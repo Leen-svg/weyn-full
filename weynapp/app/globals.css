@@ -1,0 +1,339 @@
+/* ============================================================
+   WEYN, app-specific additions on top of design-system.css.
+   Tokens, base type, buttons, cards, chips, nav shell, and
+   footer all come from design-system.css, do not redeclare them
+   here. Everything below is stuff the design system doesn't cover
+   (forms, venue cards, admin, reviews, wishlist, etc.), built with
+   the same tokens and idiom (thick ink border, hard pop shadow,
+   pill radius).
+   ============================================================ */
+
+/* the fixed floating nav needs the page content to clear it */
+body { display: flex; flex-direction: column; min-height: 100vh; }
+main.container { flex: 1; padding-top: 110px; padding-bottom: 72px; }
+.container.wide { max-width: 940px; }
+
+/* ---------- nav extras (not covered by design-system.css's .nav/.logo) ---------- */
+.nav-links { display: flex; gap: 18px; align-items: center; }
+.nav-links a { color: var(--ink); text-decoration: none; font-size: 14px; font-weight: 700; }
+.nav-links a:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.nav-link-btn {
+  color: var(--ink); background: none; border: none; font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: inherit; padding: 0;
+}
+.nav-link-btn:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.nav-user { display: flex !important; align-items: center; gap: 8px; }
+.nav-avatar {
+  width: 28px; height: 28px; border-radius: var(--radius-pill); border: 2px solid var(--ink);
+  object-fit: cover; background: var(--purple-wash);
+}
+.nav-avatar.placeholder {
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px; color: var(--purple-deep);
+}
+.points-badge {
+  background: var(--yellow); border: 2px solid var(--ink); border-radius: var(--radius-pill);
+  padding: 3px 10px; font-size: 12px; font-weight: 800;
+}
+
+/* ---------- type extras ---------- */
+.sub { color: var(--ink-soft); margin-bottom: 26px; font-size: 16px; max-width: 46ch; }
+.group-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1.6px;
+  color: var(--ink); font-weight: 800; margin: 24px 0 10px;
+}
+
+/* ---------- chip group wrapper (individual .chip comes from design-system.css) ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag-cluster { margin-bottom: 14px; }
+.subgroup-label {
+  font-size: 12px; font-weight: 700; color: var(--ink-soft);
+  margin: 10px 0 6px;
+}
+
+/* ---------- collapsible tag subgroups ---------- */
+.accordion-section {
+  border: 2px solid var(--ink); border-radius: 14px; background: var(--white);
+  margin-bottom: 8px; overflow: hidden;
+}
+.accordion-header {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: none; border: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--ink);
+}
+.accordion-header:hover { background: var(--sky-wash); }
+.accordion-meta {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+  font-weight: 700; color: var(--ink-soft); font-family: var(--font-body);
+}
+.accordion-chevron { display: inline-block; transition: transform .15s ease; font-size: 16px; }
+.accordion-chevron.open { transform: rotate(90deg); }
+.accordion-body { padding: 4px 16px 14px; border-top: 2px solid var(--ink); }
+.accordion-body .chips { padding-top: 12px; }
+
+/* ---------- button size/layout modifiers (colour variants are in design-system.css) ---------- */
+.btn.small { padding: 8px 15px; font-size: 13px; box-shadow: 3px 3px 0 var(--ink); }
+.btn.block { width: 100%; }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: var(--shadow-pop-sm); }
+.btn.dark { background: var(--ink-deep); color: var(--paper); }
+.btn.dark:hover { background: var(--ink); }
+.cta-row { margin-top: 26px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* ---------- venue cards ---------- */
+.card.compact { padding: 18px; margin-bottom: 16px; border-radius: var(--radius-md); }
+.card.picked { background: var(--purple-wash); }
+.venue-name { font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.1; }
+.venue-meta { color: var(--ink-soft); font-size: 14px; margin: 5px 0 12px; font-weight: 600; }
+.venue-links { display: flex; gap: 8px; flex-wrap: wrap; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.tag-pill {
+  background: var(--paper); border: 1.5px solid var(--ink); border-radius: var(--radius-pill);
+  padding: 3px 10px; font-size: 12px; font-weight: 700;
+}
+
+/* ---------- forms ---------- */
+.field { margin-bottom: 18px; }
+.field label { display: block; font-weight: 800; font-size: 14px; margin-bottom: 7px; }
+.field .hint { font-weight: 600; color: var(--ink-soft); font-size: 12px; }
+input[type="text"], input[type="url"], input[type="email"],
+input[type="number"], input[type="password"], select, textarea {
+  width: 100%; padding: 13px 15px; border: 2px solid var(--ink); border-radius: 12px;
+  font-size: 15px; background: var(--white); color: var(--ink);
+  font-family: inherit; font-weight: 600;
+}
+textarea { min-height: 96px; resize: vertical; }
+input:focus, select:focus, textarea:focus {
+  outline: none; box-shadow: var(--shadow-pop-sm);
+}
+.or-divider {
+  display: flex; align-items: center; gap: 12px; margin: 20px 0;
+  font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--ink-soft);
+}
+.or-divider::before, .or-divider::after { content: ""; flex: 1; height: 2px; background: var(--ink); opacity: 0.15; }
+
+.toggle-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 18px;
+  font-weight: 700; font-size: 15px; cursor: pointer;
+}
+.toggle-row input { width: 20px; height: 20px; accent-color: var(--purple); }
+
+/* ---------- venue actions / reviews ---------- */
+.star-row { display: flex; gap: 4px; }
+.star {
+  background: none; border: none; font-size: 26px; line-height: 1; cursor: pointer;
+  color: var(--paper); -webkit-text-stroke: 2px var(--ink); padding: 0;
+}
+.star.on { color: var(--yellow); -webkit-text-stroke: 2px var(--ink); }
+
+/* ---------- notices ---------- */
+.notice {
+  background: var(--yellow-wash); border: 2px solid var(--ink); border-radius: 12px;
+  padding: 14px; margin: 18px 0; font-size: 14px; font-weight: 700;
+}
+.notice.err { background: var(--pink-wash); }
+
+/* ---------- poll bars ---------- */
+.result-bar {
+  height: 12px; background: var(--paper); border: 2px solid var(--ink);
+  border-radius: var(--radius-pill); overflow: hidden; margin-top: 8px;
+}
+.result-fill { height: 100%; background: var(--purple); transition: width .35s ease; }
+.result-fill.lead { background: var(--yellow); }
+
+/* ---------- admin ---------- */
+.admin-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.count-badge {
+  background: var(--ink); color: var(--yellow); border-radius: var(--radius-pill);
+  font-size: 11px; padding: 1px 7px; margin-left: 6px; font-weight: 800;
+}
+.chip.sel .count-badge { background: var(--white); color: var(--purple); }
+.admin-row { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
+.admin-actions { display: flex; gap: 6px; flex-shrink: 0; flex-direction: column; }
+.mono { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 12px; color: var(--ink-soft); word-break: break-all; font-weight: 600; }
+
+/* ---------- coming soon ---------- */
+.coming-soon-tile {
+  margin-top: 40px; border: 2.5px dashed var(--ink); border-radius: var(--radius-lg);
+  padding: 24px; opacity: 0.85; position: relative; background: var(--white);
+}
+.coming-soon-badge {
+  display: inline-block; background: var(--ink); color: var(--paper);
+  border-radius: var(--radius-pill); padding: 4px 12px; font-size: 11px; font-weight: 800;
+  letter-spacing: .4px; margin-bottom: 12px;
+}
+
+/* ---------- admin media ---------- */
+.media-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.media-thumb {
+  position: relative; width: 80px; height: 80px; border: 2px solid var(--ink);
+  border-radius: 10px; overflow: hidden; background: var(--paper);
+}
+.media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; }
+.media-remove {
+  position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: var(--radius-pill);
+  background: var(--ink); color: var(--white); border: none; font-size: 11px; cursor: pointer; line-height: 1;
+}
+
+/* ---------- share ---------- */
+.share-box {
+  background: var(--yellow-wash); border: var(--border); border-radius: var(--radius-lg);
+  padding: 20px; margin-top: 22px; box-shadow: var(--shadow-pop);
+}
+.share-box .link {
+  font-family: ui-monospace, monospace; font-size: 13px; word-break: break-all;
+  margin: 10px 0 14px; background: var(--white); border: 2px solid var(--ink);
+  border-radius: 10px; padding: 10px; font-weight: 600;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+@media (max-width: 620px) {
+  .nav-links { gap: 11px; }
+  .nav-links a { font-size: 13px; }
+  main.container { padding-top: 88px; }
+}
+
+/* ---------- favorite-tag pills (nicer than plain tag-pill) ---------- */
+.favorite-pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.favorite-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 2px solid var(--ink); border-radius: var(--radius-pill);
+  padding: 6px 14px; font-size: 13px; font-weight: 800;
+  box-shadow: 3px 3px 0 var(--ink);
+  transform: rotate(var(--tilt, 0deg));
+}
+.favorite-pill.c0 { background: var(--yellow-wash); }
+.favorite-pill.c1 { background: var(--sky-wash); }
+.favorite-pill.c2 { background: var(--pink-wash); }
+.favorite-pill.c3 { background: var(--purple-wash); }
+
+/* ---------- venue-card v2: image-forward, softer than the brand .card ---------- */
+.venue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.venue-card {
+  background: var(--white);
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius-md);
+  box-shadow: 3px 3px 0 var(--ink);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.venue-card.picked { outline: 2.5px solid var(--purple); outline-offset: -2.5px; }
+.venue-cover {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  display: flex; align-items: center; justify-content: center;
+  border-bottom: 1.5px solid var(--ink);
+}
+.venue-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.venue-cover-glyph { font-size: 32px; opacity: 0.35; }
+.venue-city-badge {
+  position: absolute; top: 8px; right: 8px;
+  background: var(--ink); color: var(--white);
+  font-size: 10px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase;
+  padding: 3px 8px; border-radius: var(--radius-pill);
+}
+.venue-card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+.venue-card .venue-name { font-size: 16px; margin-bottom: 2px; }
+.venue-card .venue-meta { font-size: 12.5px; margin: 0 0 8px; }
+.venue-desc { font-size: 13px; color: var(--ink-soft); margin: 0 0 10px; line-height: 1.4; }
+.venue-card .venue-links { margin-top: auto; padding-top: 4px; }
+
+/* Single-column layout (poll results, group votes) reads better full-width */
+.venue-list-single .venue-card { display: grid; grid-template-columns: 120px 1fr; }
+.venue-list-single .venue-cover { aspect-ratio: auto; height: 100%; border-bottom: none; border-right: 1.5px solid var(--ink); }
+@media (max-width: 560px) {
+  .venue-list-single .venue-card { grid-template-columns: 1fr; }
+  .venue-list-single .venue-cover { aspect-ratio: 16 / 9; border-right: none; border-bottom: 1.5px solid var(--ink); }
+}
+
+/* ---------- city picker + details card (find page reorg) ---------- */
+.city-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 28px; }
+.city-card {
+  text-align: left; padding: 14px 16px; border: 1.5px solid var(--ink); border-radius: var(--radius-md);
+  background: var(--white); cursor: pointer; display: flex; flex-direction: column; gap: 3px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.city-card:hover { transform: translateY(-2px); }
+.city-card.sel { background: var(--purple); color: var(--white); box-shadow: 3px 3px 0 var(--ink); transform: translateY(-2px); }
+.city-card-name { font-family: var(--font-display); font-weight: 800; font-size: 16px; }
+.city-card-note { font-size: 12px; opacity: 0.75; font-weight: 600; }
+@media (max-width: 480px) { .city-picker { grid-template-columns: 1fr; } }
+
+.details-card {
+  border: 1.5px solid var(--ink); border-radius: var(--radius-md); background: var(--white);
+  padding: 16px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 14px;
+}
+.details-row { display: flex; flex-direction: column; gap: 8px; }
+.details-label { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink-soft); }
+.btn-ghost-row:hover { background: var(--paper); }
+
+/* ============================================================
+   MOBILE NAVIGATION
+   The top pill cannot hold the section links on a phone, it wraps
+   onto three lines and covers the page heading. Below 760px the
+   section links move to a bottom tab bar and the pill keeps only
+   the wordmark and the account controls.
+   ============================================================ */
+.tabbar { display: none; }
+
+@media (max-width: 760px) {
+  .nav-links .nav-section { display: none; }
+  .nav { padding: 8px 10px 8px 18px; }
+  main.container { padding-top: 92px; padding-bottom: 96px; }
+
+  .tabbar {
+    position: fixed; z-index: 100;
+    left: 50%; transform: translateX(-50%);
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: min(520px, calc(100% - 24px));
+    display: flex; justify-content: space-between; gap: 2px;
+    background: var(--paper);
+    border: var(--border); border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-pop-sm);
+    padding: 6px;
+  }
+  .tabbar .tab {
+    flex: 1 1 0;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 7px 2px 6px;
+    border-radius: var(--radius-pill);
+    text-decoration: none; color: var(--ink);
+    font-family: var(--font-display); font-weight: 700; font-size: 10.5px;
+    line-height: 1;
+    transition: background .15s ease, transform .15s ease;
+  }
+  .tabbar .tab-icon { font-size: 16px; line-height: 1; }
+  .tabbar .tab.active { background: var(--yellow); box-shadow: 2px 2px 0 var(--ink); transform: translateY(-1px); }
+  .tabbar .tab:active { transform: translateY(1px); }
+
+  /* the footer would otherwise sit underneath the floating bar */
+  footer { padding-bottom: 84px; }
+}
+
+@media (max-width: 380px) {
+  .tabbar .tab-label { font-size: 9.5px; }
+}
+#ckbar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(16px,env(safe-area-inset-bottom));z-index:200;width:min(680px,calc(100% - 24px));
+ display:none;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between;
+ background:#F9F9F9;border:2.5px solid #1F3044;border-radius:22px;box-shadow:6px 6px 0 #1F3044;padding:14px 18px}
+#ckbar.on{display:flex}
+#ckbar p{margin:0;font-size:13.5px;font-weight:600;color:#54677D;line-height:1.5;flex:1 1 320px}
+#ckbar a{color:#7863DB;font-weight:700}
+#ckbar button{font-family:inherit;font-weight:800;font-size:14px;background:#8E7CE8;color:#fff;border:2.5px solid #1F3044;
+ border-radius:999px;padding:9px 22px;cursor:pointer;box-shadow:4px 4px 0 #1F3044;transition:transform .15s,box-shadow .15s}
+#ckbar button:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #1F3044}
+@media(max-width:520px){#ckbar{bottom:10px;padding:13px 15px}#ckbar button{width:100%}}
+
+/* the mobile tab bar owns the bottom of the screen, lift the cookie notice above it */
+@media (max-width: 760px) {
+  #ckbar { bottom: calc(84px + env(safe-area-inset-bottom)); }
+}

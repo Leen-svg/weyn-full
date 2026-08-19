@@ -1,0 +1,50 @@
+# Weyn
+
+> Weyn ("where" in Arabic) is a free web app for deciding where to go out. You tap how you're
+> feeling, roughly where you are and what you want to spend, and it gives you three real places
+> instead of a list of fifty. You turn those three into a poll, drop the link in your group chat,
+> and everyone votes. Your friends don't need an account or an app to vote.
+
+Live in Abu Dhabi with 730 places, and starting to fill in Dubai. Every Middle Eastern city next.
+Made in Abu Dhabi. Contact: hello@goweyn.com
+
+## What it does today
+
+- **Find a spot**: pick from 88 vibe tags plus a zone and a budget, get three matches. Every place
+  is scored on the four M's: Mood, Move, Moment, Money.
+- **Group polls**: turn three picks into a shareable link. Anyone can vote with no account, no
+  download and no signup wall. Also in-app friend groups with chat and polls.
+- **Friends and feed**: see where your people actually went, what they rated and saved, plus
+  Trending this week and Just added.
+- **Saved places, ratings and reviews**, venue pages with Google Maps links, and family friendly,
+  18+ and 21+ filtering.
+- **Rewards**: points for trying somewhere new, more for going with new people, more for rating a
+  place or sending a spot to a friend.
+- **Community**: anyone can submit a place we're missing, vote on whether a place's vibe tags are
+  right, or submit a video as a credited creator. Everything goes through a moderation queue.
+
+## What it is not
+
+Weyn is not a chatbot. There is nothing to type into. It is not a restaurant booking site, and it
+is not only about restaurants: it covers beaches, art, bowling, kayaking, cinema, live music,
+padel, spas, markets and desert trips.
+
+## What's coming
+
+1. A personalised algorithm that learns from what you actually do rather than what you tap.
+2. A live map of the city showing what's buzzing and which friends are out, friends-only and opt-in.
+3. Native apps on iOS and Google Play. The waiting list on the homepage is for that launch.
+
+## Pages
+
+- [Home](https://goweyn.com/): the product, the problem it solves, and the waiting list.
+- [The app](https://goweyn.com/app): the live web app.
+- [About](https://goweyn.com/about): why Weyn exists.
+- [Roadmap](https://goweyn.com/roadmap): what's live now and what's next.
+- [Contact](https://goweyn.com/contact): hello@goweyn.com
+- [Privacy](https://goweyn.com/privacy) and [Terms](https://goweyn.com/terms).
+
+## Social
+
+- Instagram: https://www.instagram.com/goweynapp
+- TikTok: https://www.tiktok.com/@goweynapp

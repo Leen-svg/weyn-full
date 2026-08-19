@@ -1,0 +1,68 @@
+/* Layer order, pre-declared so it's fixed before Tailwind's own `@import`
+   establishes its layers. Position:
+     theme < base < weyn < components < utilities
+   "weyn" (our hand-written CSS) sits ABOVE Tailwind's Preflight ("base")
+   so our own classes (.btn, .card, .chip, .container, bare h1/body/input
+   resets, etc.) still win over Preflight's generic resets exactly like
+   before, but BELOW "utilities", so an actual Tailwind utility class
+   applied to a shadcn/kokonutui element still wins when there's a real
+   conflict (e.g. Input's px-3 vs our bare `input[type=text]` padding).
+   Without this, cascade layers make ALL unlayered CSS win regardless of
+   specificity, which silently broke every shadcn component's padding. */
+@layer theme, base, weyn, components, utilities;
+
+@import "./design-system.css" layer(weyn);
+@import "./globals.css" layer(weyn);
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Map shadcn/kokonutui's expected design tokens onto Weyn's own brand
+   tokens (defined in design-system.css) so every installed component
+   inherits the neo-brutalist pop palette instead of shadcn's grayscale
+   defaults. No dark mode, WEYN-DESIGN.md rules that out explicitly. */
+@theme inline {
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+
+  --color-card: var(--white);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--white);
+  --color-popover-foreground: var(--ink);
+
+  --color-primary: var(--purple);
+  --color-primary-foreground: var(--white);
+  --color-secondary: var(--yellow);
+  --color-secondary-foreground: var(--ink);
+  --color-accent: var(--sky);
+  --color-accent-foreground: var(--ink);
+  --color-destructive: var(--pink-deep);
+  --color-destructive-foreground: var(--white);
+
+  --color-muted: var(--paper);
+  --color-muted-foreground: var(--ink-soft);
+  --color-border: var(--ink);
+  --color-input: var(--ink);
+  --color-ring: var(--purple);
+
+  --radius-lg: var(--radius-lg);
+  --radius-md: var(--radius-md);
+  --radius-sm: 10px;
+  --radius-xl: var(--radius-lg);
+
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

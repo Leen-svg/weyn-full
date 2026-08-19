@@ -1,0 +1,121 @@
+import { createClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import { NextResponse } from "next/server";
+
+async function shapePolls(supabase, groupId, currentUserId) {
+  const { data: polls, error } = await supabase
+    .from("group_polls")
+    .select("id, group_id, created_by, selected_tag_slugs, max_spend_aed, aesthetic_only, zone_slugs, created_at, expires_at, share_token")
+    .eq("group_id", groupId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  if (!polls?.length) return [];
+
+  const pollIds = polls.map((p) => p.id);
+  const [{ data: options }, { data: votes }, { data: guestVotes }] = await Promise.all([
+    supabase.from("group_poll_options").select("id, poll_id, venue_id").in("poll_id", pollIds),
+    supabase.from("group_poll_votes").select("poll_id, option_id, user_id").in("poll_id", pollIds),
+    supabase.from("group_poll_guest_votes").select("poll_id, option_id, voter_name").in("poll_id", pollIds),
+  ]);
+
+  const venueIds = [...new Set((options || []).map((o) => o.venue_id))];
+  const s = db();
+  const { data: venues } = venueIds.length
+    ? await s
+        .from("venues")
+        .select("id, name, neighborhood, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description")
+        .in("id", venueIds)
+    : { data: [] };
+  const venueMap = Object.fromEntries((venues || []).map((v) => [v.id, v]));
+
+  const voterIds = [...new Set((votes || []).map((v) => v.user_id))];
+  const { data: authors } = voterIds.length
+    ? await s.from("profile_public").select("id, display_name").in("id", voterIds)
+    : { data: [] };
+  const authorMap = Object.fromEntries((authors || []).map((a) => [a.id, a]));
+
+  return polls.map((p) => {
+    const opts = (options || []).filter((o) => o.poll_id === p.id);
+    return {
+      ...p,
+      expired: new Date(p.expires_at) < new Date(),
+      options: opts.map((o) => {
+        const optVotes = (votes || []).filter((v) => v.option_id === o.id);
+        const optGuestVotes = (guestVotes || []).filter((v) => v.option_id === o.id);
+        return {
+          optionId: o.id,
+          venue: venueMap[o.venue_id],
+          votes: optVotes.length + optGuestVotes.length,
+          voters: [
+            ...optVotes.map((v) => authorMap[v.user_id]?.display_name || "Someone"),
+            ...optGuestVotes.map((v) => `${v.voter_name || "Guest"} (link)`),
+          ],
+        };
+      }),
+      myVote: (votes || []).find((v) => v.poll_id === p.id && v.user_id === currentUserId) || null,
+    };
+  });
+}
+
+export async function GET(req, { params }) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Log in" }, { status: 401 });
+
+  try {
+    const polls = await shapePolls(supabase, id, user.id);
+    return NextResponse.json({ polls });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
+}
+
+export async function POST(req, { params }) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Log in" }, { status: 401 });
+
+  const { tags, maxSpend, aestheticOnly, zones, maxAge } = await req.json();
+  if (!Array.isArray(tags) || tags.length === 0) {
+    return NextResponse.json({ error: "Pick at least one tag" }, { status: 400 });
+  }
+
+  const s = db();
+  const { data: venues, error: shortlistErr } = await s.rpc("get_shortlist", {
+    p_tag_slugs: tags,
+    p_max_spend: maxSpend || 99999,
+    p_aesthetic_only: !!aestheticOnly,
+    p_zone_slugs: zones && zones.length ? zones : null,
+    p_max_age: maxAge || "all-ages",
+    p_limit: 3,
+  });
+  if (shortlistErr) return NextResponse.json({ error: shortlistErr.message }, { status: 500 });
+  if (!venues?.length) return NextResponse.json({ error: "Nothing matches that combo yet" }, { status: 400 });
+
+  // Insert as the caller so RLS's is_group_member(group_id) check applies
+  // a non-member can't spin up a poll in a group they don't belong to.
+  const { data: poll, error } = await supabase
+    .from("group_polls")
+    .insert({
+      group_id: id,
+      created_by: user.id,
+      selected_tag_slugs: tags,
+      max_spend_aed: maxSpend || null,
+      aesthetic_only: !!aestheticOnly,
+      zone_slugs: zones && zones.length ? zones : null,
+    })
+    .select("id")
+    .single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const { error: e2 } = await s.from("group_poll_options").insert(venues.map((v) => ({ poll_id: poll.id, venue_id: v.id })));
+  if (e2) return NextResponse.json({ error: e2.message }, { status: 500 });
+
+  return NextResponse.json({ id: poll.id });
+}

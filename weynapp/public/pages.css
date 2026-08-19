@@ -1,0 +1,55 @@
+:root{
+  --paper:#F9F9F9;--blue:#5AA9E6;--blue-deep:#3D8FD1;--sky:#7FC8F8;--sky-wash:#EAF4FD;
+  --yellow:#FFE45E;--yellow-wash:#FFF8D9;--pink:#FF6392;--pink-deep:#F2477C;
+  --purple:#8E7CE8;--purple-deep:#7863DB;--purple-wash:#F1EEFC;
+  --ink:#1F3044;--ink-soft:#54677D;--white:#FFFFFF;
+  --border:2.5px solid var(--ink);--shadow:6px 6px 0 var(--ink);--shadow-sm:4px 4px 0 var(--ink);
+  --fd:"Bricolage Grotesque","Kufam",sans-serif;--fb:"Space Grotesk","Kufam",sans-serif;--fa:"Kufam",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--fb);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(rgba(31,48,68,.05) 1px,transparent 1px);background-size:22px 22px}
+::selection{background:var(--yellow)}
+a{color:inherit}
+.wrap{position:relative;max-width:840px;margin:0 auto;padding:0 24px}
+.nav{position:fixed;top:18px;left:50%;transform:translateX(-50%);width:min(840px,calc(100% - 32px));display:flex;align-items:center;justify-content:space-between;background:rgba(249,249,249,.94);border:var(--border);border-radius:999px;padding:10px 12px 10px 22px;z-index:100;box-shadow:var(--shadow-sm)}
+.logo{display:flex;align-items:baseline;gap:2px;font-family:var(--fd);font-weight:800;font-size:24px;text-decoration:none;color:var(--blue-deep)}
+.logo .q{color:var(--pink);display:inline-block;transform:rotate(12deg);font-family:var(--fa)}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--fd);font-weight:700;font-size:15px;background:var(--purple);color:var(--white);border:var(--border);border-radius:999px;padding:11px 22px;text-decoration:none;box-shadow:var(--shadow-sm);transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+main{padding:150px 0 90px;position:relative}
+.kick{display:inline-block;font-weight:700;font-size:13px;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue-deep);margin-bottom:12px}
+h1{font-family:var(--fd);font-size:clamp(34px,6vw,54px);font-weight:800;letter-spacing:-1.8px;line-height:1.05;margin-bottom:28px}
+h1 .hp{color:var(--pink)}
+.card{background:var(--white);border:var(--border);border-radius:26px;box-shadow:var(--shadow);padding:38px 40px;margin-bottom:26px}
+.card h2{font-family:var(--fd);font-size:23px;font-weight:800;letter-spacing:-.5px;margin-bottom:12px}
+.card p{font-size:16px;line-height:1.7;color:var(--ink-soft);font-weight:500;margin-bottom:14px}
+.card p:last-child{margin-bottom:0}
+.card p b{color:var(--ink)}
+.card ul{margin:0 0 14px 20px}
+.card li{font-size:16px;line-height:1.7;color:var(--ink-soft);font-weight:500;margin-bottom:8px}
+.card li b{color:var(--ink)}
+.pill{display:inline-block;font-family:var(--fd);font-weight:700;font-size:12.5px;letter-spacing:1px;text-transform:uppercase;border:2px solid var(--ink);border-radius:999px;padding:4px 13px;margin-bottom:14px}
+.pill.now{background:var(--yellow)}
+.pill.next{background:var(--sky)}
+.pill.then{background:var(--purple);color:var(--white)}
+.pill.later{background:var(--pink);color:var(--white)}
+.draft{font-size:13.5px;font-weight:600;color:var(--ink-soft);background:var(--yellow-wash);border:2px dashed var(--ink);border-radius:14px;padding:12px 16px;margin-bottom:26px}
+footer{border-top:var(--border);background:var(--ink);color:var(--paper);padding:34px 0;text-align:center;font-size:14px}
+footer a{color:var(--sky);font-weight:600}
+footer .links{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin-top:10px;font-weight:600}
+footer .links a{color:rgba(249,249,249,.85);text-decoration:none}
+footer .links a:hover{color:var(--yellow)}
+@media(max-width:640px){.card{padding:28px 22px}}
+
+button,a{-webkit-tap-highlight-color:rgba(142,124,232,.18);touch-action:manipulation}
+@media(min-width:961px){.nav{background:rgba(249,249,249,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
+@media(max-width:960px){body::before{display:none}main{padding:130px 0 70px}.btn{padding:10px 16px;font-size:14px}}
+.logo .q{font-weight:800}
+.ar,h1 .ar,.card .ar{font-family:var(--fa);font-weight:800;font-feature-settings:"liga" 1}
+.card p .ar,.card li .ar{font-weight:700}
+
+/* ---------- footer socials + contact email ---------- */
+.foot-social { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin-top:12px; font-weight:700; font-size:13.5px; }
+.foot-social a { color:var(--yellow); text-decoration:none; }
+.foot-social a:hover { text-decoration:underline; text-decoration-thickness:2px; }
