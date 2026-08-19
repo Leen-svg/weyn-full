@@ -53,7 +53,11 @@ export default function NearbySection() {
           No mapped spots near you yet, we&apos;re still adding coordinates as we go. Try the vibe picker instead.
         </p>
       )}
-      {state === "done" && venues.map((v) => <VenueCard key={v.id} venue={v} />)}
+      {state === "done" && (
+        <div className="venue-list-single" style={{ marginTop: 14 }}>
+          {venues.map((v) => <VenueCard key={v.id} venue={v} />)}
+        </div>
+      )}
     </div>
   );
 }

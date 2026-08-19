@@ -11,12 +11,12 @@ export default function WishlistClient({ initialVenues }) {
   }
 
   return (
-    <>
+    <div className="venue-list-single">
       {venues.map((v) => (
         <VenueCard key={v.id} venue={v}>
           <VenueActions venue={v} initialSaved onRemoved={(id) => setVenues((prev) => prev.filter((x) => x.id !== id))} />
         </VenueCard>
       ))}
-    </>
+    </div>
   );
 }

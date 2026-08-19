@@ -65,6 +65,7 @@ export default function GuestVoteClient({ token }) {
 
       {err && <div className="notice err">{err}</div>}
 
+      <div className="venue-list-single">
       {data.options.map((o) => (
         <VenueCard key={o.optionId} venue={o.venue} picked={voted === o.optionId}>
           <div style={{ marginTop: 14 }}>
@@ -86,6 +87,7 @@ export default function GuestVoteClient({ token }) {
           </div>
         </VenueCard>
       ))}
+      </div>
 
       <p className="sub" style={{ marginTop: 22 }}>
         powered by <a href="/" style={{ fontWeight: 800, color: "var(--ink)" }}>weyn</a>

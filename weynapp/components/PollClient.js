@@ -71,6 +71,7 @@ export default function PollClient({ code }) {
 
       {err && <div className="notice err">{err}</div>}
 
+      <div className="venue-list-single">
       {data.options.map((o) => (
         <VenueCard key={o.optionId} venue={o.venue} picked={voted === o.optionId}>
           <div style={{ marginTop: 14 }}>
@@ -100,6 +101,7 @@ export default function PollClient({ code }) {
           </div>
         </VenueCard>
       ))}
+      </div>
 
       <p className="sub" style={{ marginTop: 22 }}>
         {data.totalVotes} vote{data.totalVotes === 1 ? "" : "s"} so far · powered by{" "}

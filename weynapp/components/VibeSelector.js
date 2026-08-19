@@ -197,8 +197,8 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
         if (visibleTags.length === 0) return null;
         const clusters = groupBySubgroup(visibleTags);
         return (
-          <div key={cat.slug}>
-            <h2 className="group-label">
+          <div key={cat.slug} className="tag-group-card">
+            <h2 className="group-label" style={{ margin: "0 0 10px" }}>
               {cat.name} {cat.max_select > 1 ? `· pick up to ${cat.max_select}` : ""}
             </h2>
             {clusters.map((cluster) => {
@@ -247,8 +247,8 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
       )}
 
       {zoneClusters.length > 0 && (
-        <div>
-          <h2 className="group-label">Zone (optional)</h2>
+        <div className="tag-group-card">
+          <h2 className="group-label" style={{ margin: "0 0 10px" }}>Zone (optional)</h2>
           {zoneClusters.length === 1 ? (
             <div className="chips">
               {zoneClusters[0].zones.map((z) => (
@@ -332,11 +332,13 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
           ) : (
             <>
               <h2 style={{ marginBottom: 18 }}>Your three, in {city}.</h2>
-              {results.map((v) => (
-                <VenueCard key={v.id} venue={v}>
-                  <VenueActions venue={v} />
-                </VenueCard>
-              ))}
+              <div className="venue-list-single">
+                {results.map((v) => (
+                  <VenueCard key={v.id} venue={v}>
+                    <VenueActions venue={v} />
+                  </VenueCard>
+                ))}
+              </div>
               <div className="cta-row">
                 <button className="btn block" disabled={loading} onClick={makePoll}>
                   Make it a group vote 🔗

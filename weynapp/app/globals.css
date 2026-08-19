@@ -43,6 +43,13 @@ main.container { flex: 1; padding-top: 110px; padding-bottom: 72px; }
   color: var(--ink); font-weight: 800; margin: 24px 0 10px;
 }
 
+/* ---------- vibe picker: one bordered module per category, instead of an
+   undifferentiated wall of chips ---------- */
+.tag-group-card {
+  border: 1.5px solid var(--ink); border-radius: var(--radius-md); background: var(--white);
+  padding: 16px 16px 10px; margin-bottom: 14px;
+}
+
 /* ---------- chip group wrapper (individual .chip comes from design-system.css) ---------- */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag-cluster { margin-bottom: 14px; }
@@ -204,7 +211,6 @@ input:focus, select:focus, textarea:focus {
   border: 2px solid var(--ink); border-radius: var(--radius-pill);
   padding: 6px 14px; font-size: 13px; font-weight: 800;
   box-shadow: 3px 3px 0 var(--ink);
-  transform: rotate(var(--tilt, 0deg));
 }
 .favorite-pill.c0 { background: var(--yellow-wash); }
 .favorite-pill.c1 { background: var(--sky-wash); }
@@ -248,6 +254,7 @@ input:focus, select:focus, textarea:focus {
 .venue-card .venue-links { margin-top: auto; padding-top: 4px; }
 
 /* Single-column layout (poll results, group votes) reads better full-width */
+.venue-list-single { display: flex; flex-direction: column; gap: 14px; }
 .venue-list-single .venue-card { display: grid; grid-template-columns: 120px 1fr; }
 .venue-list-single .venue-cover { aspect-ratio: auto; height: 100%; border-bottom: none; border-right: 1.5px solid var(--ink); }
 @media (max-width: 560px) {
