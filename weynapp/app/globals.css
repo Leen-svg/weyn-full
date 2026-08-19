@@ -10,7 +10,10 @@
 
 /* the fixed floating nav needs the page content to clear it */
 body { display: flex; flex-direction: column; min-height: 100vh; }
-main.container { flex: 1; padding-top: 110px; padding-bottom: 72px; }
+/* The app is a single-column mobile-style flow (forms, chat, feed cards,
+   one vibe-picker), not the multi-column marketing site, so it gets its
+   own narrower reading width instead of the marketing .container's 1160px. */
+main.container { flex: 1; max-width: 760px; padding-top: 110px; padding-bottom: 72px; }
 .container.wide { max-width: 940px; }
 
 /* ---------- nav extras (not covered by design-system.css's .nav/.logo) ---------- */
