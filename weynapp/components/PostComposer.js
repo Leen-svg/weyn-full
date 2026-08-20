@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { Search, Image as ImageIcon, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -98,9 +97,8 @@ export default function PostComposer({ onPosted }) {
           <div className="relative">
             <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input className="pl-9" placeholder="Where are you? Search a spot…" value={venueQuery} onChange={(e) => setVenueQuery(e.target.value)} />
-            <AnimatePresence>
-              {venueResults.length > 0 && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-2 space-y-1">
+            {venueResults.length > 0 && (
+                <div className="app-reveal mt-2 space-y-1">
                   {venueResults.map((v) => (
                     <button
                       key={v.id}
@@ -115,9 +113,8 @@ export default function PostComposer({ onPosted }) {
                       {v.neighborhood && <span className="text-muted-foreground"> · {v.neighborhood}</span>}
                     </button>
                   ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                </div>
+            )}
           </div>
         ) : (
           <>
@@ -163,3 +160,4 @@ export default function PostComposer({ onPosted }) {
     </Card>
   );
 }
+

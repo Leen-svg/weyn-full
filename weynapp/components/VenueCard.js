@@ -49,9 +49,9 @@ export default function VenueCard({ venue, children, picked }) {
               {media.map((item, index) => (
                 <div className="venue-media-slide" key={`${item.url}-${index}`}>
                   {item.type === "video" ? (
-                    <video src={item.url} controls playsInline preload="metadata" aria-label={`${venue.name} video ${index + 1}`} />
+                    <video src={item.url} controls playsInline preload="none" aria-label={`${venue.name} video ${index + 1}`} />
                   ) : (
-                    <img src={item.url} alt={`${venue.name} photo ${index + 1}`} loading="lazy" />
+                    <img src={item.url} alt={`${venue.name} photo ${index + 1}`} loading="lazy" decoding="async" />
                   )}
                 </div>
               ))}

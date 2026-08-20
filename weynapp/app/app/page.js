@@ -30,11 +30,28 @@ async function getHomeVenues() {
   return { trending: trendingWithCovers, fresh: freshWithCovers };
 }
 
+async function getInitialPublicPosts(supabase) {
+  const { data } = await supabase
+    .from("posts")
+    .select("id, body, photo_url, visibility, created_at, user_id, venue_id, venues (id, name, neighborhood)")
+    .eq("visibility", "public")
+    .order("created_at", { ascending: false })
+    .limit(8);
+  const posts = data || [];
+  const authorIds = [...new Set(posts.map((post) => post.user_id))];
+  const { data: authors } = authorIds.length
+    ? await supabase.from("profile_public").select("id, display_name, avatar_url").in("id", authorIds)
+    : { data: [] };
+  const authorMap = Object.fromEntries((authors || []).map((author) => [author.id, author]));
+  return posts.map((post) => ({ ...post, profile_public: authorMap[post.user_id] || null }));
+}
+
 export default async function HomePage() {
   const [{ trending, fresh }, supabase] = await Promise.all([getHomeVenues(), createClient()]);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [{ data: { user } }, initialPosts] = await Promise.all([
+    supabase.auth.getUser(),
+    getInitialPublicPosts(supabase),
+  ]);
 
   return (
     <div className="app-home">
@@ -76,7 +93,7 @@ export default async function HomePage() {
             <p>Fresh opinions from people who actually went.</p>
           </div>
         </div>
-        <HomeFeed isLoggedIn={!!user} />
+        <HomeFeed isLoggedIn={!!user} initialPosts={initialPosts} />
       </section>
 
       {fresh.length > 0 && (

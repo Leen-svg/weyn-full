@@ -1,6 +1,5 @@
 "use client";
 import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { Camera, Check, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
@@ -110,12 +109,10 @@ export default function ProfileForm({ initial, groups }) {
       <Card>
         <CardContent className="flex items-center gap-5 pt-6">
           <div className="relative">
-            <motion.button
+            <button
               type="button"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
               onClick={() => fileInputRef.current?.click()}
-              className="relative block h-20 w-20 overflow-hidden rounded-full border-2"
+              className="relative block h-20 w-20 overflow-hidden rounded-full border-2 transition-transform hover:scale-[1.03] active:scale-[.98]"
               style={{ borderColor: "var(--ink)" }}
             >
               <Avatar className="h-20 w-20">
@@ -125,7 +122,7 @@ export default function ProfileForm({ initial, groups }) {
               <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-opacity hover:bg-black/40 hover:opacity-100">
                 {uploading ? <Loader2 className="h-5 w-5 animate-spin text-white" /> : <Camera className="h-5 w-5 text-white" />}
               </div>
-            </motion.button>
+            </button>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={uploadAvatar} disabled={uploading} className="hidden" />
           </div>
           <div>
@@ -228,18 +225,16 @@ export default function ProfileForm({ initial, groups }) {
         </CardContent>
       </Card>
 
-      <AnimatePresence>
-        {err && (
-          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="notice err">
+      {err && (
+          <div className="app-reveal notice err">
             {err}
-          </motion.div>
-        )}
-        {msg && (
-          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="notice">
+          </div>
+      )}
+      {msg && (
+          <div className="app-reveal notice">
             {msg}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+      )}
 
       <Button type="submit" disabled={busy} className="w-full" size="lg">
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save profile"}

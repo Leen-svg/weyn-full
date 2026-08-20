@@ -13,6 +13,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
 
+const itemClass = "profile-menu-item";
+
 export default function ProfileMenu({ userId, displayName, avatarUrl, points, isAdmin }) {
   const router = useRouter();
   const initials = (displayName || "?").slice(0, 2).toUpperCase();
@@ -30,7 +32,7 @@ export default function ProfileMenu({ userId, displayName, avatarUrl, points, is
         render={
           <button
             type="button"
-            className="profile-menu-trigger flex items-center gap-2 rounded-full border-0 bg-white py-1 pr-3 pl-1 shadow-[0_6px_18px_rgba(31,48,68,.1)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_9px_24px_rgba(31,48,68,.14)]"
+            className="profile-menu-trigger flex items-center gap-2 rounded-full border-0 bg-white py-1 pr-2.5 pl-1 shadow-[0_4px_14px_rgba(31,48,68,.09)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_7px_20px_rgba(31,48,68,.12)]"
           />
         }
       >
@@ -41,45 +43,46 @@ export default function ProfileMenu({ userId, displayName, avatarUrl, points, is
         <span className="points-badge">{points} pts</span>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-64">
-        <div className="flex items-center gap-3 px-2 py-2">
-          <Avatar className="h-10 w-10">
+      <DropdownMenuContent align="end" sideOffset={10} className="profile-menu-popover w-56 rounded-2xl border-0 p-2 ring-0">
+        <div className="profile-menu-summary flex items-center gap-2.5 px-2 py-2">
+          <Avatar className="h-9 w-9">
             <AvatarImage src={safeUrl(avatarUrl)} alt="" />
-            <AvatarFallback className="text-sm font-bold">{initials}</AvatarFallback>
+            <AvatarFallback className="text-xs font-bold">{initials}</AvatarFallback>
           </Avatar>
-          <div className="min-w-0">
-            <div className="truncate text-sm font-semibold">{displayName || "Your profile"}</div>
-            <div className="mt-0.5 text-xs font-bold" style={{ color: "var(--purple)" }}>🏅 {points} pts</div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-bold">@{displayName || "your_profile"}</div>
+            <div className="mt-0.5 text-[11px] font-semibold text-muted-foreground">Your Weyn account</div>
           </div>
+          <span className="profile-menu-points">{points}</span>
         </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/profile" />}>
+        <DropdownMenuSeparator className="profile-menu-separator" />
+        <DropdownMenuItem className={itemClass} render={<Link href="/profile" />}>
           <User className="h-4 w-4" /> Edit profile
         </DropdownMenuItem>
         {userId && (
-          <DropdownMenuItem render={<Link href={`/u/${userId}`} target="_blank" />}>
+          <DropdownMenuItem className={itemClass} render={<Link href={`/u/${userId}`} target="_blank" />}>
             <Eye className="h-4 w-4" /> View public profile
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem render={<Link href="/wishlist" />}>
+        <DropdownMenuItem className={itemClass} render={<Link href="/wishlist" />}>
           <Heart className="h-4 w-4" /> Wishlist
         </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/rewards" />}>
+        <DropdownMenuItem className={itemClass} render={<Link href="/rewards" />}>
           <Trophy className="h-4 w-4" /> Rewards
         </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/friends" />}>
+        <DropdownMenuItem className={itemClass} render={<Link href="/friends" />}>
           <Users className="h-4 w-4" /> Friends
         </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/groups" />}>
+        <DropdownMenuItem className={itemClass} render={<Link href="/groups" />}>
           <MessagesSquare className="h-4 w-4" /> Groups
         </DropdownMenuItem>
         {isAdmin && (
-          <DropdownMenuItem render={<Link href="/admin" />}>
+          <DropdownMenuItem className={`${itemClass} profile-menu-admin`} render={<Link href="/admin" />}>
             <ShieldCheck className="h-4 w-4" /> Admin
           </DropdownMenuItem>
         )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={signOut} variant="destructive">
+        <DropdownMenuSeparator className="profile-menu-separator" />
+        <DropdownMenuItem className={`${itemClass} profile-menu-logout`} onClick={signOut} variant="destructive">
           <LogOut className="h-4 w-4" /> Log out
         </DropdownMenuItem>
       </DropdownMenuContent>
