@@ -1320,3 +1320,19 @@ input:focus, select:focus, textarea:focus {
     animation: none;
   }
 }
+
+
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 12px;
+  z-index: 1000;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--white);
+  font-weight: 800;
+  transform: translateY(-160%);
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+.skip-link:focus { transform: translateY(0); }
