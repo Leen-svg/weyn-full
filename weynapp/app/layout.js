@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import AuthNav from "@/components/AuthNav";
 import TabBar from "@/components/TabBar";
+import PrimaryNav from "@/components/PrimaryNav";
 import CookieBar from "@/components/CookieBar";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -57,27 +58,19 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body>
+      <body className="app-shell">
         <header className="nav">
           <Link href="/app" className="logo">
             weyn<span className="q ar">؟</span>
           </Link>
           <nav className="nav-links">
-            <Link className="nav-section" href="/app">
-              Discover
-            </Link>
-            <Link className="nav-section" href="/find">
-              Find a spot
-            </Link>
-            <Link className="nav-section" href="/groups">
-              Groups
-            </Link>
+            <PrimaryNav />
             <Suspense fallback={null}>
               <AuthNav />
             </Suspense>
           </nav>
         </header>
-        <main className="container">{children}</main>
+        <main className="container app-main">{children}</main>
         <Suspense fallback={null}>
           <TabBar />
         </Suspense>
