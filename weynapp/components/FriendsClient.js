@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Search, UserPlus, Check, X, Star } from "lucide-react";
+import { Search, UserPlus, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -207,11 +207,7 @@ export default function FriendsClient() {
                 <span className="text-muted-foreground">rated</span>
                 <span className="font-semibold">{a.venues?.name}</span>
               </div>
-              <div className="mt-0.5 flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`h-3.5 w-3.5 ${i < a.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
-                ))}
-              </div>
+              <div className="mt-1 text-xs text-muted-foreground">{a.aesthetic_taste ?? 50}% taste · {a.quiet_loud ?? 50}% loud · {a.wallet_splurge ?? 50}% splurge</div>
               {a.body && <p className="mt-1 text-sm text-muted-foreground">{a.body}</p>}
             </div>
           ))}
@@ -220,4 +216,3 @@ export default function FriendsClient() {
     </div>
   );
 }
-

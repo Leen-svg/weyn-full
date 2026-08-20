@@ -10,16 +10,9 @@ export default async function PublicProfilePage({ params }) {
   const { id } = await params;
   const s = db();
 
-  const [{ data: pub }, { data: allTags }, { data: posts }] = await Promise.all([
-    s.from("profile_public").select("id, display_name, avatar_url, bio, favorite_tags").eq("id", id).single(),
+  const [{ data: pub }, { data: allTags }] = await Promise.all([
+    s.from("profile_public").select("id, display_name, avatar_url, bio, favorite_tags, ghost_mode").eq("id", id).single(),
     s.from("vibe_tags").select("slug, display_name, category_id, categories (name)").eq("is_active", true),
-    s
-      .from("posts")
-      .select("id, body, photo_url, created_at, venues (name)")
-      .eq("user_id", id)
-      .eq("visibility", "public")
-      .order("created_at", { ascending: false })
-      .limit(10),
   ]);
 
   if (!pub) notFound();
@@ -27,6 +20,7 @@ export default async function PublicProfilePage({ params }) {
   const tagMap = Object.fromEntries((allTags || []).map((t) => [t.slug, t]));
   const favoriteTags = (pub.favorite_tags || []).map((slug) => tagMap[slug]).filter(Boolean);
   const initials = (pub.display_name || "?").slice(0, 2).toUpperCase();
+  const { data: posts } = pub.ghost_mode ? { data: [] } : await s.from("posts").select("id, body, photo_url, created_at, venues (name)").eq("user_id", id).eq("visibility", "public").order("created_at", { ascending: false }).limit(10);
 
   return (
     <>
@@ -50,7 +44,7 @@ export default async function PublicProfilePage({ params }) {
 
       <div style={{ marginTop: 24 }}>
         <h2 className="group-label">Public posts</h2>
-        {!posts?.length && <p className="sub">Nothing public yet.</p>}
+        {pub.ghost_mode ? <p className="sub">This person has Ghost Mode on, so their activity is private.</p> : !posts?.length && <p className="sub">Nothing public yet.</p>}
         {posts?.map((p) => (
           <div className="card compact" key={p.id}>
             <div className="venue-meta" style={{ margin: 0 }}>

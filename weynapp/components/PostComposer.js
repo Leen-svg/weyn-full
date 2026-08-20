@@ -1,15 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Search, Image as ImageIcon, Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { Search, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import useDebounce from "@/hooks/use-debounce";
-
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
-const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export default function PostComposer({ onPosted }) {
   const [venueQuery, setVenueQuery] = useState("");
@@ -18,8 +14,6 @@ export default function PostComposer({ onPosted }) {
   const [venue, setVenue] = useState(null);
   const [body, setBody] = useState("");
   const [visibility, setVisibility] = useState("public");
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
 
@@ -33,47 +27,15 @@ export default function PostComposer({ onPosted }) {
       .then((d) => setVenueResults(d.results || []));
   }, [debouncedVenueQuery]);
 
-  function pickPhoto(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setErr(null);
-    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      setErr("Photos only, JPG, PNG, WEBP or GIF.");
-      e.target.value = "";
-      return;
-    }
-    if (file.size > MAX_PHOTO_BYTES) {
-      setErr("That photo's too big, 5MB max.");
-      e.target.value = "";
-      return;
-    }
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
-  }
-
   async function submit() {
     if (!venue || !body.trim()) return;
     setBusy(true);
     setErr(null);
     try {
-      let photoUrl = null;
-      if (photoFile) {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        const ext = photoFile.name.split(".").pop();
-        const path = `${user.id}/post-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("review-photos").upload(path, photoFile, { contentType: photoFile.type });
-        if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from("review-photos").getPublicUrl(path);
-        photoUrl = pub.publicUrl;
-      }
-
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venueId: venue.id, body, visibility, photoUrl }),
+        body: JSON.stringify({ venueId: venue.id, body, visibility }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Couldn't post");
@@ -81,8 +43,6 @@ export default function PostComposer({ onPosted }) {
       setVenue(null);
       setVenueQuery("");
       setBody("");
-      setPhotoFile(null);
-      setPhotoPreview(null);
       onPosted?.(d.pointsEarned);
     } catch (e) {
       setErr(e.message);
@@ -126,7 +86,6 @@ export default function PostComposer({ onPosted }) {
             </div>
             <Textarea placeholder="Why do you recommend it?" value={body} maxLength={500} onChange={(e) => setBody(e.target.value)} />
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Photos are paused while we add stronger safety checks.</span>
               <div className="ml-auto flex gap-1">
                 <button
                   type="button"
@@ -146,6 +105,7 @@ export default function PostComposer({ onPosted }) {
                 </button>
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">Photo uploads are paused while stronger image moderation is added.</p>
             {err && <div className="notice err">{err}</div>}
             <Button className="w-full" disabled={busy || !body.trim()} onClick={submit}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Post"}
@@ -156,5 +116,3 @@ export default function PostComposer({ onPosted }) {
     </Card>
   );
 }
-
-

@@ -9,7 +9,7 @@ export async function GET(req, { params }) {
   const s = db();
 
   const [{ data: reviews }, { data: saves }, { data: posts }] = await Promise.all([
-    s.from("reviews").select("id, rating, body, created_at, venue_id, venues (name)").eq("user_id", id).order("created_at", { ascending: false }),
+    s.from("reviews").select("id, rating, body, aesthetic_taste, quiet_loud, wallet_splurge, created_at, venue_id, venues (name)").eq("user_id", id).order("created_at", { ascending: false }),
     s.from("saves").select("venue_id, venues (name)").eq("user_id", id),
     s.from("posts").select("id, body, visibility, created_at, venues (name)").eq("user_id", id).order("created_at", { ascending: false }),
   ]);

@@ -1,12 +1,7 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
 import ShareToGroupButton from "./ShareToGroupButton";
-import ReportButton from "./ReportButton";
-
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
-const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export default function VenueActions({ venue, initialSaved = false, onRemoved }) {
   const [saved, setSaved] = useState(initialSaved);
@@ -16,9 +11,6 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
   const [quietLoud, setQuietLoud] = useState(50);
   const [walletSplurge, setWalletSplurge] = useState(50);
   const [body, setBody] = useState("");
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [photoError, setPhotoError] = useState(null);
   const [reviewMsg, setReviewMsg] = useState(null);
   const [needsLogin, setNeedsLogin] = useState(false);
 
@@ -45,53 +37,15 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
     setBusy(false);
   }
 
-  function pickPhoto(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPhotoError(null);
-    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      setPhotoError("Photos only, JPG, PNG, WEBP or GIF.");
-      e.target.value = "";
-      return;
-    }
-    if (file.size > MAX_PHOTO_BYTES) {
-      setPhotoError("That photo's too big, 5MB max.");
-      e.target.value = "";
-      return;
-    }
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
-  }
-
   async function submitReview() {
     const rating = Math.max(1, Math.min(5, Math.round((aestheticTaste + (100 - quietLoud) + (100 - walletSplurge)) / 75)));
     setBusy(true);
     setNeedsLogin(false);
     try {
-      let photoUrl = null;
-      if (photoFile) {
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) {
-          setNeedsLogin(true);
-          setBusy(false);
-          return;
-        }
-        const ext = photoFile.name.split(".").pop();
-        const path = `${user.id}/${venue.id}-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("review-photos").upload(path, photoFile, { contentType: photoFile.type });
-        if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from("review-photos").getPublicUrl(path);
-        photoUrl = pub.publicUrl;
-      }
-
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venueId: venue.id, rating, body, photoUrl, aestheticTaste, quietLoud, walletSplurge }),
+        body: JSON.stringify({ venueId: venue.id, rating, body, aestheticTaste, quietLoud, walletSplurge }),
       });
       if (res.status === 401) setNeedsLogin(true);
       else if (res.ok) {
@@ -158,7 +112,7 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
             onChange={(e) => setBody(e.target.value)}
             style={{ marginTop: 8 }}
           />
-          <div className="mono" style={{ marginTop: 8 }}>Photos are paused while we add stronger safety checks.</div>
+          <p className="sub" style={{ marginTop: 8 }}>Photo uploads are paused while stronger image moderation is added.</p>
           <button className="btn small block" style={{ marginTop: 8 }} disabled={busy} onClick={submitReview}>
             Submit review
           </button>
@@ -181,7 +135,6 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
               {safeUrl(r.photo_url) && (
                 <img src={safeUrl(r.photo_url)} alt="" style={{ marginTop: 6, width: 96, height: 96, objectFit: "cover", borderRadius: 10, border: "2px solid var(--ink)" }} />
               )}
-              <ReportButton contentType="review" contentId={r.id} />
             </div>
           ))}
         </div>
@@ -189,4 +142,3 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
     </div>
   );
 }
-
