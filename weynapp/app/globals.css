@@ -1336,3 +1336,35 @@ input:focus, select:focus, textarea:focus {
   transition: transform var(--motion-fast) var(--motion-ease);
 }
 .skip-link:focus { transform: translateY(0); }
+
+/* Keep shortlist media inside its grid track. A later app-wide 16:9 rule
+   otherwise lets the cover overflow across the venue details. */
+@media (min-width: 561px) {
+  .app-main .venue-list-single .venue-card {
+    grid-template-columns: minmax(160px, 34%) minmax(0, 1fr);
+  }
+  .app-main .venue-list-single .venue-cover {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    aspect-ratio: auto;
+    border-right: 1px solid rgba(31,48,68,.16);
+    border-bottom: 0;
+  }
+  .app-main .venue-list-single .venue-card-body { min-width: 0; }
+}
+
+@media (max-width: 560px) {
+  .app-main .venue-list-single .venue-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app-main .venue-list-single .venue-cover {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-right: 0;
+    border-bottom: 1px solid rgba(31,48,68,.16);
+  }
+}
+
