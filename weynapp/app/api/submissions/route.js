@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { awardPoints, POINTS } from "@/lib/points";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -50,6 +49,6 @@ export async function POST(req) {
     user_id: userId,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (userId) await awardPoints(userId, POINTS.suggested_a_place, "suggested_a_place");
-  return NextResponse.json({ ok: true, pointsEarned: userId ? POINTS.suggested_a_place : 0 });
+  return NextResponse.json({ ok: true, pointsEarned: 0, pendingReview: true });
 }
+
