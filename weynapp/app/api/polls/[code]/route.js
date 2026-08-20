@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { withCovers } from "@/lib/venueMedia";
 
 export async function GET(_req, { params }) {
   const { code } = await params;
@@ -20,15 +21,18 @@ export async function GET(_req, { params }) {
     .from("votes")
     .select("poll_option_id, voter_name, voter_fingerprint")
     .eq("poll_id", poll.id);
+  const venuesWithMedia = await withCovers((options || []).map((option) => option.venues).filter(Boolean));
+  const venueMap = Object.fromEntries(venuesWithMedia.map((venue) => [venue.id, venue]));
 
   return NextResponse.json({
     poll: { code: poll.short_code, expiresAt: poll.expires_at, expired: new Date(poll.expires_at) < new Date() },
     options: (options || []).map((o) => ({
       optionId: o.id,
-      venue: o.venues,
+      venue: venueMap[o.venue_id] || o.venues,
       votes: (votes || []).filter((v) => v.poll_option_id === o.id).length,
       voters: (votes || []).filter((v) => v.poll_option_id === o.id).map((v) => v.voter_name).filter(Boolean),
     })),
     totalVotes: (votes || []).length,
   });
 }
+

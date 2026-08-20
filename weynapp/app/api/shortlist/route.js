@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { withCovers } from "@/lib/venueMedia";
 
 export async function POST(req) {
   const { tags, maxSpend, aestheticOnly, zones, maxAge, city } = await req.json();
@@ -16,5 +17,6 @@ export async function POST(req) {
     p_city: city === "Dubai" ? "Dubai" : "Abu Dhabi",
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ venues: data || [] });
+  return NextResponse.json({ venues: await withCovers(data || []) });
 }
+

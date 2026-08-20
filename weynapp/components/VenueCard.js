@@ -1,3 +1,6 @@
+"use client";
+
+import { useRef, useState } from "react";
 import { safeUrl } from "@/lib/sanitize";
 
 const PLACEHOLDER_GRADIENTS = [
@@ -18,11 +21,52 @@ export default function VenueCard({ venue, children, picked }) {
   const videoUrl = safeUrl(venue.hero_video_url);
   const mapsUrl = safeUrl(venue.google_maps_url);
   const coverUrl = safeUrl(venue.cover_url);
+  const media = (venue.media || [])
+    .map((item) => ({ type: item.type, url: safeUrl(item.url) }))
+    .filter((item) => item.url);
+  if (!media.length && coverUrl) media.push({ type: "image", url: coverUrl });
+  const [activeMedia, setActiveMedia] = useState(0);
+  const mediaRef = useRef(null);
+
+  function goToMedia(index) {
+    const next = Math.max(0, Math.min(media.length - 1, index));
+    mediaRef.current?.scrollTo({ left: mediaRef.current.clientWidth * next, behavior: "smooth" });
+    setActiveMedia(next);
+  }
+
+  function trackMedia() {
+    const node = mediaRef.current;
+    if (!node?.clientWidth) return;
+    setActiveMedia(Math.round(node.scrollLeft / node.clientWidth));
+  }
 
   return (
     <div className={`venue-card${picked ? " picked" : ""}`}>
-      <div className="venue-cover" style={coverUrl ? undefined : { background: gradientFor(venue.id) }}>
-        {coverUrl ? <img src={coverUrl} alt="" loading="lazy" /> : <span className="venue-cover-glyph">📍</span>}
+      <div className="venue-cover" style={media.length ? undefined : { background: gradientFor(venue.id) }}>
+        {media.length ? (
+          <>
+            <div className="venue-media-track" ref={mediaRef} onScroll={trackMedia}>
+              {media.map((item, index) => (
+                <div className="venue-media-slide" key={`${item.url}-${index}`}>
+                  {item.type === "video" ? (
+                    <video src={item.url} controls playsInline preload="metadata" aria-label={`${venue.name} video ${index + 1}`} />
+                  ) : (
+                    <img src={item.url} alt={`${venue.name} photo ${index + 1}`} loading="lazy" />
+                  )}
+                </div>
+              ))}
+            </div>
+            {media.length > 1 && (
+              <>
+                <button className="venue-media-arrow prev" type="button" aria-label="Previous photo" onClick={() => goToMedia(activeMedia - 1)} disabled={activeMedia === 0}>‹</button>
+                <button className="venue-media-arrow next" type="button" aria-label="Next photo" onClick={() => goToMedia(activeMedia + 1)} disabled={activeMedia === media.length - 1}>›</button>
+                <div className="venue-media-dots" aria-label={`${activeMedia + 1} of ${media.length}`}>
+                  {media.map((_, index) => <span key={index} className={index === activeMedia ? "active" : ""} />)}
+                </div>
+              </>
+            )}
+          </>
+        ) : <span className="venue-cover-glyph">📍</span>}
         {venue.city === "Dubai" && <span className="venue-city-badge">Dubai</span>}
       </div>
       <div className="venue-card-body">
@@ -55,3 +99,4 @@ export default function VenueCard({ venue, children, picked }) {
     </div>
   );
 }
+

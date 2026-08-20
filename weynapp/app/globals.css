@@ -71,7 +71,7 @@ main.container { flex: 1; max-width: 760px; padding-top: 110px; padding-bottom: 
   padding: 12px 16px; background: none; border: none; cursor: pointer;
   font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--ink);
 }
-.accordion-header:hover { background: var(--sky-wash); }
+.accordion-header:hover { background: var(--paper); color: var(--purple-deep); }
 .accordion-meta {
   display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
   font-weight: 700; color: var(--ink-soft); font-family: var(--font-body);
@@ -355,8 +355,8 @@ input:focus, select:focus, textarea:focus {
    static marketing site under public/ does not load these rules.
    ============================================================ */
 :root {
-  --app-reading-width: 600px;
-  --app-nav-width: 860px;
+  --app-reading-width: 560px;
+  --app-nav-width: 820px;
   --motion-fast: 160ms;
   --motion-base: 240ms;
   --motion-ease: cubic-bezier(.22, 1, .36, 1);
@@ -377,7 +377,7 @@ input:focus, select:focus, textarea:focus {
 
 /* Product type hierarchy: strong, but not billboard-sized on laptops. */
 .app-main h1 {
-  font-size: clamp(38px, 4.4vw, 52px);
+  font-size: clamp(36px, 4vw, 46px);
   line-height: 1.04;
   letter-spacing: -1.5px;
   margin-bottom: 12px;
@@ -397,7 +397,7 @@ input:focus, select:focus, textarea:focus {
 /* Navigation now exposes the same five core destinations as the tab bar. */
 .app-shell .nav {
   width: min(var(--app-nav-width), calc(100% - 32px));
-  border: 1px solid rgba(31,48,68,.18);
+  border: 0;
   box-shadow: 0 10px 34px rgba(31,48,68,.1);
 }
 .primary-nav {
@@ -412,15 +412,16 @@ input:focus, select:focus, textarea:focus {
   transition: color var(--motion-fast) ease, background var(--motion-fast) ease, transform var(--motion-fast) var(--motion-ease);
 }
 .primary-nav .nav-section:hover {
-  background: var(--purple-wash);
+  background: var(--white);
   color: var(--purple-deep);
   transform: translateY(-1px);
+  box-shadow: none;
   text-decoration: none;
 }
 .primary-nav .nav-section.active {
   background: var(--purple-wash);
   color: var(--purple-deep);
-  box-shadow: inset 0 0 0 1.5px var(--purple);
+  box-shadow: none;
 }
 .app-shell footer .container { max-width: var(--app-nav-width); }
 
@@ -458,6 +459,33 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 10px 30px rgba(31,48,68,.08);
 }
 .app-main .venue-cover { border-bottom-color: rgba(31,48,68,.16); }
+.venue-media-track {
+  width: 100%; height: 100%; display: flex; overflow-x: auto;
+  scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.venue-media-track::-webkit-scrollbar { display: none; }
+.venue-media-slide { flex: 0 0 100%; width: 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; }
+.venue-media-slide img,
+.venue-media-slide video { width: 100%; height: 100%; display: block; object-fit: cover; }
+.venue-media-slide video { background: var(--ink-deep); }
+.venue-media-arrow {
+  position: absolute; z-index: 3; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border: 0; border-radius: 50%;
+  background: rgba(255,255,255,.9); color: var(--ink); box-shadow: 0 4px 16px rgba(31,48,68,.2);
+  font-size: 24px; line-height: 1; cursor: pointer; opacity: 0;
+  transition: opacity var(--motion-fast) ease, transform var(--motion-fast) var(--motion-ease);
+}
+.venue-media-arrow.prev { left: 8px; }
+.venue-media-arrow.next { right: 8px; }
+.venue-media-arrow:disabled { display: none; }
+.venue-cover:hover .venue-media-arrow { opacity: 1; }
+.venue-media-dots {
+  position: absolute; z-index: 3; left: 50%; bottom: 8px; transform: translateX(-50%);
+  display: flex; gap: 5px; padding: 5px 7px; border-radius: 999px; background: rgba(21,34,48,.48);
+}
+.venue-media-dots span { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.58); transition: width var(--motion-fast) ease, background var(--motion-fast) ease; }
+.venue-media-dots span.active { width: 14px; border-radius: 999px; background: var(--white); }
 
 /* Interactive elements should feel equally clickable everywhere. */
 .app-main .chip { min-height: 40px; }
@@ -479,18 +507,23 @@ input:focus, select:focus, textarea:focus {
   animation: app-enter var(--motion-base) var(--motion-ease) both;
 }
 
-/* Product interaction states: calm purple/sky feedback, never yellow. */
-.app-shell .chip:hover { background: var(--purple-wash); }
+/* Product interaction states: brand purple for selection, clean white hover, no thin pill outlines. */
+.app-shell .chip {
+  border: 0;
+  background: rgba(31,48,68,.065);
+  box-shadow: none;
+}
+.app-shell .chip:hover { background: var(--white); color: var(--purple-deep); box-shadow: 0 5px 14px rgba(31,48,68,.09); }
 .app-shell .chip.sel {
   background: var(--purple-wash);
   color: var(--purple-deep);
-  box-shadow: inset 0 0 0 1px var(--purple);
+  box-shadow: 0 5px 16px rgba(120,99,219,.16);
   transform: translateY(-1px);
 }
 .app-shell .btn:not(.primary):not(.dark) { background: var(--white); }
-.app-shell .btn:not(.primary):not(.dark):hover { background: var(--purple-wash); }
+.app-shell .btn:not(.primary):not(.dark):hover { background: var(--white); color: var(--purple-deep); }
 .app-shell .btn {
-  border-width: 1px;
+  border: 0;
   box-shadow: 0 6px 18px rgba(31,48,68,.1);
   transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) ease, background var(--motion-fast) ease;
 }
@@ -499,11 +532,16 @@ input:focus, select:focus, textarea:focus {
 .app-shell .tabbar .tab.active {
   background: var(--purple-wash);
   color: var(--purple-deep);
-  box-shadow: inset 0 0 0 1.5px var(--purple);
+  box-shadow: none;
 }
 .app-shell .tabbar {
-  border: 1px solid rgba(31,48,68,.18);
+  border: 0;
   box-shadow: 0 10px 34px rgba(31,48,68,.14);
+}
+.app-main .tag-pill {
+  border: 0;
+  background: var(--purple-wash);
+  color: var(--purple-deep);
 }
 
 /* Short, purposeful motion improves perceived responsiveness without delaying input. */
@@ -522,6 +560,22 @@ input:focus, select:focus, textarea:focus {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+.venue-grid > *,
+.venue-list-single > *,
+.social-stack > [data-slot="card"],
+.social-stack > div > [data-slot="card"] {
+  animation: app-card-in 280ms var(--motion-ease) both;
+}
+.venue-grid > :nth-child(2),
+.venue-list-single > :nth-child(2),
+.social-stack > :nth-child(2) { animation-delay: 45ms; }
+.venue-grid > :nth-child(3),
+.venue-list-single > :nth-child(3),
+.social-stack > :nth-child(3) { animation-delay: 90ms; }
+@keyframes app-card-in {
+  from { opacity: 0; transform: translateY(10px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 /* Accessible password reveal control inside the input boundary. */
 .password-control { position: relative; }
@@ -532,7 +586,7 @@ input:focus, select:focus, textarea:focus {
   border: 0; border-radius: 9px; background: transparent; color: var(--purple-deep);
   font: 800 12px/1 var(--font-body); cursor: pointer;
 }
-.password-toggle:hover { background: var(--purple-wash); }
+.password-toggle:hover { background: var(--paper); }
 
 /* Admin venue editing stays dense and scannable. */
 .venue-tag-picker { display: grid; gap: 12px; }
@@ -556,14 +610,14 @@ input:focus, select:focus, textarea:focus {
 }
 .person-row:last-child { border-bottom: 0; }
 @media (hover: hover) and (pointer: fine) {
-  .person-row:hover { background: var(--purple-wash); transform: translateX(3px); }
+  .person-row:hover { background: var(--paper); transform: translateX(3px); }
 }
 .vote-option {
   border-color: rgba(31,48,68,.14);
   background: rgba(249,249,249,.72);
   transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease;
 }
-.vote-option:has(button:hover) { border-color: rgba(142,124,232,.55); background: var(--purple-wash); }
+.vote-option:has(button:hover) { border-color: rgba(142,124,232,.55); background: var(--white); }
 .result-bar { height: 9px; border: 0; background: rgba(31,48,68,.1); }
 .result-fill { background: var(--purple); border-radius: inherit; }
 .result-fill.lead { background: var(--purple-deep); }
@@ -572,7 +626,7 @@ input:focus, select:focus, textarea:focus {
   width: fit-content; padding: 7px 10px; border-radius: 10px;
   transition: background var(--motion-fast) ease, color var(--motion-fast) ease;
 }
-.group-detail-view > a:first-child:hover { background: var(--purple-wash); color: var(--purple-deep); }
+.group-detail-view > a:first-child:hover { background: var(--white); color: var(--purple-deep); }
 .vote-flow .field {
   padding: 16px;
   border: 1px solid rgba(31,48,68,.14);
@@ -600,7 +654,7 @@ input:focus, select:focus, textarea:focus {
 .recent-group-button > span:first-child { display: grid; gap: 2px; }
 .recent-group-button small { color: var(--ink-soft); font-size: 11px; }
 .recent-group-button > span:last-child { color: var(--purple-deep); font-size: 12px; font-weight: 800; }
-.recent-group-button:hover { transform: translateY(-1px); border-color: var(--purple); background: var(--purple-wash); }
+.recent-group-button:hover { transform: translateY(-1px); border-color: var(--purple); background: var(--white); }
 .share-link-actions { display: flex; gap: 8px; }
 .share-link-actions .btn { flex: 1; }
 .poll-share-panel details { font-size: 12px; color: var(--ink-soft); }
@@ -659,6 +713,8 @@ input:focus, select:focus, textarea:focus {
   .group-detail-view h1 { overflow-wrap: anywhere; }
   .group-chat [data-slot="card-content"] { min-height: 260px; }
   .vote-flow .field { padding: 14px; }
+  .venue-media-arrow { display: none; }
+  .venue-media-dots { bottom: 7px; }
 }
 .app-home__hero {
   display: grid;

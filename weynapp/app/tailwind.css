@@ -35,8 +35,8 @@
   --color-primary-foreground: var(--white);
   --color-secondary: var(--yellow);
   --color-secondary-foreground: var(--ink);
-  --color-accent: var(--sky);
-  --color-accent-foreground: var(--ink);
+  --color-accent: var(--paper);
+  --color-accent-foreground: var(--purple-deep);
   --color-destructive: var(--pink-deep);
   --color-destructive-foreground: var(--white);
 
@@ -66,3 +66,4 @@
     @apply font-sans;
   }
 }
+
