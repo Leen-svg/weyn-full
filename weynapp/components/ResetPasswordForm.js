@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import PasswordInput from "./PasswordInput";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -35,8 +36,8 @@ export default function ResetPasswordForm() {
       ) : (
         <form onSubmit={submit}>
           <div className="field">
-            <label>New password</label>
-            <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
+            <label htmlFor="new-password">New password</label>
+            <PasswordInput id="new-password" required minLength={6} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
           </div>
           {err && <div className="notice err">{err}</div>}
           <button className="btn block" disabled={busy} type="submit">
@@ -47,3 +48,4 @@ export default function ResetPasswordForm() {
     </>
   );
 }
+

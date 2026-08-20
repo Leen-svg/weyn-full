@@ -27,18 +27,27 @@ export async function GET() {
         .select("id, display_name, avatar_url")
         .in("id", [...new Set((allMembers || []).map((m) => m.user_id))])
     : { data: [] };
+  const { data: recentMessages } = groupIds.length
+    ? await s.from("group_messages").select("group_id, created_at").in("group_id", groupIds).order("created_at", { ascending: false })
+    : { data: [] };
   const authorMap = Object.fromEntries((authors || []).map((a) => [a.id, a]));
+  const recentMap = {};
+  for (const message of recentMessages || []) {
+    if (!recentMap[message.group_id]) recentMap[message.group_id] = message.created_at;
+  }
 
   const groups = (memberships || [])
     .map((m) => m.friend_groups)
     .filter(Boolean)
     .map((g) => ({
       ...g,
+      recent_at: recentMap[g.id] || g.created_at,
       members: (allMembers || [])
         .filter((mm) => mm.group_id === g.id)
         .map((mm) => authorMap[mm.user_id])
         .filter(Boolean),
-    }));
+    }))
+    .sort((a, b) => new Date(b.recent_at) - new Date(a.recent_at));
 
   return NextResponse.json({ groups });
 }
@@ -81,3 +90,4 @@ export async function POST(req) {
 
   return NextResponse.json({ id: group.id });
 }
+

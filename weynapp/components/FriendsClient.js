@@ -12,10 +12,10 @@ import { safeUrl } from "@/lib/sanitize";
 function PersonRow({ person, right }) {
   const initials = (person.display_name || "?").slice(0, 2).toUpperCase();
   return (
-    <div className="flex items-center justify-between gap-3 py-2">
+    <div className="person-row flex items-center justify-between gap-3 py-2">
       <div className="flex items-center gap-3">
         <Avatar className="h-9 w-9">
-          <AvatarImage src={safeUrl(person.avatar_url)} alt="" />
+        <AvatarImage src={safeUrl(person.avatar_url)} alt="" />
           <AvatarFallback className="text-xs font-bold">{initials}</AvatarFallback>
         </Avatar>
         <span className="text-sm font-medium">{person.display_name || "Someone"}</span>
@@ -103,7 +103,7 @@ export default function FriendsClient() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="social-stack friends-view space-y-5">
       <Card>
         <CardHeader>
           <CardTitle>Find people</CardTitle>
@@ -151,10 +151,10 @@ export default function FriendsClient() {
                 person={f.other}
                 right={
                   <div className="flex gap-1.5">
-                    <Button size="icon-sm" disabled={busy} onClick={() => respond(f.id, "accept")}>
+                    <Button aria-label={`Accept ${f.other.display_name || "friend"}`} size="icon-sm" disabled={busy} onClick={() => respond(f.id, "accept")}>
                       <Check className="h-4 w-4" />
                     </Button>
-                    <Button size="icon-sm" variant="ghost" disabled={busy} onClick={() => respond(f.id, "decline")}>
+                    <Button aria-label={`Decline ${f.other.display_name || "friend"}`} size="icon-sm" variant="ghost" disabled={busy} onClick={() => respond(f.id, "decline")}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -223,3 +223,4 @@ export default function FriendsClient() {
     </div>
   );
 }
+

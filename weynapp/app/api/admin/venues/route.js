@@ -13,14 +13,20 @@ export async function GET(req) {
 
   let query = s
     .from("venues")
-    .select("id, name, neighborhood, zone_slug, city, avg_spend_aed, hero_video_url, description, is_trending, trending_rank, is_active")
+    .select("id, name, neighborhood, zone_slug, city, avg_spend_aed, hero_video_url, description, is_trending, trending_rank, is_active, venue_tags(tag_id)")
     .order("name")
     .limit(50);
   if (q) query = query.ilike("name", `%${q}%`);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ venues: data || [] });
+  return NextResponse.json({
+    venues: (data || []).map((venue) => ({
+      ...venue,
+      tag_ids: (venue.venue_tags || []).map((item) => item.tag_id),
+      venue_tags: undefined,
+    })),
+  });
 }
 
 export async function POST(req) {
@@ -49,7 +55,7 @@ export async function PATCH(req) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { id, patch } = await req.json();
+  const { id, patch, tag_ids } = await req.json();
   if (!id || !patch) return NextResponse.json({ error: "id and patch required" }, { status: 400 });
 
   const allowed = [
@@ -74,5 +80,27 @@ export async function PATCH(req) {
 
   const { error } = await db().from("venues").update(clean).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (Array.isArray(tag_ids)) {
+    const uniqueTagIds = [...new Set(tag_ids.filter((value) => typeof value === "string"))];
+    const s = db();
+    const { data: validTags, error: tagError } = uniqueTagIds.length
+      ? await s.from("vibe_tags").select("id").in("id", uniqueTagIds).eq("is_active", true)
+      : { data: [], error: null };
+    if (tagError) return NextResponse.json({ error: tagError.message }, { status: 500 });
+    if ((validTags || []).length !== uniqueTagIds.length) {
+      return NextResponse.json({ error: "One or more tags are invalid" }, { status: 400 });
+    }
+
+    const { error: deleteError } = await s.from("venue_tags").delete().eq("venue_id", id);
+    if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
+    if (uniqueTagIds.length) {
+      const { error: insertError } = await s
+        .from("venue_tags")
+        .insert(uniqueTagIds.map((tagId) => ({ venue_id: id, tag_id: tagId })));
+      if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+  }
   return NextResponse.json({ ok: true });
 }
+

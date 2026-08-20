@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import PasswordInput from "./PasswordInput";
 
 export default function AuthForm({ mode }) {
   const router = useRouter();
@@ -85,11 +86,11 @@ export default function AuthForm({ mode }) {
           style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
         />
         <div className="field">
-          <label>Email</label>
-          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
+          <label htmlFor="auth-email">Email</label>
+          <input id="auth-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
         </div>
         <div className="field">
-          <label>
+          <label htmlFor="auth-password">
             Password
             {mode === "login" && (
               <a href="/forgot-password" style={{ float: "right", fontWeight: 700, fontSize: 13 }}>
@@ -97,10 +98,11 @@ export default function AuthForm({ mode }) {
               </a>
             )}
           </label>
-          <input
-            type="password"
+          <PasswordInput
+            id="auth-password"
             required
             minLength={6}
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -124,3 +126,4 @@ export default function AuthForm({ mode }) {
     </>
   );
 }
+

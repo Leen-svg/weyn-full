@@ -1,6 +1,24 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { safeUrl } from "@/lib/sanitize";
+import { createClient } from "@/lib/supabase/client";
+
+const MAX_IMAGE_EDGE = 1600;
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+
+async function compressImage(file) {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  canvas.getContext("2d", { alpha: false }).drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  const blob = await new Promise((resolve, reject) =>
+    canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Could not compress image")), "image/webp", 0.78)
+  );
+  return new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.webp`, { type: "image/webp" });
+}
 
 export default function VenueEditor() {
   const [q, setQ] = useState("");
@@ -9,6 +27,8 @@ export default function VenueEditor() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
   const [newVenue, setNewVenue] = useState({ name: "", neighborhood: "", city: "Abu Dhabi", avg_spend_aed: 0 });
 
   const search = useCallback(async (query) => {
@@ -18,18 +38,24 @@ export default function VenueEditor() {
     setVenues(d.venues || []);
   }, []);
 
-  useEffect(() => { search(""); }, [search]);
+  useEffect(() => {
+    search("");
+    fetch("/api/admin/tags").then((res) => res.json()).then((data) => {
+      setCategories(data.categories || []);
+      setTags((data.tags || []).filter((tag) => tag.is_active));
+    });
+  }, [search]);
 
-  async function patch(id, fields) {
+  async function patch(id, fields, tagIds) {
     setBusy(true);
     const res = await fetch("/api/admin/venues", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, patch: fields }),
+      body: JSON.stringify({ id, patch: fields, ...(tagIds ? { tag_ids: tagIds } : {}) }),
     });
     const d = await res.json();
     if (!res.ok) setErr(d.error);
-    else setVenues((prev) => prev.map((v) => (v.id === id ? { ...v, ...fields } : v)));
+    else setVenues((prev) => prev.map((v) => (v.id === id ? { ...v, ...fields, ...(tagIds ? { tag_ids: tagIds } : {}) } : v)));
     setBusy(false);
   }
 
@@ -118,14 +144,22 @@ export default function VenueEditor() {
               </button>
             </div>
           </div>
-          {openId === v.id && <VenueEditFields venue={v} onSave={(fields) => patch(v.id, fields)} busy={busy} />}
+          {openId === v.id && (
+            <VenueEditFields
+              venue={v}
+              categories={categories}
+              tags={tags}
+              onSave={(fields, tagIds) => patch(v.id, fields, tagIds)}
+              busy={busy}
+            />
+          )}
         </div>
       ))}
     </div>
   );
 }
 
-function VenueEditFields({ venue, onSave, busy }) {
+function VenueEditFields({ venue, categories, tags, onSave, busy }) {
   const [name, setName] = useState(venue.name || "");
   const [neighborhood, setNeighborhood] = useState(venue.neighborhood || "");
   const [city, setCity] = useState(venue.city || "Abu Dhabi");
@@ -133,7 +167,10 @@ function VenueEditFields({ venue, onSave, busy }) {
   const [description, setDescription] = useState(venue.description || "");
   const [heroVideo, setHeroVideo] = useState(venue.hero_video_url || "");
   const [media, setMedia] = useState([]);
+  const [tagIds, setTagIds] = useState(venue.tag_ids || []);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [mediaError, setMediaError] = useState(null);
 
   const loadMedia = useCallback(async () => {
     const res = await fetch(`/api/admin/venues/media?venueId=${venue.id}`);
@@ -144,15 +181,56 @@ function VenueEditFields({ venue, onSave, busy }) {
   useEffect(() => { loadMedia(); }, [loadMedia]);
 
   async function uploadFile(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = [...(e.target.files || [])];
+    if (!files.length) return;
     setUploading(true);
-    const form = new FormData();
-    form.append("venueId", venue.id);
-    form.append("file", file);
-    await fetch("/api/admin/venues/media", { method: "POST", body: form });
-    await loadMedia();
-    setUploading(false);
+    setMediaError(null);
+    try {
+      for (let index = 0; index < files.length; index += 1) {
+        const source = files[index];
+        setUploadStatus(`Optimizing ${index + 1} of ${files.length}…`);
+        if (!source.type.startsWith("image/") && !source.type.startsWith("video/")) throw new Error(`${source.name} is not an image or video`);
+        if (source.type.startsWith("video/") && source.size > MAX_VIDEO_BYTES) throw new Error(`${source.name} is larger than 100 MB`);
+        const file = source.type.startsWith("image/") ? await compressImage(source) : source;
+
+        const signRes = await fetch("/api/admin/venues/media", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ intent: "sign", venueId: venue.id, fileName: file.name, contentType: file.type }),
+        });
+        const signed = await signRes.json();
+        if (!signRes.ok) throw new Error(signed.error || "Could not start upload");
+
+        setUploadStatus(`Uploading ${index + 1} of ${files.length}…`);
+        const supabase = createClient();
+        const { error: uploadError } = await supabase.storage
+          .from("venue-media")
+          .uploadToSignedUrl(signed.path, signed.token, file, { contentType: file.type });
+        if (uploadError) throw uploadError;
+
+        const completeRes = await fetch("/api/admin/venues/media", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            intent: "complete",
+            venueId: venue.id,
+            path: signed.path,
+            publicUrl: signed.publicUrl,
+            mediaType: signed.mediaType,
+          }),
+        });
+        const completed = await completeRes.json();
+        if (!completeRes.ok) throw new Error(completed.error || "Could not save upload");
+      }
+      await loadMedia();
+      setUploadStatus("Upload complete");
+      e.target.value = "";
+    } catch (error) {
+      setMediaError(error.message || "Upload failed");
+      setUploadStatus("");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function removeMedia(id) {
@@ -190,25 +268,58 @@ function VenueEditFields({ venue, onSave, busy }) {
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
       <div className="field">
+        <label>Venue tags</label>
+        <div className="venue-tag-picker">
+          {categories.map((category) => {
+            const categoryTags = tags.filter((tag) => tag.category_id === category.id);
+            if (!categoryTags.length) return null;
+            return (
+              <fieldset className="venue-tag-group" key={category.id}>
+                <legend>{category.name}</legend>
+                <div className="chips">
+                  {categoryTags.map((tag) => {
+                    const selected = tagIds.includes(tag.id);
+                    return (
+                      <button
+                        type="button"
+                        key={tag.id}
+                        className={`chip ${selected ? "sel" : ""}`}
+                        aria-pressed={selected}
+                        onClick={() => setTagIds((current) => selected ? current.filter((id) => id !== tag.id) : [...current, tag.id])}
+                      >
+                        {tag.display_name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            );
+          })}
+        </div>
+      </div>
+      <div className="field">
         <label>Hero video URL</label>
         <input type="url" value={heroVideo} onChange={(e) => setHeroVideo(e.target.value)} />
       </div>
 
       <div className="field">
         <label>Photos & videos</label>
+        <p className="venue-media-help">Select several files at once. Photos are resized to 1600px and compressed to WebP before upload. Videos can be up to 100 MB.</p>
         <div className="media-grid">
           {media.map((m) => (
             <div className="media-thumb" key={m.id}>
               {m.media_type === "video" ? (
-                <video src={safeUrl(m.url)} muted />
+                <video src={safeUrl(m.url)} muted preload="metadata" controls />
               ) : (
                 <img src={safeUrl(m.url)} alt="" />
               )}
-              <button type="button" className="media-remove" onClick={() => removeMedia(m.id)}>✕</button>
+              <button type="button" className="media-remove" aria-label="Remove media" onClick={() => removeMedia(m.id)}>✕</button>
             </div>
           ))}
         </div>
-        <input type="file" accept="image/*,video/*" onChange={uploadFile} disabled={uploading} />
+        <input type="file" accept="image/*,video/*" multiple onChange={uploadFile} disabled={uploading} />
+        {uploadStatus && <div className="media-upload-status" role="status">{uploadStatus}</div>}
+        {mediaError && <div className="notice err" role="alert">{mediaError}</div>}
       </div>
 
       <button
@@ -222,7 +333,7 @@ function VenueEditFields({ venue, onSave, busy }) {
             avg_spend_aed: avgSpend,
             description,
             hero_video_url: heroVideo || null,
-          })
+          }, tagIds)
         }
       >
         Save changes
@@ -230,3 +341,4 @@ function VenueEditFields({ venue, onSave, busy }) {
     </div>
   );
 }
+

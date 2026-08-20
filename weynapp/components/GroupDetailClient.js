@@ -168,7 +168,7 @@ function PollResults({ poll, groupId, onVoted }) {
       </CardHeader>
       <CardContent className="space-y-2 pt-0">
         {poll.options.map((o) => (
-          <div key={o.optionId} className="rounded-lg border p-2.5">
+          <div key={o.optionId} className="vote-option rounded-xl border p-3">
             <div className="flex items-center justify-between text-xs font-semibold">
               <span>{o.venue?.name}</span>
               <span>{o.votes} vote{o.votes === 1 ? "" : "s"}</span>
@@ -328,7 +328,7 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
   }
 
   return (
-    <div className="space-y-5">
+    <div className="social-stack group-detail-view space-y-5">
       <Link href="/groups" className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Groups
       </Link>
@@ -358,7 +358,7 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
         ))}
       </AnimatePresence>
 
-      <Card>
+      <Card className="group-chat">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Chat</CardTitle>
         </CardHeader>
@@ -387,3 +387,4 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
     </div>
   );
 }
+

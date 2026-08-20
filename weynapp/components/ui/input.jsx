@@ -13,7 +13,7 @@ function Input({
       type={type}
       data-slot="input"
       className={cn(
-        "h-10 w-full min-w-0 rounded-[12px] border-2 border-input bg-white px-3 py-1 text-base font-medium transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:shadow-[3px_3px_0_var(--ink)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm",
+        "h-11 w-full min-w-0 rounded-xl border border-input/35 bg-white px-3.5 py-1 text-base font-medium shadow-[0_3px_12px_rgba(31,48,68,.04)] transition-[border-color,box-shadow] outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:shadow-[0_0_0_3px_var(--purple-wash)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm",
         className
       )}
       {...props} />
@@ -21,3 +21,4 @@ function Input({
 }
 
 export { Input }
+

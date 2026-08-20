@@ -12,7 +12,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-4 overflow-hidden rounded-xl border-2 border-border bg-card py-4 text-sm text-card-foreground shadow-[5px_5px_0_var(--ink)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        "group/card flex flex-col gap-4 overflow-hidden rounded-2xl border border-border/25 bg-card py-5 text-sm text-card-foreground shadow-[0_10px_32px_rgba(31,48,68,.08)] transition-[transform,box-shadow,border-color] duration-200 ease-out has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 hover:border-primary/30 hover:shadow-[0_14px_38px_rgba(31,48,68,.12)] data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl",
         className
       )}
       {...props} />
@@ -42,7 +42,7 @@ function CardTitle({
     <div
       data-slot="card-title"
       className={cn(
-        "text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+        "font-[family-name:var(--font-display)] text-base leading-snug font-bold tracking-[-.02em] group-data-[size=sm]/card:text-sm",
         className
       )}
       {...props} />
@@ -112,3 +112,4 @@ export {
   CardDescription,
   CardContent,
 }
+

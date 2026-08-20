@@ -59,7 +59,7 @@ export default function GroupsClient() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="social-stack groups-view space-y-5">
       <Card>
         <CardContent className="space-y-3 pt-6">
           {!creating ? (
@@ -138,3 +138,4 @@ export default function GroupsClient() {
     </div>
   );
 }
+

@@ -355,8 +355,11 @@ input:focus, select:focus, textarea:focus {
    static marketing site under public/ does not load these rules.
    ============================================================ */
 :root {
-  --app-reading-width: 700px;
-  --app-nav-width: 960px;
+  --app-reading-width: 600px;
+  --app-nav-width: 860px;
+  --motion-fast: 160ms;
+  --motion-base: 240ms;
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
 }
 
 /* One calm reading axis across product screens. Admin can opt into .wide. */
@@ -394,6 +397,8 @@ input:focus, select:focus, textarea:focus {
 /* Navigation now exposes the same five core destinations as the tab bar. */
 .app-shell .nav {
   width: min(var(--app-nav-width), calc(100% - 32px));
+  border: 1px solid rgba(31,48,68,.18);
+  box-shadow: 0 10px 34px rgba(31,48,68,.1);
 }
 .primary-nav {
   display: flex;
@@ -404,26 +409,32 @@ input:focus, select:focus, textarea:focus {
   padding: 7px 10px;
   border-radius: var(--radius-pill);
   line-height: 1;
+  transition: color var(--motion-fast) ease, background var(--motion-fast) ease, transform var(--motion-fast) var(--motion-ease);
 }
 .primary-nav .nav-section:hover {
-  background: var(--sky-wash);
+  background: var(--purple-wash);
+  color: var(--purple-deep);
+  transform: translateY(-1px);
   text-decoration: none;
 }
 .primary-nav .nav-section.active {
-  background: var(--yellow);
-  box-shadow: 2px 2px 0 var(--ink);
+  background: var(--purple-wash);
+  color: var(--purple-deep);
+  box-shadow: inset 0 0 0 1.5px var(--purple);
 }
 .app-shell footer .container { max-width: var(--app-nav-width); }
 
 /* Consistent density across legacy cards and newer component primitives. */
 .app-main .card {
   padding: 24px;
+  border: 1px solid rgba(31,48,68,.18);
+  box-shadow: 0 10px 30px rgba(31,48,68,.08);
 }
 .app-main .card.compact {
   padding: 16px;
   margin-bottom: 14px;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-pop-sm);
+  box-shadow: 0 8px 24px rgba(31,48,68,.08);
 }
 .app-main .tag-group-card,
 .app-main .details-card {
@@ -441,6 +452,12 @@ input:focus, select:focus, textarea:focus {
 }
 .app-main .venue-card-body { padding: 14px; }
 .app-main .venue-cover { aspect-ratio: 16 / 9; }
+.app-main .venue-card {
+  border: 1px solid rgba(31,48,68,.18);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(31,48,68,.08);
+}
+.app-main .venue-cover { border-bottom-color: rgba(31,48,68,.16); }
 
 /* Interactive elements should feel equally clickable everywhere. */
 .app-main .chip { min-height: 40px; }
@@ -459,6 +476,189 @@ input:focus, select:focus, textarea:focus {
 .app-home {
   width: 100%;
   margin: 0 auto;
+  animation: app-enter var(--motion-base) var(--motion-ease) both;
+}
+
+/* Product interaction states: calm purple/sky feedback, never yellow. */
+.app-shell .chip:hover { background: var(--purple-wash); }
+.app-shell .chip.sel {
+  background: var(--purple-wash);
+  color: var(--purple-deep);
+  box-shadow: inset 0 0 0 1px var(--purple);
+  transform: translateY(-1px);
+}
+.app-shell .btn:not(.primary):not(.dark) { background: var(--white); }
+.app-shell .btn:not(.primary):not(.dark):hover { background: var(--purple-wash); }
+.app-shell .btn {
+  border-width: 1px;
+  box-shadow: 0 6px 18px rgba(31,48,68,.1);
+  transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) ease, background var(--motion-fast) ease;
+}
+.app-shell .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(31,48,68,.14); }
+.app-shell .btn:active { transform: scale(.98); box-shadow: 0 3px 10px rgba(31,48,68,.1); }
+.app-shell .tabbar .tab.active {
+  background: var(--purple-wash);
+  color: var(--purple-deep);
+  box-shadow: inset 0 0 0 1.5px var(--purple);
+}
+.app-shell .tabbar {
+  border: 1px solid rgba(31,48,68,.18);
+  box-shadow: 0 10px 34px rgba(31,48,68,.14);
+}
+
+/* Short, purposeful motion improves perceived responsiveness without delaying input. */
+.app-main > * { animation: app-enter var(--motion-base) var(--motion-ease) both; }
+.app-main .card,
+.app-main .venue-card,
+.app-main .tag-group-card,
+.app-main .details-card {
+  transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) ease, border-color var(--motion-fast) ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .app-main .card:hover,
+  .app-main .venue-card:hover { transform: translateY(-3px); box-shadow: 0 16px 38px rgba(31,48,68,.13); }
+}
+@keyframes app-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Accessible password reveal control inside the input boundary. */
+.password-control { position: relative; }
+.password-control input { padding-right: 74px; }
+.password-toggle {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  min-width: 54px; min-height: 36px; padding: 0 8px;
+  border: 0; border-radius: 9px; background: transparent; color: var(--purple-deep);
+  font: 800 12px/1 var(--font-body); cursor: pointer;
+}
+.password-toggle:hover { background: var(--purple-wash); }
+
+/* Admin venue editing stays dense and scannable. */
+.venue-tag-picker { display: grid; gap: 12px; }
+.venue-tag-group { padding: 12px; border: 1.5px solid rgba(31,48,68,.28); border-radius: 14px; }
+.venue-tag-group legend { padding: 0 6px; font-size: 12px; font-weight: 800; color: var(--ink-soft); }
+.venue-media-help { margin: 0 0 10px; font-size: 12px; line-height: 1.45; }
+.media-upload-status { margin-top: 8px; color: var(--purple-deep); font-size: 12px; font-weight: 800; }
+.media-thumb { width: 104px; height: 104px; }
+.media-thumb video { background: var(--ink-deep); }
+
+/* Social, group, and voting flows share one modern interaction language. */
+.social-stack,
+.vote-flow { animation: app-enter var(--motion-base) var(--motion-ease) both; }
+.social-stack [data-slot="card"] { margin: 0; }
+.social-stack [data-slot="card-content"] { padding-inline: 20px; }
+.social-stack [data-slot="card-header"] { padding-inline: 20px; }
+.person-row {
+  min-height: 54px;
+  border-bottom: 1px solid rgba(31,48,68,.09);
+  transition: background var(--motion-fast) ease, transform var(--motion-fast) var(--motion-ease);
+}
+.person-row:last-child { border-bottom: 0; }
+@media (hover: hover) and (pointer: fine) {
+  .person-row:hover { background: var(--purple-wash); transform: translateX(3px); }
+}
+.vote-option {
+  border-color: rgba(31,48,68,.14);
+  background: rgba(249,249,249,.72);
+  transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease;
+}
+.vote-option:has(button:hover) { border-color: rgba(142,124,232,.55); background: var(--purple-wash); }
+.result-bar { height: 9px; border: 0; background: rgba(31,48,68,.1); }
+.result-fill { background: var(--purple); border-radius: inherit; }
+.result-fill.lead { background: var(--purple-deep); }
+.group-chat [data-slot="card-content"] { display: flex; flex-direction: column; min-height: 300px; }
+.group-detail-view > a:first-child {
+  width: fit-content; padding: 7px 10px; border-radius: 10px;
+  transition: background var(--motion-fast) ease, color var(--motion-fast) ease;
+}
+.group-detail-view > a:first-child:hover { background: var(--purple-wash); color: var(--purple-deep); }
+.vote-flow .field {
+  padding: 16px;
+  border: 1px solid rgba(31,48,68,.14);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: 0 8px 26px rgba(31,48,68,.06);
+}
+.vote-flow .venue-list-single { gap: 18px; }
+.poll-share-panel {
+  display: grid;
+  gap: 14px;
+  background: var(--white);
+  border: 1px solid rgba(31,48,68,.16);
+  box-shadow: 0 14px 38px rgba(31,48,68,.1);
+}
+.poll-share-panel > strong { font-family: var(--font-display); font-size: 18px; }
+.poll-share-panel .sub { margin: 0; font-size: 13px; }
+.recent-group-list { display: grid; gap: 8px; }
+.recent-group-button {
+  width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 10px 12px; border: 1px solid rgba(31,48,68,.14); border-radius: 14px;
+  background: var(--paper); color: var(--ink); text-align: left; cursor: pointer;
+  transition: transform var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) ease, background var(--motion-fast) ease;
+}
+.recent-group-button > span:first-child { display: grid; gap: 2px; }
+.recent-group-button small { color: var(--ink-soft); font-size: 11px; }
+.recent-group-button > span:last-child { color: var(--purple-deep); font-size: 12px; font-weight: 800; }
+.recent-group-button:hover { transform: translateY(-1px); border-color: var(--purple); background: var(--purple-wash); }
+.share-link-actions { display: flex; gap: 8px; }
+.share-link-actions .btn { flex: 1; }
+.poll-share-panel details { font-size: 12px; color: var(--ink-soft); }
+.poll-share-panel summary { cursor: pointer; font-weight: 700; }
+.poll-share-panel .link { margin-bottom: 0; }
+
+@media (max-width: 640px) {
+  :root { --app-reading-width: 100%; }
+  .app-shell .nav {
+    top: 10px;
+    width: calc(100% - 20px);
+    min-height: 58px;
+    padding: 7px 9px 7px 15px;
+    box-shadow: 0 8px 28px rgba(31,48,68,.13);
+  }
+  .app-shell .logo { font-size: 21px; }
+  .app-shell .nav-links { gap: 8px; min-width: 0; }
+  .app-shell .nav-user { gap: 5px; }
+  .app-shell .points-badge { padding-inline: 7px; }
+  .app-main {
+    padding-top: 84px;
+    padding-inline: 14px;
+    padding-bottom: 102px;
+  }
+  .app-main h1 { font-size: clamp(32px, 10vw, 40px); letter-spacing: -1.1px; }
+  .app-main h2:not(.group-label) { font-size: 25px; }
+  .app-main .sub { font-size: 15px; margin-bottom: 20px; }
+  .app-main .card,
+  .app-main .card.compact { padding: 17px; border-radius: 18px; box-shadow: 0 8px 24px rgba(31,48,68,.08); }
+  .app-main .btn { min-height: 44px; }
+  .app-main [data-slot="button"] { min-height: 44px; }
+  .app-main .cta-row { gap: 9px; }
+  .app-main .cta-row .btn { flex: 1 1 auto; }
+  .admin-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -14px;
+    padding: 2px 14px 10px;
+    scrollbar-width: none;
+  }
+  .admin-tabs::-webkit-scrollbar { display: none; }
+  .admin-tabs .chip { flex: 0 0 auto; }
+  .admin-row { flex-direction: column; }
+  .admin-actions { width: 100%; flex-direction: row; flex-wrap: wrap; }
+  .admin-actions .btn { flex: 1 1 auto; }
+  .media-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .media-thumb { width: 100%; height: auto; aspect-ratio: 1; }
+  .venue-tag-picker { gap: 9px; }
+  .venue-tag-group { padding: 10px; }
+  input[type="file"] { max-width: 100%; font-size: 13px; }
+  .social-stack { gap: 14px; }
+  .social-stack [data-slot="card"] { border-radius: 18px; }
+  .social-stack [data-slot="card-content"],
+  .social-stack [data-slot="card-header"] { padding-inline: 16px; }
+  .person-row { min-height: 58px; }
+  .group-detail-view h1 { overflow-wrap: anywhere; }
+  .group-chat [data-slot="card-content"] { min-height: 260px; }
+  .vote-flow .field { padding: 14px; }
 }
 .app-home__hero {
   display: grid;
@@ -518,3 +718,4 @@ input:focus, select:focus, textarea:focus {
   .app-home__section { margin-top: 32px !important; }
   .app-home__section-header > span { display: none; }
 }
+
