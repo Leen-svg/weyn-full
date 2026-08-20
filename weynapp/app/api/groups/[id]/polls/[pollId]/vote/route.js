@@ -20,5 +20,10 @@ export async function POST(req, { params }) {
     .from("group_poll_votes")
     .upsert({ poll_id: pollId, option_id: optionId, user_id: user.id }, { onConflict: "poll_id,user_id" });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  const { data: pointsEarned } = await supabase.rpc("award_new_people_for_vote", {
+    p_user_id: user.id,
+    p_poll_id: pollId,
+  });
+  return NextResponse.json({ ok: true, pointsEarned: pointsEarned || 0 });
 }
+
