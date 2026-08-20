@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Vote, Loader2, ArrowLeft, Share2, UserPlus, UserMinus, Archive, ChevronDown } from "lucide-react";
+import { Send, Vote, Loader2, ArrowLeft, Share2, UserPlus, UserMinus, Archive, ChevronDown, MapPin } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
@@ -173,24 +173,51 @@ function PollResults({ poll, groupId, onVoted, archived = false }) {
         )}
       </CardHeader>
       <CardContent className="group-poll-options space-y-2 pt-0">
-        {poll.options.map((o) => (
-          <div key={o.optionId} className={`vote-option${poll.myVote?.option_id === o.optionId ? " my-vote" : ""}`}>
-            <div className="vote-option-copy">
-              <div className="flex items-center justify-between gap-3 text-sm font-semibold">
-                <span>{o.venue?.name}</span>
-                <span className="vote-count">{o.votes}</span>
+        {poll.options.map((o) => {
+          const venue = o.venue || {};
+          const coverUrl = safeUrl(venue.cover_url);
+          const mapsUrl = safeUrl(venue.google_maps_url) || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.name || "Venue"} ${venue.neighborhood || ""}`)}`;
+          const spend = venue.avg_spend_aed === 0
+            ? "Free"
+            : venue.avg_spend_aed
+              ? `~${venue.avg_spend_aed} AED pp`
+              : null;
+          const description = venue.description?.trim()
+            || `${venue.name || "This place"} is one of Weyn's picks${venue.neighborhood ? ` in ${venue.neighborhood}` : ""}.`;
+
+          return (
+            <article key={o.optionId} className={`vote-option${poll.myVote?.option_id === o.optionId ? " my-vote" : ""}`}>
+              <div className={`vote-venue-media${coverUrl ? " has-image" : ""}`}>
+                {coverUrl ? (
+                  <img src={coverUrl} alt={`${venue.name || "Venue"} preview`} loading="lazy" decoding="async" />
+                ) : (
+                  <MapPin className="h-6 w-6" aria-hidden="true" />
+                )}
               </div>
-              <div className="result-bar" aria-label={`${o.votes} vote${o.votes === 1 ? "" : "s"}`}>
-                <div className={`result-fill${o.votes === max && o.votes > 0 ? " lead" : ""}`} style={{ width: `${(o.votes / max) * 100}%` }} />
+              <div className="vote-option-copy">
+                <div className="vote-option-title">
+                  <h3>{venue.name || "Venue"}</h3>
+                  <span className="vote-count" aria-label={`${o.votes} vote${o.votes === 1 ? "" : "s"}`}>{o.votes}</span>
+                </div>
+                {(venue.neighborhood || spend) && (
+                  <p className="vote-venue-meta">{[venue.neighborhood, spend].filter(Boolean).join(" · ")}</p>
+                )}
+                <p className="vote-venue-description">{description}</p>
+                <a className="vote-venue-map" href={mapsUrl} target="_blank" rel="noreferrer">
+                  <MapPin className="h-3.5 w-3.5" aria-hidden="true" /> Maps
+                </a>
+                <div className="result-bar" aria-label={`${o.votes} vote${o.votes === 1 ? "" : "s"}`}>
+                  <div className={`result-fill${o.votes === max && o.votes > 0 ? " lead" : ""}`} style={{ width: `${(o.votes / max) * 100}%` }} />
+                </div>
               </div>
-            </div>
-            {!archived && !poll.expired && (
-              <Button size="sm" variant={poll.myVote?.option_id === o.optionId ? "default" : "outline"} disabled={busy} onClick={() => vote(o.optionId)}>
-                {poll.myVote?.option_id === o.optionId ? "Voted" : "Vote"}
-              </Button>
-            )}
-          </div>
-        ))}
+              {!archived && !poll.expired && (
+                <Button size="sm" variant={poll.myVote?.option_id === o.optionId ? "default" : "outline"} disabled={busy} onClick={() => vote(o.optionId)}>
+                  {poll.myVote?.option_id === o.optionId ? "Voted" : "Vote"}
+                </Button>
+              )}
+            </article>
+          );
+        })}
       </CardContent>
     </Card>
   );
