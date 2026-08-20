@@ -1,6 +1,10 @@
 import TakedownForm from "@/components/TakedownForm";
+import { privatePageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Video takedown, Weyn" };
+export const metadata = privatePageMetadata({
+  title: "Video Takedown Request",
+  description: "Request removal of a creator video displayed on Weyn.",
+});
 
 export default function TakedownPage() {
   return (
@@ -14,3 +18,4 @@ export default function TakedownPage() {
     </>
   );
 }
+
