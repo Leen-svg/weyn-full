@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { awardPoints, POINTS } from "@/lib/points";
 import { NextResponse } from "next/server";
 
 const VALID = ["fits", "wrong_tag", "missing_tag"];
@@ -36,10 +35,6 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  let pointsEarned = 0;
-  if (userId && b.vote !== "fits") {
-    pointsEarned = POINTS.suggested_a_tag_fix;
-    await awardPoints(userId, pointsEarned, "suggested_a_tag_fix");
-  }
-  return NextResponse.json({ ok: true, pointsEarned });
+  return NextResponse.json({ ok: true, pointsEarned: 0, pendingReview: b.vote !== "fits" });
 }
+
