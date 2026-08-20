@@ -76,7 +76,7 @@ export default function AdminUsers() {
                   <strong style={{ fontSize: 13 }}>Reviews ({activity.reviews.length})</strong>
                   {activity.reviews.map((r) => (
                     <div key={r.id} className="mono" style={{ marginTop: 4 }}>
-                      {"★".repeat(r.rating)} {r.venues?.name}, {r.body || "(no comment)"}
+                      {r.venues?.name}: {r.aesthetic_taste ?? 50}% taste · {r.quiet_loud ?? 50}% loud · {r.wallet_splurge ?? 50}% splurge, {r.body || "(no comment)"}
                     </div>
                   ))}
                   <strong style={{ fontSize: 13, display: "block", marginTop: 10 }}>Saved spots ({activity.saves.length})</strong>

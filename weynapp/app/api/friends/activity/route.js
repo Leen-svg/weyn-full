@@ -21,14 +21,15 @@ export async function GET() {
     .from("profile_public")
     .select("id, display_name, avatar_url")
     .in("id", friendIds)
-    .eq("share_activity_with_friends", true);
+    .eq("share_activity_with_friends", true)
+    .eq("ghost_mode", false);
 
   const sharingIds = (sharingFriends || []).map((f) => f.id);
   if (!sharingIds.length) return NextResponse.json({ activity: [] });
 
   const { data: reviews, error } = await supabase
     .from("reviews")
-    .select("id, rating, body, created_at, user_id, venues (id, name, neighborhood)")
+    .select("id, rating, body, aesthetic_taste, quiet_loud, wallet_splurge, created_at, user_id, venues (id, name, neighborhood)")
     .in("user_id", sharingIds)
     .order("created_at", { ascending: false })
     .limit(20);
