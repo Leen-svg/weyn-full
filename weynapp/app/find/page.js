@@ -2,8 +2,13 @@ import { getTaxonomy } from "@/lib/taxonomy";
 import { createClient } from "@/lib/supabase/server";
 import VibeSelector from "@/components/VibeSelector";
 import ComingSoonMap from "@/components/ComingSoonMap";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Find a spot, Weyn" };
+export const metadata = pageMetadata({
+  title: "Find Where to Go in Abu Dhabi",
+  description: "Choose your mood, activity, budget, and optional Near me filter. Weyn gives you three curated Abu Dhabi places and a quick group vote.",
+  path: "/find",
+});
 
 export default async function FindPage() {
   const [{ groups, zones }, supabase] = await Promise.all([getTaxonomy(), createClient()]);
@@ -24,5 +29,6 @@ export default async function FindPage() {
     </>
   );
 }
+
 
 
