@@ -1,9 +1,13 @@
 import { db } from "@/lib/db";
 import { getTaxonomy } from "@/lib/taxonomy";
 import RateClient from "@/components/RateClient";
+import { privatePageMetadata } from "@/lib/seo";
 
 export const revalidate = 0;
-export const metadata = { title: "Rate the tags, Weyn" };
+export const metadata = privatePageMetadata({
+  title: "Help Improve Weyn's Place Tags",
+  description: "Tell Weyn when a place's mood, activity, or occasion tags need correcting.",
+});
 
 export default async function RatePage() {
   const s = db();
@@ -31,3 +35,4 @@ export default async function RatePage() {
     </>
   );
 }
+
