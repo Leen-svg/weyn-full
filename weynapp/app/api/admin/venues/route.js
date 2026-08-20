@@ -13,35 +13,63 @@ export async function GET(req) {
 
   let query = s
     .from("venues")
-    .select("id, name, neighborhood, zone_slug, city, avg_spend_aed, hero_video_url, description, is_trending, trending_rank, is_active")
+    .select("id, name, neighborhood, zone_slug, city, avg_spend_aed, hero_video_url, google_maps_url, description, age_restriction, is_aesthetic, is_trending, trending_rank, is_active, venue_tags(tag_id)")
     .order("name")
     .limit(50);
   if (q) query = query.ilike("name", `%${q}%`);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ venues: data || [] });
+  return NextResponse.json({
+    venues: (data || []).map((venue) => ({
+      ...venue,
+      tag_ids: (venue.venue_tags || []).map((item) => item.tag_id),
+      venue_tags: undefined,
+    })),
+  });
 }
 
 export async function POST(req) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { name, neighborhood, city, avg_spend_aed } = await req.json();
+  const body = await req.json();
+  const { name, neighborhood, city, avg_spend_aed, description, google_maps_url, hero_video_url, latitude, longitude, age_restriction, is_aesthetic, is_trending, tag_ids } = body;
   if (!name?.trim()) return NextResponse.json({ error: "name required" }, { status: 400 });
 
-  const { data, error } = await db()
+  const s = db();
+  const { data, error } = await s
     .from("venues")
     .insert({
       name: name.trim(),
       neighborhood: neighborhood?.trim() || null,
       city: city === "Dubai" ? "Dubai" : "Abu Dhabi",
       avg_spend_aed: Number.isFinite(avg_spend_aed) ? avg_spend_aed : 0,
+      description: description?.trim().slice(0, 1000) || null,
+      google_maps_url: google_maps_url ? safeUrl(google_maps_url) : null,
+      hero_video_url: hero_video_url ? safeUrl(hero_video_url) : null,
+      latitude: Number.isFinite(latitude) ? latitude : null,
+      longitude: Number.isFinite(longitude) ? longitude : null,
+      age_restriction: ["18-plus", "21-plus"].includes(age_restriction) ? age_restriction : "all-ages",
+      is_aesthetic: !!is_aesthetic,
+      is_trending: !!is_trending,
+      trending_rank: is_trending ? 1 : null,
+      trending_set_at: is_trending ? new Date().toISOString() : null,
       is_active: true,
     })
     .select("id")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (Array.isArray(tag_ids) && tag_ids.length) {
+    const uniqueTagIds = [...new Set(tag_ids.filter((value) => typeof value === "string"))];
+    const { data: validTags, error: tagError } = await s.from("vibe_tags").select("id").in("id", uniqueTagIds).eq("is_active", true);
+    if (tagError || (validTags || []).length !== uniqueTagIds.length) {
+      await s.from("venues").delete().eq("id", data.id);
+      return NextResponse.json({ error: tagError?.message || "One or more tags are invalid" }, { status: 400 });
+    }
+    const { error: insertError } = await s.from("venue_tags").insert(uniqueTagIds.map((tagId) => ({ venue_id: data.id, tag_id: tagId })));
+    if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+  }
   return NextResponse.json({ id: data.id });
 }
 
@@ -49,7 +77,7 @@ export async function PATCH(req) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { id, patch } = await req.json();
+  const { id, patch, tag_ids } = await req.json();
   if (!id || !patch) return NextResponse.json({ error: "id and patch required" }, { status: 400 });
 
   const allowed = [
@@ -65,6 +93,8 @@ export async function PATCH(req) {
     "is_active",
     "latitude",
     "longitude",
+    "age_restriction",
+    "is_aesthetic",
   ];
   const clean = {};
   for (const k of allowed) if (k in patch) clean[k] = patch[k];
@@ -74,5 +104,27 @@ export async function PATCH(req) {
 
   const { error } = await db().from("venues").update(clean).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (Array.isArray(tag_ids)) {
+    const uniqueTagIds = [...new Set(tag_ids.filter((value) => typeof value === "string"))];
+    const s = db();
+    const { data: validTags, error: tagError } = uniqueTagIds.length
+      ? await s.from("vibe_tags").select("id").in("id", uniqueTagIds).eq("is_active", true)
+      : { data: [], error: null };
+    if (tagError) return NextResponse.json({ error: tagError.message }, { status: 500 });
+    if ((validTags || []).length !== uniqueTagIds.length) {
+      return NextResponse.json({ error: "One or more tags are invalid" }, { status: 400 });
+    }
+
+    const { error: deleteError } = await s.from("venue_tags").delete().eq("venue_id", id);
+    if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
+    if (uniqueTagIds.length) {
+      const { error: insertError } = await s
+        .from("venue_tags")
+        .insert(uniqueTagIds.map((tagId) => ({ venue_id: id, tag_id: tagId })));
+      if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+  }
   return NextResponse.json({ ok: true });
 }
+

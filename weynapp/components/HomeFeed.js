@@ -20,7 +20,7 @@ export default function HomeFeed({ isLoggedIn }) {
   }, [scope, load]);
 
   return (
-    <div style={{ marginTop: 34 }}>
+    <div className="home-feed">
       <div className="chips" style={{ marginBottom: 16 }}>
         <button className={`chip ${scope === "public" ? "sel" : ""}`} onClick={() => setScope("public")}>
           🌍 Public
@@ -50,3 +50,4 @@ export default function HomeFeed({ isLoggedIn }) {
     </div>
   );
 }
+

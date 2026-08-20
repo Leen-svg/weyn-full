@@ -122,7 +122,7 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
 
   return (
     <div className="venue-actions">
-      <div className="venue-links" style={{ marginTop: 10 }}>
+      <div className="venue-links venue-action-bar" style={{ marginTop: 10 }}>
         <button className={`btn small ${saved ? "" : "ghost"}`} disabled={busy} onClick={toggleSave} type="button">
           {saved ? "★ Saved" : "☆ Save"}
         </button>
@@ -199,3 +199,4 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
     </div>
   );
 }
+

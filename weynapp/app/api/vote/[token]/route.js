@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { withCovers } from "@/lib/venueMedia";
 
 export async function GET(req, { params }) {
   const { token } = await params;
@@ -19,7 +20,8 @@ export async function GET(req, { params }) {
         .select("id, name, neighborhood, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description")
         .in("id", venueIds)
     : { data: [] };
-  const venueMap = Object.fromEntries((venues || []).map((v) => [v.id, v]));
+  const venuesWithMedia = await withCovers(venues || []);
+  const venueMap = Object.fromEntries(venuesWithMedia.map((v) => [v.id, v]));
 
   const [{ data: memberVotes }, { data: guestVotes }] = await Promise.all([
     s.from("group_poll_votes").select("option_id").eq("poll_id", poll.id),
@@ -63,3 +65,4 @@ export async function POST(req, { params }) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
+

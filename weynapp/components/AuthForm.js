@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import PasswordInput from "./PasswordInput";
 
 export default function AuthForm({ mode }) {
   const router = useRouter();
@@ -24,20 +25,29 @@ export default function AuthForm({ mode }) {
     const supabase = createClient();
 
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
       });
       if (error) setErr(error.message);
+      else if (data.session) {
+        router.push(`/onboarding?next=${encodeURIComponent(next)}`);
+        router.refresh();
+      }
       else {
-        setNotice("Check your email to confirm your account, then you're in, with 200 points waiting.");
+        setNotice("Check your email to confirm your account. Then you'll choose your unique username.");
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setErr(error.message);
       else {
-        router.push(next);
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: profile } = user
+          ? await supabase.from("profile_public").select("display_name").eq("id", user.id).maybeSingle()
+          : { data: null };
+        const hasUsername = /^[a-z0-9_]{3,24}$/.test(profile?.display_name || "");
+        router.push(hasUsername ? next : `/onboarding?next=${encodeURIComponent(next)}`);
         router.refresh();
       }
     }
@@ -85,11 +95,11 @@ export default function AuthForm({ mode }) {
           style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
         />
         <div className="field">
-          <label>Email</label>
-          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
+          <label htmlFor="auth-email">Email</label>
+          <input id="auth-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
         </div>
         <div className="field">
-          <label>
+          <label htmlFor="auth-password">
             Password
             {mode === "login" && (
               <a href="/forgot-password" style={{ float: "right", fontWeight: 700, fontSize: 13 }}>
@@ -97,10 +107,11 @@ export default function AuthForm({ mode }) {
               </a>
             )}
           </label>
-          <input
-            type="password"
+          <PasswordInput
+            id="auth-password"
             required
             minLength={6}
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -124,3 +135,4 @@ export default function AuthForm({ mode }) {
     </>
   );
 }
+

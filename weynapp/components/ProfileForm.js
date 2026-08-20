@@ -17,7 +17,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
-export default function ProfileForm({ initial, email, groups }) {
+export default function ProfileForm({ initial, groups }) {
   const [displayName, setDisplayName] = useState(initial.display_name || "");
   const [bio, setBio] = useState(initial.bio || "");
   const [favoriteTags, setFavoriteTags] = useState(initial.favorite_tags || []);
@@ -70,6 +70,19 @@ export default function ProfileForm({ initial, email, groups }) {
     setBusy(true);
     setErr(null);
     setMsg(null);
+    const username = displayName.trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,24}$/.test(username)) {
+      setErr("Username must be 3–24 characters using only letters, numbers, or underscores.");
+      setBusy(false);
+      return;
+    }
+    const availabilityRes = await fetch(`/api/profile/username?username=${encodeURIComponent(username)}`);
+    const availability = await availabilityRes.json();
+    if (!availabilityRes.ok || !availability.available) {
+      setErr(availability.error || "That username is already taken.");
+      setBusy(false);
+      return;
+    }
     const supabase = createClient();
     const {
       data: { user },
@@ -77,19 +90,20 @@ export default function ProfileForm({ initial, email, groups }) {
     const { error } = await supabase
       .from("profile_public")
       .update({
-        display_name: displayName.trim().slice(0, 40) || null,
+        display_name: username,
         bio: bio.trim().slice(0, 300) || null,
         favorite_tags: favoriteTags,
         avatar_url: avatarUrl || null,
         share_activity_with_friends: shareActivity,
       })
       .eq("id", user.id);
-    if (error) setErr(error.message);
+    if (error?.code === "23505") setErr("That username is already taken.");
+    else if (error) setErr(error.message);
     else setMsg("Saved.");
     setBusy(false);
   }
 
-  const initials = (displayName || email || "?").slice(0, 2).toUpperCase();
+  const initials = (displayName || "?").slice(0, 2).toUpperCase();
 
   return (
     <form onSubmit={save} className="space-y-5">
@@ -116,7 +130,7 @@ export default function ProfileForm({ initial, email, groups }) {
           </div>
           <div>
             <div className="font-semibold" style={{ fontFamily: "var(--font-display)" }}>{displayName || "Your name"}</div>
-            <div className="text-sm text-muted-foreground">{email}</div>
+            <div className="text-sm text-muted-foreground">@{displayName || "choose_a_username"}</div>
             <button type="button" onClick={() => fileInputRef.current?.click()} className="mt-1 text-xs font-semibold text-primary hover:underline">
               Change photo
             </button>
@@ -131,8 +145,9 @@ export default function ProfileForm({ initial, email, groups }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="display-name">Display name</Label>
-            <Input id="display-name" maxLength={40} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+            <Label htmlFor="display-name">Username</Label>
+            <Input id="display-name" autoComplete="username" maxLength={24} value={displayName} onChange={(e) => setDisplayName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} placeholder="your_username" />
+            <p className="text-xs text-muted-foreground">Unique, public, and never your email. Letters, numbers, and underscores only.</p>
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -232,3 +247,4 @@ export default function ProfileForm({ initial, email, groups }) {
     </form>
   );
 }
+

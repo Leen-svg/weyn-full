@@ -1,6 +1,62 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { safeUrl } from "@/lib/sanitize";
+import { createClient } from "@/lib/supabase/client";
+
+const MAX_IMAGE_EDGE = 1600;
+const MAX_COMPRESSED_IMAGE_BYTES = 1.5 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+const EMPTY_VENUE = {
+  placeId: "", name: "", neighborhood: "", city: "Abu Dhabi", avg_spend_aed: 0,
+  description: "", google_maps_url: "", hero_video_url: "", latitude: null, longitude: null,
+  age_restriction: "all-ages", is_aesthetic: false, is_trending: false,
+};
+
+async function compressImage(file) {
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  const maxSourceEdge = Math.max(bitmap.width, bitmap.height);
+  let targetEdge = MAX_IMAGE_EDGE;
+  let quality = 0.8;
+  let blob;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const scale = Math.min(1, targetEdge / maxSourceEdge);
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.getContext("2d", { alpha: false }).drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    blob = await new Promise((resolve, reject) =>
+      canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Could not compress image")), "image/webp", quality)
+    );
+    if (blob.size <= MAX_COMPRESSED_IMAGE_BYTES) break;
+    targetEdge = Math.round(targetEdge * 0.82);
+    quality = Math.max(0.62, quality - 0.06);
+  }
+  bitmap.close();
+  return new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.webp`, { type: "image/webp" });
+}
+
+async function uploadVenueFile(venueId, source) {
+  if (!source.type.startsWith("image/") && !source.type.startsWith("video/")) throw new Error(`${source.name} is not an image or video`);
+  if (source.type.startsWith("video/") && source.size > MAX_VIDEO_BYTES) throw new Error(`${source.name} is larger than 50 MB`);
+  const file = source.type.startsWith("image/") ? await compressImage(source) : source;
+  const signRes = await fetch("/api/admin/venues/media", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ intent: "sign", venueId, fileName: file.name, contentType: file.type }),
+  });
+  const signed = await signRes.json();
+  if (!signRes.ok) throw new Error(signed.error || "Could not start upload");
+  const supabase = createClient();
+  const { error: uploadError } = await supabase.storage.from("venue-media").uploadToSignedUrl(signed.path, signed.token, file, { contentType: file.type });
+  if (uploadError) throw uploadError;
+  const completeRes = await fetch("/api/admin/venues/media", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ intent: "complete", venueId, path: signed.path, publicUrl: signed.publicUrl, mediaType: signed.mediaType }),
+  });
+  const completed = await completeRes.json();
+  if (!completeRes.ok) throw new Error(completed.error || "Could not save upload");
+}
 
 export default function VenueEditor() {
   const [q, setQ] = useState("");
@@ -9,27 +65,39 @@ export default function VenueEditor() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   const [creating, setCreating] = useState(false);
-  const [newVenue, setNewVenue] = useState({ name: "", neighborhood: "", city: "Abu Dhabi", avg_spend_aed: 0 });
+  const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [newVenue, setNewVenue] = useState(EMPTY_VENUE);
+  const [newTagIds, setNewTagIds] = useState([]);
+  const [newFiles, setNewFiles] = useState([]);
+  const [suggesting, setSuggesting] = useState(false);
+  const [createStatus, setCreateStatus] = useState("");
 
   const search = useCallback(async (query) => {
     const res = await fetch(`/api/admin/venues?q=${encodeURIComponent(query)}`);
     const d = await res.json();
-    if (!res.ok) { setErr(d.error); return; }
+    if (!res.ok) { setErr(d.error); setBusy(false); return; }
     setVenues(d.venues || []);
   }, []);
 
-  useEffect(() => { search(""); }, [search]);
+  useEffect(() => {
+    search("");
+    fetch("/api/admin/tags").then((res) => res.json()).then((data) => {
+      setCategories(data.categories || []);
+      setTags((data.tags || []).filter((tag) => tag.is_active));
+    });
+  }, [search]);
 
-  async function patch(id, fields) {
+  async function patch(id, fields, tagIds) {
     setBusy(true);
     const res = await fetch("/api/admin/venues", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, patch: fields }),
+      body: JSON.stringify({ id, patch: fields, ...(tagIds ? { tag_ids: tagIds } : {}) }),
     });
     const d = await res.json();
     if (!res.ok) setErr(d.error);
-    else setVenues((prev) => prev.map((v) => (v.id === id ? { ...v, ...fields } : v)));
+    else setVenues((prev) => prev.map((v) => (v.id === id ? { ...v, ...fields, ...(tagIds ? { tag_ids: tagIds } : {}) } : v)));
     setBusy(false);
   }
 
@@ -39,15 +107,44 @@ export default function VenueEditor() {
     const res = await fetch("/api/admin/venues", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newVenue),
+      body: JSON.stringify({ ...newVenue, tag_ids: newTagIds }),
     });
     const d = await res.json();
-    setBusy(false);
     if (!res.ok) { setErr(d.error); return; }
-    setNewVenue({ name: "", neighborhood: "", city: "Abu Dhabi", avg_spend_aed: 0 });
+    try {
+      for (let index = 0; index < newFiles.length; index += 1) {
+        setCreateStatus(`Uploading ${index + 1} of ${newFiles.length}…`);
+        await uploadVenueFile(d.id, newFiles[index]);
+      }
+    } catch (error) {
+      setErr(`Venue created, but media upload failed: ${error.message}`);
+    }
+    setBusy(false);
+    setNewVenue(EMPTY_VENUE);
+    setNewTagIds([]);
+    setNewFiles([]);
+    setCreateStatus("");
     setCreating(false);
-    search(q);
+    await search(q);
     setOpenId(d.id);
+  }
+
+  async function suggestVenue() {
+    if (!newVenue.placeId.trim()) return;
+    setSuggesting(true);
+    setErr(null);
+    const res = await fetch("/api/admin/venues/suggest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ placeId: newVenue.placeId }),
+    });
+    const data = await res.json();
+    if (!res.ok) setErr(data.error);
+    else {
+      setNewVenue((current) => ({ ...current, ...data.place }));
+      setNewTagIds(data.tag_ids || []);
+    }
+    setSuggesting(false);
   }
 
   return (
@@ -66,8 +163,22 @@ export default function VenueEditor() {
         {!creating ? (
           <button className="btn small" onClick={() => setCreating(true)}>+ Add a new venue</button>
         ) : (
-          <>
-            <strong style={{ fontSize: 14 }}>New venue</strong>
+          <div className="venue-create-form">
+            <div className="venue-create-heading">
+              <div><strong>New venue</strong><p>Paste a Google Place ID to fill details and suggest tags, then review everything before creating.</p></div>
+              <button className="btn small ghost" type="button" onClick={() => setCreating(false)}>Cancel</button>
+            </div>
+            <div className="field">
+              <label htmlFor="new-place-id">Google Place ID</label>
+              <div className="venue-ai-row">
+                <input id="new-place-id" type="text" value={newVenue.placeId} onChange={(e) => setNewVenue({ ...newVenue, placeId: e.target.value })} placeholder="ChIJ…" />
+                <button className="btn small primary" type="button" disabled={suggesting || !newVenue.placeId.trim()} onClick={suggestVenue}>
+                  {suggesting ? "Suggesting…" : "✨ Fill + suggest tags"}
+                </button>
+              </div>
+              <span className="hint">AI suggestions are a draft—you can change every field and tag.</span>
+            </div>
+            <div className="venue-form-grid">
             <div className="field">
               <label>Name</label>
               <input type="text" value={newVenue.name} onChange={(e) => setNewVenue({ ...newVenue, name: e.target.value })} />
@@ -87,9 +198,48 @@ export default function VenueEditor() {
               <label>Avg spend (AED)</label>
               <input type="number" value={newVenue.avg_spend_aed} onChange={(e) => setNewVenue({ ...newVenue, avg_spend_aed: parseInt(e.target.value, 10) || 0 })} />
             </div>
-            <button className="btn small" disabled={busy} onClick={createVenue}>Create</button>{" "}
-            <button className="btn small ghost" onClick={() => setCreating(false)}>Cancel</button>
-          </>
+            </div>
+            <div className="field">
+              <label>Description</label>
+              <textarea value={newVenue.description} onChange={(e) => setNewVenue({ ...newVenue, description: e.target.value })} />
+            </div>
+            <div className="field">
+              <label>Google Maps URL</label>
+              <input type="url" value={newVenue.google_maps_url} onChange={(e) => setNewVenue({ ...newVenue, google_maps_url: e.target.value })} />
+            </div>
+            <div className="field">
+              <label>Optional external video URL</label>
+              <input type="url" value={newVenue.hero_video_url} onChange={(e) => setNewVenue({ ...newVenue, hero_video_url: e.target.value })} />
+            </div>
+            <div className="venue-form-grid">
+              <div className="field">
+                <label>Age access</label>
+                <select value={newVenue.age_restriction} onChange={(e) => setNewVenue({ ...newVenue, age_restriction: e.target.value })}>
+                  <option value="all-ages">All ages</option>
+                  <option value="18-plus">18+</option>
+                  <option value="21-plus">21+</option>
+                </select>
+              </div>
+              <div className="venue-create-options">
+                <label className="toggle-row"><input type="checkbox" checked={newVenue.is_aesthetic} onChange={(e) => setNewVenue({ ...newVenue, is_aesthetic: e.target.checked })} /> Aesthetic spot</label>
+                <label className="toggle-row"><input type="checkbox" checked={newVenue.is_trending} onChange={(e) => setNewVenue({ ...newVenue, is_trending: e.target.checked })} /> Add to Our picks</label>
+              </div>
+            </div>
+            <div className="field">
+              <label>Tags</label>
+              <TagPicker categories={categories} tags={tags} selected={newTagIds} onChange={setNewTagIds} />
+            </div>
+            <div className="field">
+              <label>Photos & videos</label>
+              <p className="venue-media-help">Select several files. Every photo is resized, converted to WebP, and compressed below 1.5 MB automatically. Videos upload directly.</p>
+              <input type="file" accept="image/*,video/*" multiple onChange={(e) => setNewFiles([...(e.target.files || [])])} />
+              {newFiles.length > 0 && <div className="media-upload-status">{newFiles.length} file{newFiles.length === 1 ? "" : "s"} ready</div>}
+            </div>
+            {createStatus && <div className="media-upload-status" role="status">{createStatus}</div>}
+            <button className="btn primary block" disabled={busy || !newVenue.name.trim()} onClick={createVenue}>
+              {busy ? "Creating venue…" : "Create venue with everything"}
+            </button>
+          </div>
         )}
       </div>
 
@@ -118,22 +268,67 @@ export default function VenueEditor() {
               </button>
             </div>
           </div>
-          {openId === v.id && <VenueEditFields venue={v} onSave={(fields) => patch(v.id, fields)} busy={busy} />}
+          {openId === v.id && (
+            <VenueEditFields
+              venue={v}
+              categories={categories}
+              tags={tags}
+              onSave={(fields, tagIds) => patch(v.id, fields, tagIds)}
+              busy={busy}
+            />
+          )}
         </div>
       ))}
     </div>
   );
 }
 
-function VenueEditFields({ venue, onSave, busy }) {
+function TagPicker({ categories, tags, selected, onChange }) {
+  return (
+    <div className="venue-tag-picker">
+      {categories.map((category) => {
+        const categoryTags = tags.filter((tag) => tag.category_id === category.id);
+        if (!categoryTags.length) return null;
+        return (
+          <fieldset className="venue-tag-group" key={category.id}>
+            <legend>{category.name}</legend>
+            <div className="chips">
+              {categoryTags.map((tag) => {
+                const active = selected.includes(tag.id);
+                return (
+                  <button
+                    type="button"
+                    key={tag.id}
+                    className={`chip ${active ? "sel" : ""}`}
+                    aria-pressed={active}
+                    onClick={() => onChange(active ? selected.filter((id) => id !== tag.id) : [...selected, tag.id])}
+                  >
+                    {tag.display_name}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+        );
+      })}
+    </div>
+  );
+}
+
+function VenueEditFields({ venue, categories, tags, onSave, busy }) {
   const [name, setName] = useState(venue.name || "");
   const [neighborhood, setNeighborhood] = useState(venue.neighborhood || "");
   const [city, setCity] = useState(venue.city || "Abu Dhabi");
   const [avgSpend, setAvgSpend] = useState(venue.avg_spend_aed ?? 0);
   const [description, setDescription] = useState(venue.description || "");
   const [heroVideo, setHeroVideo] = useState(venue.hero_video_url || "");
+  const [ageRestriction, setAgeRestriction] = useState(venue.age_restriction || "all-ages");
+  const [isAesthetic, setIsAesthetic] = useState(!!venue.is_aesthetic);
   const [media, setMedia] = useState([]);
+  const [tagIds, setTagIds] = useState(venue.tag_ids || []);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [mediaError, setMediaError] = useState(null);
 
   const loadMedia = useCallback(async () => {
     const res = await fetch(`/api/admin/venues/media?venueId=${venue.id}`);
@@ -144,15 +339,26 @@ function VenueEditFields({ venue, onSave, busy }) {
   useEffect(() => { loadMedia(); }, [loadMedia]);
 
   async function uploadFile(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = [...(e.target.files || [])];
+    if (!files.length) return;
     setUploading(true);
-    const form = new FormData();
-    form.append("venueId", venue.id);
-    form.append("file", file);
-    await fetch("/api/admin/venues/media", { method: "POST", body: form });
-    await loadMedia();
-    setUploading(false);
+    setMediaError(null);
+    try {
+      for (let index = 0; index < files.length; index += 1) {
+        const source = files[index];
+        setUploadStatus(`Optimizing ${index + 1} of ${files.length}…`);
+        setUploadStatus(`Uploading ${index + 1} of ${files.length}…`);
+        await uploadVenueFile(venue.id, source);
+      }
+      await loadMedia();
+      setUploadStatus("Upload complete");
+      e.target.value = "";
+    } catch (error) {
+      setMediaError(error.message || "Upload failed");
+      setUploadStatus("");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function removeMedia(id) {
@@ -190,25 +396,69 @@ function VenueEditFields({ venue, onSave, busy }) {
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
       <div className="field">
+        <label>Venue tags</label>
+        <div className="venue-tag-picker">
+          {categories.map((category) => {
+            const categoryTags = tags.filter((tag) => tag.category_id === category.id);
+            if (!categoryTags.length) return null;
+            return (
+              <fieldset className="venue-tag-group" key={category.id}>
+                <legend>{category.name}</legend>
+                <div className="chips">
+                  {categoryTags.map((tag) => {
+                    const selected = tagIds.includes(tag.id);
+                    return (
+                      <button
+                        type="button"
+                        key={tag.id}
+                        className={`chip ${selected ? "sel" : ""}`}
+                        aria-pressed={selected}
+                        onClick={() => setTagIds((current) => selected ? current.filter((id) => id !== tag.id) : [...current, tag.id])}
+                      >
+                        {tag.display_name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            );
+          })}
+        </div>
+      </div>
+      <div className="field">
         <label>Hero video URL</label>
         <input type="url" value={heroVideo} onChange={(e) => setHeroVideo(e.target.value)} />
+      </div>
+      <div className="venue-form-grid">
+        <div className="field">
+          <label>Age access</label>
+          <select value={ageRestriction} onChange={(e) => setAgeRestriction(e.target.value)}>
+            <option value="all-ages">All ages</option>
+            <option value="18-plus">18+</option>
+            <option value="21-plus">21+</option>
+          </select>
+        </div>
+        <label className="toggle-row"><input type="checkbox" checked={isAesthetic} onChange={(e) => setIsAesthetic(e.target.checked)} /> Aesthetic spot</label>
       </div>
 
       <div className="field">
         <label>Photos & videos</label>
+        <p className="venue-media-help">Select several files at once. Every photo is resized to at most 1600px, converted to WebP, and compressed below 1.5 MB before upload. Videos can be up to 50 MB.</p>
         <div className="media-grid">
           {media.map((m) => (
             <div className="media-thumb" key={m.id}>
               {m.media_type === "video" ? (
-                <video src={safeUrl(m.url)} muted />
+                <video src={safeUrl(m.url)} muted preload="metadata" controls />
               ) : (
                 <img src={safeUrl(m.url)} alt="" />
               )}
-              <button type="button" className="media-remove" onClick={() => removeMedia(m.id)}>✕</button>
+              <button type="button" className="media-remove" aria-label="Remove media" onClick={() => removeMedia(m.id)}>✕</button>
             </div>
           ))}
         </div>
-        <input type="file" accept="image/*,video/*" onChange={uploadFile} disabled={uploading} />
+        <input type="file" accept="image/*,video/*" multiple onChange={uploadFile} disabled={uploading} />
+        {uploadStatus && <div className="media-upload-status" role="status">{uploadStatus}</div>}
+        {mediaError && <div className="notice err" role="alert">{mediaError}</div>}
       </div>
 
       <button
@@ -222,7 +472,9 @@ function VenueEditFields({ venue, onSave, busy }) {
             avg_spend_aed: avgSpend,
             description,
             hero_video_url: heroVideo || null,
-          })
+            age_restriction: ageRestriction,
+            is_aesthetic: isAesthetic,
+          }, tagIds)
         }
       >
         Save changes
@@ -230,3 +482,4 @@ function VenueEditFields({ venue, onSave, busy }) {
     </div>
   );
 }
+

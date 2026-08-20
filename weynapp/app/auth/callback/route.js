@@ -6,13 +6,31 @@ export async function GET(req) {
   const { searchParams, origin } = new URL(req.url);
   const code = searchParams.get("code");
   const type = searchParams.get("type");
-  const next = type === "recovery" ? "/reset-password" : searchParams.get("next") || "/app";
+  const requestedNext = searchParams.get("next") || "/app";
+  const safeNext = requestedNext.startsWith("/") && !requestedNext.startsWith("//") ? requestedNext : "/app";
+  const next = type === "recovery" ? "/reset-password" : safeNext;
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}${next}`);
+    if (!error) {
+      if (type !== "recovery") {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profile_public")
+            .select("display_name")
+            .eq("id", user.id)
+            .maybeSingle();
+          if (!/^[a-z0-9_]{3,24}$/.test(profile?.display_name || "")) {
+            return NextResponse.redirect(`${origin}/onboarding?next=${encodeURIComponent(next)}`);
+          }
+        }
+      }
+      return NextResponse.redirect(`${origin}${next}`);
+    }
   }
 
   return NextResponse.redirect(`${origin}/login?error=auth`);
 }
+

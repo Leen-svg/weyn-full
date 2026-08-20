@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { withCovers } from "@/lib/venueMedia";
 
 async function shapePolls(supabase, groupId, currentUserId) {
   const { data: polls, error } = await supabase
@@ -26,7 +27,8 @@ async function shapePolls(supabase, groupId, currentUserId) {
         .select("id, name, neighborhood, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description")
         .in("id", venueIds)
     : { data: [] };
-  const venueMap = Object.fromEntries((venues || []).map((v) => [v.id, v]));
+  const venuesWithMedia = await withCovers(venues || []);
+  const venueMap = Object.fromEntries(venuesWithMedia.map((v) => [v.id, v]));
 
   const voterIds = [...new Set((votes || []).map((v) => v.user_id))];
   const { data: authors } = voterIds.length
@@ -119,3 +121,4 @@ export async function POST(req, { params }) {
 
   return NextResponse.json({ id: poll.id });
 }
+

@@ -52,7 +52,7 @@ export default function GuestVoteClient({ token }) {
   const max = Math.max(1, ...data.options.map((o) => o.votes));
 
   return (
-    <>
+    <div className="vote-flow">
       <h1>{data.groupName ? `${data.groupName} is deciding.` : "Pick one."}</h1>
       <p className="sub">{data.expired ? "Voting has closed, here's the verdict." : "Tap your pick. You don't need the app to vote."}</p>
 
@@ -92,6 +92,7 @@ export default function GuestVoteClient({ token }) {
       <p className="sub" style={{ marginTop: 22 }}>
         powered by <a href="/" style={{ fontWeight: 800, color: "var(--ink)" }}>weyn</a>
       </p>
-    </>
+    </div>
   );
 }
+

@@ -54,7 +54,7 @@ export default function PollClient({ code }) {
   const max = Math.max(1, ...data.options.map((o) => o.votes));
 
   return (
-    <>
+    <div className="vote-flow">
       <h1>Pick one.</h1>
       <p className="sub">
         {data.poll.expired
@@ -107,6 +107,7 @@ export default function PollClient({ code }) {
         {data.totalVotes} vote{data.totalVotes === 1 ? "" : "s"} so far · powered by{" "}
         <a href="/" style={{ fontWeight: 800, color: "var(--ink)" }}>weyn</a>
       </p>
-    </>
+    </div>
   );
 }
+

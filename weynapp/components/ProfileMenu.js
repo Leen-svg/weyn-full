@@ -13,9 +13,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
 
-export default function ProfileMenu({ userId, displayName, email, avatarUrl, points, isAdmin }) {
+export default function ProfileMenu({ userId, displayName, avatarUrl, points, isAdmin }) {
   const router = useRouter();
-  const initials = (displayName || email || "?").slice(0, 2).toUpperCase();
+  const initials = (displayName || "?").slice(0, 2).toUpperCase();
 
   async function signOut() {
     const supabase = createClient();
@@ -30,8 +30,7 @@ export default function ProfileMenu({ userId, displayName, email, avatarUrl, poi
         render={
           <button
             type="button"
-            className="flex items-center gap-2 rounded-full border-2 py-1 pr-3 pl-1 transition-transform hover:-translate-y-0.5"
-            style={{ borderColor: "var(--ink)" }}
+            className="profile-menu-trigger flex items-center gap-2 rounded-full border-0 bg-white py-1 pr-3 pl-1 shadow-[0_6px_18px_rgba(31,48,68,.1)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_9px_24px_rgba(31,48,68,.14)]"
           />
         }
       >
@@ -50,7 +49,6 @@ export default function ProfileMenu({ userId, displayName, email, avatarUrl, poi
           </Avatar>
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold">{displayName || "Your profile"}</div>
-            <div className="truncate text-xs text-muted-foreground">{email}</div>
             <div className="mt-0.5 text-xs font-bold" style={{ color: "var(--purple)" }}>🏅 {points} pts</div>
           </div>
         </div>
@@ -88,3 +86,4 @@ export default function ProfileMenu({ userId, displayName, email, avatarUrl, poi
     </DropdownMenu>
   );
 }
+

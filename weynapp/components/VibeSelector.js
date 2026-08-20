@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import VenueCard from "./VenueCard";
 import VenueActions from "./VenueActions";
@@ -87,9 +87,25 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [share, setShare] = useState(null);
+  const [shareGroups, setShareGroups] = useState(null);
+  const [sharedGroupId, setSharedGroupId] = useState(null);
+  const [shareBusy, setShareBusy] = useState(false);
   const [err, setErr] = useState(null);
   const [openSections, setOpenSections] = useState(new Set());
   const [cold] = useState(isColdSeason);
+  const sharePanelRef = useRef(null);
+
+  useEffect(() => {
+    if (!share) return;
+    const timer = window.setTimeout(() => {
+      sharePanelRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "center",
+      });
+      sharePanelRef.current?.focus({ preventScroll: true });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [share]);
 
   function toggleSection(id) {
     setOpenSections((prev) => {
@@ -172,10 +188,45 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
       if (!res.ok) throw new Error(data.error || "Could not create poll");
       const url = `${window.location.origin}/p/${data.code}`;
       setShare(url);
-      if (navigator.share) navigator.share({ title: "Weyn, vote on where we're going", url }).catch(() => {});
-      else navigator.clipboard?.writeText(url).catch(() => {});
+      setSharedGroupId(null);
+      if (isLoggedIn) {
+        const groupsRes = await fetch("/api/groups");
+        const groupsData = await groupsRes.json();
+        setShareGroups(groupsRes.ok ? groupsData.groups || [] : []);
+      } else {
+        setShareGroups([]);
+      }
     } catch (e) { setErr(e.message); }
     setLoading(false);
+  }
+
+  async function shareWithGroup(groupId) {
+    if (!share) return;
+    setShareBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/groups/${groupId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: `🗳️ Vote on where we should go: ${share}` }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not share with this group");
+      setSharedGroupId(groupId);
+    } catch (error) {
+      setErr(error.message);
+    } finally {
+      setShareBusy(false);
+    }
+  }
+
+  async function shareLink() {
+    if (!share) return;
+    if (navigator.share) {
+      await navigator.share({ title: "Weyn, vote on where we're going", url: share }).catch(() => {});
+    } else {
+      await navigator.clipboard?.writeText(share);
+    }
   }
 
   const zoneClusters = groupZonesByEmirate(zones);
@@ -340,9 +391,10 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
                 ))}
               </div>
               <div className="cta-row">
-                <button className="btn block" disabled={loading} onClick={makePoll}>
-                  Make it a group vote 🔗
+                <button className="btn primary block" disabled={loading} onClick={makePoll}>
+                  Create a group vote
                 </button>
+                <p className="group-vote-hint">Then send it straight to one of your Weyn groups or share the link anywhere.</p>
               </div>
             </>
           )}
@@ -350,14 +402,51 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
       )}
 
       {share && (
-        <div className="share-box">
-          <strong style={{ fontSize: 17 }}>Poll&apos;s live for 24 hours.</strong>
-          <div className="link">{share}</div>
-          <button className="btn small dark" onClick={() => navigator.clipboard.writeText(share)}>
-            Copy link
-          </button>
+        <div ref={sharePanelRef} tabIndex={-1} className="share-box poll-share-panel" role="region" aria-label="Share group vote">
+          <div className="poll-share-heading">
+            <span>Vote created ✓</span>
+            <strong>Share with your Weyn groups</strong>
+            <p>The poll stays live for 24 hours.</p>
+          </div>
+          {shareGroups === null && <p className="sub">Loading your recent groups…</p>}
+          {shareGroups?.length > 0 && (
+            <div className="recent-group-list">
+              <span className="details-label">Recent groups</span>
+              {shareGroups.slice(0, 5).map((group) => (
+                <button
+                  type="button"
+                  className="recent-group-button"
+                  key={group.id}
+                  disabled={shareBusy}
+                  onClick={() => shareWithGroup(group.id)}
+                >
+                  <span>
+                    <b>{group.name}</b>
+                    <small>{group.members.length} member{group.members.length === 1 ? "" : "s"}</small>
+                  </span>
+                  <span>{sharedGroupId === group.id ? "Sent ✓" : "Send →"}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {isLoggedIn && shareGroups?.length === 0 && <p className="sub">No groups yet. You can still share the link anywhere.</p>}
+          {!isLoggedIn && (
+            <a className="recent-group-button poll-login-row" href="/login?next=/find">
+              <span><b>Log in to share inside Weyn</b><small>Your recent groups will appear here.</small></span>
+              <span>Log in →</span>
+            </a>
+          )}
+          <div className="share-link-actions">
+            <button className="btn small" type="button" onClick={shareLink}>Share anywhere</button>
+            <button className="btn small ghost" type="button" onClick={() => navigator.clipboard?.writeText(share)}>Copy link</button>
+          </div>
+          <details>
+            <summary>Show poll link</summary>
+            <div className="link">{share}</div>
+          </details>
         </div>
       )}
     </div>
   );
 }
+
