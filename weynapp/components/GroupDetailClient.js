@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Send, Vote, Loader2, ArrowLeft, Share2, UserPlus, UserMinus, X } from "lucide-react";
+import { Send, Vote, Loader2, ArrowLeft, Share2, UserPlus, UserMinus, Archive, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
@@ -9,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import VenueCard from "./VenueCard";
 
 const BUDGETS = [
   { label: "Under 100", value: 100 },
@@ -20,24 +18,23 @@ const BUDGETS = [
 function MessageBubble({ msg, mine }) {
   const author = msg.profile_public;
   const initials = (author?.display_name || "?").slice(0, 2).toUpperCase();
+  const sentAt = new Date(msg.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   return (
-    <div className={`flex items-end gap-2 ${mine ? "flex-row-reverse" : ""}`}>
+    <div className={`message-row flex items-end gap-2 ${mine ? "mine flex-row-reverse" : ""}`}>
       <Avatar className="h-7 w-7 shrink-0">
         <AvatarImage src={safeUrl(author?.avatar_url)} alt="" />
         <AvatarFallback className="text-[10px] font-bold">{initials}</AvatarFallback>
       </Avatar>
-      <div
-        className="max-w-[75%] rounded-2xl px-3 py-2 text-sm"
-        style={{ background: mine ? "var(--purple)" : "var(--paper)", color: mine ? "var(--white)" : "var(--ink)", border: mine ? "none" : "1.5px solid var(--ink)" }}
-      >
+      <div className="message-bubble max-w-[78%] rounded-2xl px-3 py-2 text-sm">
         {!mine && <div className="mb-0.5 text-[11px] font-bold opacity-70">{author?.display_name || "Someone"}</div>}
-        {msg.body}
+        <div>{msg.body}</div>
+        <div className="message-time">{sentAt}</div>
       </div>
     </div>
   );
 }
 
-function PollComposer({ groups, zones, onCreated }) {
+function PollComposer({ groups, zones, onCreated, hasCurrent = false }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState({});
   const [budget, setBudget] = useState(99999);
@@ -79,9 +76,12 @@ function PollComposer({ groups, zones, onCreated }) {
 
   if (!open) {
     return (
-      <Button className="w-full" onClick={() => setOpen(true)}>
-        <Vote className="h-4 w-4" /> Start a vote
-      </Button>
+      <div className="new-vote-action">
+        <Button variant={hasCurrent ? "outline" : "default"} className="w-full" onClick={() => setOpen(true)}>
+          <Vote className="h-4 w-4" /> {hasCurrent ? "Start a new vote" : "Start a vote"}
+        </Button>
+        {hasCurrent && <p>Starting another vote moves this one to the archive.</p>}
+      </div>
     );
   }
 
@@ -130,10 +130,12 @@ function PollComposer({ groups, zones, onCreated }) {
   );
 }
 
-function PollResults({ poll, groupId, onVoted }) {
+function PollResults({ poll, groupId, onVoted, archived = false }) {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const max = Math.max(1, ...poll.options.map((o) => o.votes));
+  const winner = [...poll.options].sort((a, b) => b.votes - a.votes)[0];
+  const totalVotes = poll.options.reduce((sum, option) => sum + option.votes, 0);
 
   async function vote(optionId) {
     setBusy(true);
@@ -155,30 +157,36 @@ function PollResults({ poll, groupId, onVoted }) {
   }
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm">
-          {poll.expired ? "Vote closed" : "Vote open"} · {new Date(poll.created_at).toLocaleDateString()}
-        </CardTitle>
-        {!poll.expired && (
+    <Card className={`group-poll-card${archived ? " archived" : ""}`}>
+      <CardHeader className="group-poll-header flex-row items-center justify-between pb-2">
+        <div>
+          <span className={`poll-status ${poll.expired || archived ? "closed" : "open"}`}>{poll.expired || archived ? "Archived" : "Open now"}</span>
+          <CardTitle className="mt-1 text-base">
+            {archived && winner ? `${winner.venue?.name || "Vote"} led` : "Where are we going?"}
+          </CardTitle>
+          <p>{new Date(poll.created_at).toLocaleDateString()} · {totalVotes} vote{totalVotes === 1 ? "" : "s"}</p>
+        </div>
+        {!archived && !poll.expired && (
           <Button size="sm" variant="outline" onClick={shareLink}>
-            <Share2 className="h-3.5 w-3.5" /> {copied ? "Copied!" : "Share link"}
+            <Share2 className="h-3.5 w-3.5" /> {copied ? "Copied!" : "Share"}
           </Button>
         )}
       </CardHeader>
-      <CardContent className="space-y-2 pt-0">
+      <CardContent className="group-poll-options space-y-2 pt-0">
         {poll.options.map((o) => (
-          <div key={o.optionId} className="vote-option rounded-xl border p-3">
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span>{o.venue?.name}</span>
-              <span>{o.votes} vote{o.votes === 1 ? "" : "s"}</span>
+          <div key={o.optionId} className={`vote-option${poll.myVote?.option_id === o.optionId ? " my-vote" : ""}`}>
+            <div className="vote-option-copy">
+              <div className="flex items-center justify-between gap-3 text-sm font-semibold">
+                <span>{o.venue?.name}</span>
+                <span className="vote-count">{o.votes}</span>
+              </div>
+              <div className="result-bar" aria-label={`${o.votes} vote${o.votes === 1 ? "" : "s"}`}>
+                <div className={`result-fill${o.votes === max && o.votes > 0 ? " lead" : ""}`} style={{ width: `${(o.votes / max) * 100}%` }} />
+              </div>
             </div>
-            <div className="result-bar">
-              <div className={`result-fill${o.votes === max && o.votes > 0 ? " lead" : ""}`} style={{ width: `${(o.votes / max) * 100}%` }} />
-            </div>
-            {!poll.expired && (
-              <Button size="sm" variant={poll.myVote?.option_id === o.optionId ? "default" : "outline"} className="mt-2 w-full" disabled={busy} onClick={() => vote(o.optionId)}>
-                {poll.myVote?.option_id === o.optionId ? "Voted ✓" : "Vote"}
+            {!archived && !poll.expired && (
+              <Button size="sm" variant={poll.myVote?.option_id === o.optionId ? "default" : "outline"} disabled={busy} onClick={() => vote(o.optionId)}>
+                {poll.myVote?.option_id === o.optionId ? "Voted" : "Vote"}
               </Button>
             )}
           </div>
@@ -270,9 +278,12 @@ function MembersManager({ groupId, members, creatorId, currentUserId, onChanged 
 
 export default function GroupDetailClient({ groupId, group, members: initialMembers, taxonomy, currentUserId }) {
   const [members, setMembers] = useState(initialMembers);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(null);
   const [text, setText] = useState("");
-  const [polls, setPolls] = useState([]);
+  const [polls, setPolls] = useState(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [sendBusy, setSendBusy] = useState(false);
+  const [chatError, setChatError] = useState(null);
   const bottomRef = useRef(null);
 
   const loadMembers = useCallback(async () => {
@@ -312,20 +323,47 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
   }, [groupId, loadMessages]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+    if (messages?.length) bottomRef.current?.scrollIntoView({ behavior: "auto" });
+  }, [messages?.length]);
 
   async function send() {
     const body = text.trim();
-    if (!body) return;
+    if (!body || sendBusy) return;
+    const optimisticId = `pending-${Date.now()}`;
+    const currentMember = members.find((member) => member.id === currentUserId);
+    const optimisticMessage = {
+      id: optimisticId,
+      body,
+      user_id: currentUserId,
+      created_at: new Date().toISOString(),
+      profile_public: currentMember || null,
+    };
     setText("");
-    await fetch(`/api/groups/${groupId}/messages`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body }),
-    });
-    loadMessages();
+    setChatError(null);
+    setSendBusy(true);
+    setMessages((current) => [...(current || []), optimisticMessage]);
+    try {
+      const response = await fetch(`/api/groups/${groupId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Message failed to send");
+      setMessages((current) => (current || []).map((message) => (
+        message.id === optimisticId ? { ...data.message, profile_public: currentMember || null } : message
+      )));
+    } catch (error) {
+      setMessages((current) => (current || []).filter((message) => message.id !== optimisticId));
+      setText(body);
+      setChatError(error.message);
+    } finally {
+      setSendBusy(false);
+    }
   }
+
+  const currentPoll = polls?.find((poll) => !poll.expired) || null;
+  const archivedPolls = (polls || []).filter((poll) => poll.id !== currentPoll?.id);
 
   return (
     <div className="social-stack group-detail-view space-y-5">
@@ -348,42 +386,85 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
         <MembersManager groupId={groupId} members={members} creatorId={group.created_by} currentUserId={currentUserId} onChanged={loadMembers} />
       </div>
 
-      <PollComposer groups={taxonomy.groups} zones={taxonomy.zones} onCreated={{ groupId, refresh: loadPolls }} />
-
-      <AnimatePresence>
-        {polls.map((p) => (
-          <motion.div key={p.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <PollResults poll={p} groupId={groupId} onVoted={loadPolls} />
-          </motion.div>
-        ))}
-      </AnimatePresence>
+      <section className="group-current-vote" aria-labelledby="current-vote-heading">
+        <div className="group-section-heading">
+          <div>
+            <span>Decision</span>
+            <h2 id="current-vote-heading">Current vote</h2>
+          </div>
+          {archivedPolls.length > 0 && (
+            <button
+              type="button"
+              className="vote-archive-button"
+              aria-expanded={archiveOpen}
+              aria-controls="vote-archive"
+              onClick={() => setArchiveOpen((open) => !open)}
+            >
+              <Archive className="h-4 w-4" /> {archivedPolls.length} old <ChevronDown className={`h-3.5 w-3.5 ${archiveOpen ? "rotate-180" : ""}`} />
+            </button>
+          )}
+        </div>
+        {polls === null && <div className="group-loading-card">Loading the latest vote…</div>}
+        {polls !== null && currentPoll && <PollResults poll={currentPoll} groupId={groupId} onVoted={loadPolls} />}
+        {polls !== null && !currentPoll && (
+          <div className="group-empty-vote">
+            <Vote className="h-5 w-5" />
+            <span><strong>No vote running</strong><small>Start one and settle the plan here.</small></span>
+          </div>
+        )}
+        {polls !== null && <PollComposer groups={taxonomy.groups} zones={taxonomy.zones} onCreated={{ groupId, refresh: loadPolls }} hasCurrent={!!currentPoll} />}
+      </section>
 
       <Card className="group-chat">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Chat</CardTitle>
+        <CardHeader className="group-chat-header pb-2">
+          <div>
+            <span>Conversation</span>
+            <CardTitle className="text-base">Group chat</CardTitle>
+          </div>
+          <small>{members.length} member{members.length === 1 ? "" : "s"}</small>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="mb-3 flex max-h-96 flex-col gap-2 overflow-y-auto">
-            {!messages.length && <p className="text-sm text-muted-foreground">No messages yet, say hi.</p>}
-            {messages.map((m) => (
-              <MessageBubble key={m.id} msg={m} mine={m.user_id === currentUserId} />
+          <div className="group-chat-log" aria-live="polite">
+            {messages === null && <p className="text-sm text-muted-foreground">Loading messages…</p>}
+            {messages?.length === 0 && <p className="text-sm text-muted-foreground">No messages yet—say hi.</p>}
+            {messages?.map((m, index) => (
+              <div className="message-entry" key={m.id}>
+                {(index === 0 || new Date(messages[index - 1].created_at).toDateString() !== new Date(m.created_at).toDateString()) && (
+                  <div className="message-day"><span>{new Date(m.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}</span></div>
+                )}
+                <MessageBubble msg={m} mine={m.user_id === currentUserId} />
+              </div>
             ))}
             <div ref={bottomRef} />
           </div>
-          <div className="flex gap-2">
+          {chatError && <div className="group-chat-error" role="alert">{chatError}</div>}
+          <form className="group-chat-composer" onSubmit={(event) => { event.preventDefault(); send(); }}>
             <Input
               placeholder="Message the group…"
               maxLength={1000}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && send()}
             />
-            <Button size="icon" onClick={send} disabled={!text.trim()}>
-              <Send className="h-4 w-4" />
+            <Button type="submit" size="icon" aria-label="Send message" disabled={!text.trim() || sendBusy}>
+              {sendBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
-          </div>
+          </form>
         </CardContent>
       </Card>
+
+      {archiveOpen && archivedPolls.length > 0 && (
+        <section id="vote-archive" className="vote-archive app-reveal" aria-labelledby="vote-archive-heading">
+          <div className="group-section-heading">
+            <div>
+              <span>History</span>
+              <h2 id="vote-archive-heading">Vote archive</h2>
+            </div>
+          </div>
+          <div className="vote-archive-list">
+            {archivedPolls.map((poll) => <PollResults key={poll.id} poll={poll} groupId={groupId} onVoted={loadPolls} archived />)}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

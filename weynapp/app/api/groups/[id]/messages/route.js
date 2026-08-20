@@ -15,11 +15,11 @@ export async function GET(req, { params }) {
     .from("group_messages")
     .select("id, body, user_id, created_at")
     .eq("group_id", id)
-    .order("created_at", { ascending: true })
-    .limit(200);
+    .order("created_at", { ascending: false })
+    .limit(100);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const messages = data || [];
+  const messages = (data || []).reverse();
   const authorIds = [...new Set(messages.map((m) => m.user_id))];
   const s = db();
   const { data: authors } = authorIds.length
@@ -42,7 +42,12 @@ export async function POST(req, { params }) {
   const trimmed = (body || "").trim().slice(0, 1000);
   if (!trimmed) return NextResponse.json({ error: "Say something first" }, { status: 400 });
 
-  const { error } = await supabase.from("group_messages").insert({ group_id: id, user_id: user.id, body: trimmed });
+  const { data: message, error } = await supabase
+    .from("group_messages")
+    .insert({ group_id: id, user_id: user.id, body: trimmed })
+    .select("id, body, user_id, created_at")
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, message });
 }
+

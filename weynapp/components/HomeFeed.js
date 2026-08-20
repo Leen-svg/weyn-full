@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import PostComposer from "./PostComposer";
 import PostCard from "./PostCard";
 
-export default function HomeFeed({ isLoggedIn }) {
+export default function HomeFeed({ isLoggedIn, initialPosts = [] }) {
   const [scope, setScope] = useState("public");
-  const [posts, setPosts] = useState(null);
+  const [posts, setPosts] = useState(initialPosts);
   const [msg, setMsg] = useState(null);
 
   const load = useCallback(async (s) => {
@@ -15,17 +15,23 @@ export default function HomeFeed({ isLoggedIn }) {
     setPosts(res.ok ? d.posts || [] : []);
   }, []);
 
-  useEffect(() => {
-    load(scope);
-  }, [scope, load]);
+  function changeScope(nextScope) {
+    if (nextScope === "friends" && !isLoggedIn) {
+      window.location.href = "/signup?next=/app";
+      return;
+    }
+    if (nextScope === scope) return;
+    setScope(nextScope);
+    load(nextScope);
+  }
 
   return (
     <div className="home-feed">
       <div className="chips" style={{ marginBottom: 16 }}>
-        <button className={`chip ${scope === "public" ? "sel" : ""}`} onClick={() => setScope("public")}>
+        <button className={`chip ${scope === "public" ? "sel" : ""}`} onClick={() => changeScope("public")}>
           🌍 Public
         </button>
-        <button className={`chip ${scope === "friends" ? "sel" : ""}`} onClick={() => isLoggedIn ? setScope("friends") : (window.location.href = "/signup?next=/app")}>
+        <button className={`chip ${scope === "friends" ? "sel" : ""}`} onClick={() => changeScope("friends")}>
           👋 Friends
         </button>
       </div>

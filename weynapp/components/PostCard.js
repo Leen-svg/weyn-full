@@ -26,7 +26,9 @@ export default function PostCard({ post, isLoggedIn }) {
             <img
               src={safeUrl(post.photo_url)}
               alt=""
-              style={{ marginTop: 8, width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 10, border: "2px solid var(--ink)" }}
+              loading="lazy"
+              decoding="async"
+              style={{ marginTop: 8, width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 14 }}
             />
           )}
           {isLoggedIn && (
@@ -39,3 +41,4 @@ export default function PostCard({ post, isLoggedIn }) {
     </div>
   );
 }
+

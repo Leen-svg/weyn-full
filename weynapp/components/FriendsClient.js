@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { Search, UserPlus, Check, X, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -118,9 +117,8 @@ export default function FriendsClient() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          <AnimatePresence>
-            {results.length > 0 && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2 overflow-hidden">
+          {results.length > 0 && (
+              <div className="app-reveal mt-2 overflow-hidden">
                 {results.map((p) => (
                   <PersonRow
                     key={p.id}
@@ -132,9 +130,8 @@ export default function FriendsClient() {
                     }
                   />
                 ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+          )}
           {searching && <p className="mt-2 text-xs text-muted-foreground">Searching…</p>}
         </CardContent>
       </Card>

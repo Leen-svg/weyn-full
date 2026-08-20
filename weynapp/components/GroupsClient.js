@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
 import { Users, Plus, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -112,9 +111,8 @@ export default function GroupsClient() {
       {groups === null && <p className="sub">Loading your groups…</p>}
       {groups?.length === 0 && <p className="sub">No groups yet, start one above.</p>}
 
-      <AnimatePresence>
-        {groups?.map((g) => (
-          <motion.div key={g.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+      {groups?.map((g) => (
+          <div className="app-reveal" key={g.id}>
             <Link href={`/groups/${g.id}`}>
               <Card className="transition-colors hover:bg-accent">
                 <CardHeader className="pb-2">
@@ -132,9 +130,8 @@ export default function GroupsClient() {
                 </CardContent>
               </Card>
             </Link>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+          </div>
+      ))}
     </div>
   );
 }

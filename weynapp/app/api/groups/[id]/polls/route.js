@@ -119,6 +119,16 @@ export async function POST(req, { params }) {
   const { error: e2 } = await s.from("group_poll_options").insert(venues.map((v) => ({ poll_id: poll.id, venue_id: v.id })));
   if (e2) return NextResponse.json({ error: e2.message }, { status: 500 });
 
+  // A group has one current decision. Only archive older polls after the new
+  // poll is fully usable, so a failed option insert cannot wipe out the old one.
+  const now = new Date().toISOString();
+  await s
+    .from("group_polls")
+    .update({ expires_at: now })
+    .eq("group_id", id)
+    .neq("id", poll.id)
+    .gt("expires_at", now);
+
   return NextResponse.json({ id: poll.id });
 }
 
