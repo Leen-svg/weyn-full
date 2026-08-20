@@ -9,6 +9,7 @@ export default function AdminTagsZones() {
   const [newTag, setNewTag] = useState({ categoryId: "", displayName: "", subgroup: "" });
   const [newZone, setNewZone] = useState({ name: "", emirate: "Abu Dhabi" });
   const [busy, setBusy] = useState(false);
+  const [tagQuery, setTagQuery] = useState("");
 
   const loadTags = useCallback(async () => {
     const res = await fetch("/api/admin/tags");
@@ -100,18 +101,29 @@ export default function AdminTagsZones() {
             <button className="btn small" disabled={busy} onClick={createTag}>Add tag</button>
           </div>
 
-          {categories.map((c) => (
-            <div key={c.id} className="card">
-              <div className="venue-name" style={{ fontSize: 15 }}>{c.name}</div>
+          <div className="field admin-tag-search">
+            <label htmlFor="admin-tag-filter">Find a tag</label>
+            <input id="admin-tag-filter" type="text" value={tagQuery} onChange={(e) => setTagQuery(e.target.value)} placeholder="Search active and inactive tags…" />
+          </div>
+
+          {categories.map((c) => {
+            const categoryTags = tags.filter((t) => t.category_id === c.id && t.display_name.toLowerCase().includes(tagQuery.trim().toLowerCase()));
+            if (!categoryTags.length) return null;
+            return (
+            <div key={c.id} className="card tag-admin-category">
+              <div className="tag-admin-heading">
+                <div className="venue-name" style={{ fontSize: 17 }}>{c.name}</div>
+                <span>{categoryTags.filter((tag) => tag.is_active).length} active</span>
+              </div>
               <div className="tag-row">
-                {tags.filter((t) => t.category_id === c.id).map((t) => (
-                  <button key={t.id} type="button" className={`chip ${t.is_active ? "sel" : ""}`} disabled={busy} onClick={() => toggleTag(t)} title={t.is_active ? "Click to deactivate" : "Click to activate"}>
-                    {t.display_name}
+                {categoryTags.map((t) => (
+                  <button key={t.id} type="button" className={`chip ${t.is_active ? "sel" : "tag-inactive"}`} disabled={busy} onClick={() => toggleTag(t)} title={t.is_active ? "Click to deactivate" : "Click to activate"}>
+                    {t.display_name}{!t.is_active && <small>Inactive</small>}
                   </button>
                 ))}
               </div>
             </div>
-          ))}
+          )})}
         </>
       )}
 
@@ -147,3 +159,4 @@ export default function AdminTagsZones() {
     </div>
   );
 }
+

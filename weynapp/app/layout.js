@@ -70,7 +70,7 @@ export default function RootLayout({ children }) {
             </Suspense>
           </nav>
         </header>
-        <main className="container app-main">{children}</main>
+        <main className="app-main">{children}</main>
         <Suspense fallback={null}>
           <TabBar />
         </Suspense>
@@ -78,7 +78,7 @@ export default function RootLayout({ children }) {
         <footer>
           <div className="container">
             <span>
-              weyn<span className="q ar">؟</span> · beta · made in Abu Dhabi
+              weyn<span className="q ar">؟</span> · beta · made in the UAE
             </span>
             <div className="links">
               <a href="/">Home</a>
@@ -103,3 +103,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+

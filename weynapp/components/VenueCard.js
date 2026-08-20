@@ -45,7 +45,7 @@ export default function VenueCard({ venue, children, picked }) {
       <div className="venue-cover" style={media.length ? undefined : { background: gradientFor(venue.id) }}>
         {media.length ? (
           <>
-            <div className="venue-media-track" ref={mediaRef} onScroll={trackMedia}>
+            <div className="venue-media-track" ref={mediaRef} onScroll={trackMedia} aria-label={`${venue.name} photos and videos`}>
               {media.map((item, index) => (
                 <div className="venue-media-slide" key={`${item.url}-${index}`}>
                   {item.type === "video" ? (
@@ -61,7 +61,16 @@ export default function VenueCard({ venue, children, picked }) {
                 <button className="venue-media-arrow prev" type="button" aria-label="Previous photo" onClick={() => goToMedia(activeMedia - 1)} disabled={activeMedia === 0}>‹</button>
                 <button className="venue-media-arrow next" type="button" aria-label="Next photo" onClick={() => goToMedia(activeMedia + 1)} disabled={activeMedia === media.length - 1}>›</button>
                 <div className="venue-media-dots" aria-label={`${activeMedia + 1} of ${media.length}`}>
-                  {media.map((_, index) => <span key={index} className={index === activeMedia ? "active" : ""} />)}
+                  {media.map((_, index) => (
+                    <button
+                      type="button"
+                      key={index}
+                      className={index === activeMedia ? "active" : ""}
+                      aria-label={`Show media ${index + 1} of ${media.length}`}
+                      aria-current={index === activeMedia ? "true" : undefined}
+                      onClick={() => goToMedia(index)}
+                    />
+                  ))}
                 </div>
               </>
             )}

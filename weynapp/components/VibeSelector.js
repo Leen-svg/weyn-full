@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import VenueCard from "./VenueCard";
 import VenueActions from "./VenueActions";
@@ -93,6 +93,19 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
   const [err, setErr] = useState(null);
   const [openSections, setOpenSections] = useState(new Set());
   const [cold] = useState(isColdSeason);
+  const sharePanelRef = useRef(null);
+
+  useEffect(() => {
+    if (!share) return;
+    const timer = window.setTimeout(() => {
+      sharePanelRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "center",
+      });
+      sharePanelRef.current?.focus({ preventScroll: true });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [share]);
 
   function toggleSection(id) {
     setOpenSections((prev) => {
@@ -378,9 +391,10 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
                 ))}
               </div>
               <div className="cta-row">
-                <button className="btn block" disabled={loading} onClick={makePoll}>
-                  Make it a group vote 🔗
+                <button className="btn primary block" disabled={loading} onClick={makePoll}>
+                  Create a group vote
                 </button>
+                <p className="group-vote-hint">Then send it straight to one of your Weyn groups or share the link anywhere.</p>
               </div>
             </>
           )}
@@ -388,8 +402,12 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
       )}
 
       {share && (
-        <div className="share-box poll-share-panel" role="region" aria-label="Share group vote">
-          <strong>Poll&apos;s live for 24 hours. Where should it go?</strong>
+        <div ref={sharePanelRef} tabIndex={-1} className="share-box poll-share-panel" role="region" aria-label="Share group vote">
+          <div className="poll-share-heading">
+            <span>Vote created ✓</span>
+            <strong>Share with your Weyn groups</strong>
+            <p>The poll stays live for 24 hours.</p>
+          </div>
           {shareGroups === null && <p className="sub">Loading your recent groups…</p>}
           {shareGroups?.length > 0 && (
             <div className="recent-group-list">
@@ -412,9 +430,15 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
             </div>
           )}
           {isLoggedIn && shareGroups?.length === 0 && <p className="sub">No groups yet. You can still share the link anywhere.</p>}
+          {!isLoggedIn && (
+            <a className="recent-group-button poll-login-row" href="/login?next=/find">
+              <span><b>Log in to share inside Weyn</b><small>Your recent groups will appear here.</small></span>
+              <span>Log in →</span>
+            </a>
+          )}
           <div className="share-link-actions">
-            <button className="btn small primary" type="button" onClick={shareLink}>Share link</button>
-            <button className="btn small ghost" type="button" onClick={() => navigator.clipboard?.writeText(share)}>Copy</button>
+            <button className="btn small" type="button" onClick={shareLink}>Share anywhere</button>
+            <button className="btn small ghost" type="button" onClick={() => navigator.clipboard?.writeText(share)}>Copy link</button>
           </div>
           <details>
             <summary>Show poll link</summary>

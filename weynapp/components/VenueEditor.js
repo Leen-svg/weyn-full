@@ -4,23 +4,34 @@ import { safeUrl } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/client";
 
 const MAX_IMAGE_EDGE = 1600;
+const MAX_COMPRESSED_IMAGE_BYTES = 1.5 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 const EMPTY_VENUE = {
   placeId: "", name: "", neighborhood: "", city: "Abu Dhabi", avg_spend_aed: 0,
   description: "", google_maps_url: "", hero_video_url: "", latitude: null, longitude: null,
+  age_restriction: "all-ages", is_aesthetic: false, is_trending: false,
 };
 
 async function compressImage(file) {
   const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-  canvas.getContext("2d", { alpha: false }).drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const maxSourceEdge = Math.max(bitmap.width, bitmap.height);
+  let targetEdge = MAX_IMAGE_EDGE;
+  let quality = 0.8;
+  let blob;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const scale = Math.min(1, targetEdge / maxSourceEdge);
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.getContext("2d", { alpha: false }).drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    blob = await new Promise((resolve, reject) =>
+      canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Could not compress image")), "image/webp", quality)
+    );
+    if (blob.size <= MAX_COMPRESSED_IMAGE_BYTES) break;
+    targetEdge = Math.round(targetEdge * 0.82);
+    quality = Math.max(0.62, quality - 0.06);
+  }
   bitmap.close();
-  const blob = await new Promise((resolve, reject) =>
-    canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Could not compress image")), "image/webp", 0.78)
-  );
   return new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.webp`, { type: "image/webp" });
 }
 
@@ -200,13 +211,27 @@ export default function VenueEditor() {
               <label>Optional external video URL</label>
               <input type="url" value={newVenue.hero_video_url} onChange={(e) => setNewVenue({ ...newVenue, hero_video_url: e.target.value })} />
             </div>
+            <div className="venue-form-grid">
+              <div className="field">
+                <label>Age access</label>
+                <select value={newVenue.age_restriction} onChange={(e) => setNewVenue({ ...newVenue, age_restriction: e.target.value })}>
+                  <option value="all-ages">All ages</option>
+                  <option value="18-plus">18+</option>
+                  <option value="21-plus">21+</option>
+                </select>
+              </div>
+              <div className="venue-create-options">
+                <label className="toggle-row"><input type="checkbox" checked={newVenue.is_aesthetic} onChange={(e) => setNewVenue({ ...newVenue, is_aesthetic: e.target.checked })} /> Aesthetic spot</label>
+                <label className="toggle-row"><input type="checkbox" checked={newVenue.is_trending} onChange={(e) => setNewVenue({ ...newVenue, is_trending: e.target.checked })} /> Add to Our picks</label>
+              </div>
+            </div>
             <div className="field">
               <label>Tags</label>
               <TagPicker categories={categories} tags={tags} selected={newTagIds} onChange={setNewTagIds} />
             </div>
             <div className="field">
               <label>Photos & videos</label>
-              <p className="venue-media-help">Select several files. Photos are compressed to WebP automatically; videos upload directly to storage.</p>
+              <p className="venue-media-help">Select several files. Every photo is resized, converted to WebP, and compressed below 1.5 MB automatically. Videos upload directly.</p>
               <input type="file" accept="image/*,video/*" multiple onChange={(e) => setNewFiles([...(e.target.files || [])])} />
               {newFiles.length > 0 && <div className="media-upload-status">{newFiles.length} file{newFiles.length === 1 ? "" : "s"} ready</div>}
             </div>
@@ -297,6 +322,8 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
   const [avgSpend, setAvgSpend] = useState(venue.avg_spend_aed ?? 0);
   const [description, setDescription] = useState(venue.description || "");
   const [heroVideo, setHeroVideo] = useState(venue.hero_video_url || "");
+  const [ageRestriction, setAgeRestriction] = useState(venue.age_restriction || "all-ages");
+  const [isAesthetic, setIsAesthetic] = useState(!!venue.is_aesthetic);
   const [media, setMedia] = useState([]);
   const [tagIds, setTagIds] = useState(venue.tag_ids || []);
   const [uploading, setUploading] = useState(false);
@@ -402,10 +429,21 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
         <label>Hero video URL</label>
         <input type="url" value={heroVideo} onChange={(e) => setHeroVideo(e.target.value)} />
       </div>
+      <div className="venue-form-grid">
+        <div className="field">
+          <label>Age access</label>
+          <select value={ageRestriction} onChange={(e) => setAgeRestriction(e.target.value)}>
+            <option value="all-ages">All ages</option>
+            <option value="18-plus">18+</option>
+            <option value="21-plus">21+</option>
+          </select>
+        </div>
+        <label className="toggle-row"><input type="checkbox" checked={isAesthetic} onChange={(e) => setIsAesthetic(e.target.checked)} /> Aesthetic spot</label>
+      </div>
 
       <div className="field">
         <label>Photos & videos</label>
-        <p className="venue-media-help">Select several files at once. Photos are resized to 1600px and compressed to WebP before upload. Videos can be up to 50 MB.</p>
+        <p className="venue-media-help">Select several files at once. Every photo is resized to at most 1600px, converted to WebP, and compressed below 1.5 MB before upload. Videos can be up to 50 MB.</p>
         <div className="media-grid">
           {media.map((m) => (
             <div className="media-thumb" key={m.id}>
@@ -434,6 +472,8 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
             avg_spend_aed: avgSpend,
             description,
             hero_video_url: heroVideo || null,
+            age_restriction: ageRestriction,
+            is_aesthetic: isAesthetic,
           }, tagIds)
         }
       >

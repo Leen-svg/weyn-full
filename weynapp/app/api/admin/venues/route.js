@@ -13,7 +13,7 @@ export async function GET(req) {
 
   let query = s
     .from("venues")
-    .select("id, name, neighborhood, zone_slug, city, avg_spend_aed, hero_video_url, description, is_trending, trending_rank, is_active, venue_tags(tag_id)")
+    .select("id, name, neighborhood, zone_slug, city, avg_spend_aed, hero_video_url, google_maps_url, description, age_restriction, is_aesthetic, is_trending, trending_rank, is_active, venue_tags(tag_id)")
     .order("name")
     .limit(50);
   if (q) query = query.ilike("name", `%${q}%`);
@@ -34,7 +34,7 @@ export async function POST(req) {
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const { name, neighborhood, city, avg_spend_aed, description, google_maps_url, hero_video_url, latitude, longitude, tag_ids } = body;
+  const { name, neighborhood, city, avg_spend_aed, description, google_maps_url, hero_video_url, latitude, longitude, age_restriction, is_aesthetic, is_trending, tag_ids } = body;
   if (!name?.trim()) return NextResponse.json({ error: "name required" }, { status: 400 });
 
   const s = db();
@@ -50,6 +50,11 @@ export async function POST(req) {
       hero_video_url: hero_video_url ? safeUrl(hero_video_url) : null,
       latitude: Number.isFinite(latitude) ? latitude : null,
       longitude: Number.isFinite(longitude) ? longitude : null,
+      age_restriction: ["18-plus", "21-plus"].includes(age_restriction) ? age_restriction : "all-ages",
+      is_aesthetic: !!is_aesthetic,
+      is_trending: !!is_trending,
+      trending_rank: is_trending ? 1 : null,
+      trending_set_at: is_trending ? new Date().toISOString() : null,
       is_active: true,
     })
     .select("id")
@@ -88,6 +93,8 @@ export async function PATCH(req) {
     "is_active",
     "latitude",
     "longitude",
+    "age_restriction",
+    "is_aesthetic",
   ];
   const clean = {};
   for (const k of allowed) if (k in patch) clean[k] = patch[k];

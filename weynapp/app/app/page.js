@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 import { withCovers } from "@/lib/venueMedia";
 import VenueCard from "@/components/VenueCard";
+import VenueActions from "@/components/VenueActions";
 import HomeFeed from "@/components/HomeFeed";
 
 export const dynamic = "force-dynamic";
@@ -49,33 +50,46 @@ export default async function HomePage() {
         </div>
       </header>
 
-      <section className="app-home__feed" aria-label="Community feed">
-        <HomeFeed isLoggedIn={!!user} />
-      </section>
-
       {trending.length > 0 && (
-        <section className="app-home__section">
+        <section className="app-home__section app-home__picks" aria-label="Our picks">
           <div className="app-home__section-header">
-            <h2 className="group-label">🔥 Trending this week</h2>
-            <span>{trending.length} spots</span>
+            <div>
+              <h2>Our picks</h2>
+              <p>Worth leaving the group chat for.</p>
+            </div>
+            <span>Swipe →</span>
           </div>
-          <div className="venue-grid">
+          <div className="venue-rail" aria-label="Scroll through our picks">
             {trending.map((v) => (
-              <VenueCard key={v.id} venue={v} />
+              <VenueCard key={v.id} venue={v}>
+                <VenueActions venue={v} />
+              </VenueCard>
             ))}
           </div>
         </section>
       )}
 
+      <section className="app-home__feed" aria-label="Community feed">
+        <div className="app-home__section-header app-home__feed-heading">
+          <div>
+            <h2>From the community</h2>
+            <p>Fresh opinions from people who actually went.</p>
+          </div>
+        </div>
+        <HomeFeed isLoggedIn={!!user} />
+      </section>
+
       {fresh.length > 0 && (
         <section className="app-home__section">
           <div className="app-home__section-header">
-            <h2 className="group-label">🆕 Just added</h2>
+            <h2 className="group-label">Just added</h2>
             <span>{fresh.length} spots</span>
           </div>
           <div className="venue-grid">
             {fresh.map((v) => (
-              <VenueCard key={v.id} venue={v} />
+              <VenueCard key={v.id} venue={v}>
+                <VenueActions venue={v} />
+              </VenueCard>
             ))}
           </div>
         </section>
@@ -83,3 +97,4 @@ export default async function HomePage() {
     </div>
   );
 }
+
