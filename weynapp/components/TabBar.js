@@ -2,32 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Bookmark, Compass, MapPinned, MessagesSquare, Sparkles } from "lucide-react";
 
-// Mobile bottom tab bar. The floating pill nav at the top cannot hold the
-// section links on a phone without wrapping onto three lines and covering the
-// page heading, so on small screens those links live down here instead, in the
-// same neo-brutalist idiom as the rest of the site.
 const TABS = [
-  { href: "/app", label: "Discover", icon: "✦" },
-  { href: "/find", label: "Find", icon: "📍" },
-  { href: "/groups", label: "Groups", icon: "👥" },
-  { href: "/wishlist", label: "Saved", icon: "💭" },
-  { href: "/rewards", label: "Points", icon: "🏅" },
+  { href: "/app", label: "Discover", Icon: Compass },
+  { href: "/find", label: "Find", Icon: MapPinned },
+  { href: "/groups", label: "Groups", Icon: MessagesSquare },
+  { href: "/wishlist", label: "Saved", Icon: Bookmark },
+  { href: "/rewards", label: "Points", Icon: Sparkles },
 ];
 
 export default function TabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="tabbar" aria-label="Sections">
-      {TABS.map((t) => {
-        const active = pathname === t.href || pathname.startsWith(t.href + "/");
+    <nav className="tabbar" aria-label="App sections">
+      {TABS.map(({ href, label, Icon }) => {
+        const active = pathname === href || pathname.startsWith(href + "/");
         return (
-          <Link key={t.href} href={t.href} className={active ? "tab active" : "tab"} aria-current={active ? "page" : undefined}>
-            <span className="tab-icon" aria-hidden="true">
-              {t.icon}
-            </span>
-            <span className="tab-label">{t.label}</span>
+          <Link key={href} href={href} className={active ? "tab active" : "tab"} aria-current={active ? "page" : undefined}>
+            <span className="tab-icon" aria-hidden="true"><Icon /></span>
+            <span className="tab-label">{label}</span>
           </Link>
         );
       })}

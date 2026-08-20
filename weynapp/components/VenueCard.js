@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { safeUrl } from "@/lib/sanitize";
 
 const PLACEHOLDER_GRADIENTS = [
@@ -15,7 +15,7 @@ function gradientFor(id) {
   return PLACEHOLDER_GRADIENTS[hash];
 }
 
-export default function VenueCard({ venue, children, picked }) {
+export default function VenueCard({ venue, children, picked, priority = false }) {
   const spend = venue.avg_spend_aed === 0 ? "Free entry" : `~${venue.avg_spend_aed} AED pp`;
   const ageLabel = venue.age_restriction === "21-plus" ? "21+" : venue.age_restriction === "18-plus" ? "18+" : null;
   const videoUrl = safeUrl(venue.hero_video_url);
@@ -26,7 +26,7 @@ export default function VenueCard({ venue, children, picked }) {
     .filter((item) => item.url);
   if (!media.length && coverUrl) media.push({ type: "image", url: coverUrl });
   const [activeMedia, setActiveMedia] = useState(0);
-  const mediaRef = useRef(null);
+  const mediaRef = useRef(null);\n  const scrollFrame = useRef(0);\n\n  useEffect(() => () => cancelAnimationFrame(scrollFrame.current), []);
 
   function goToMedia(index) {
     const next = Math.max(0, Math.min(media.length - 1, index));
@@ -35,9 +35,13 @@ export default function VenueCard({ venue, children, picked }) {
   }
 
   function trackMedia() {
-    const node = mediaRef.current;
-    if (!node?.clientWidth) return;
-    setActiveMedia(Math.round(node.scrollLeft / node.clientWidth));
+    if (scrollFrame.current) return;
+    scrollFrame.current = requestAnimationFrame(() => {
+      scrollFrame.current = 0;
+      const node = mediaRef.current;
+      if (!node?.clientWidth) return;
+      setActiveMedia(Math.round(node.scrollLeft / node.clientWidth));
+    });
   }
 
   return (
@@ -51,7 +55,7 @@ export default function VenueCard({ venue, children, picked }) {
                   {item.type === "video" ? (
                     <video src={item.url} controls playsInline preload="none" aria-label={`${venue.name} video ${index + 1}`} />
                   ) : (
-                    <img src={item.url} alt={`${venue.name} photo ${index + 1}`} loading="lazy" decoding="async" />
+                    <img\n                      src={item.url}\n                      alt={`${venue.name} photo ${index + 1}`}\n                      width="720"\n                      height="405"\n                      loading={priority && index === 0 ? "eager" : "lazy"}\n                      fetchPriority={priority && index === 0 ? "high" : "auto"}\n                      decoding="async"\n                    />
                   )}
                 </div>
               ))}

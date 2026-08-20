@@ -68,7 +68,7 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
     try {
       let photoUrl = null;
       if (photoFile) {
-        const supabase = createClient();
+        const { createClient } = await import("@/lib/supabase/client");\n        const supabase = createClient();
         const {
           data: { user },
         } = await supabase.auth.getUser();
