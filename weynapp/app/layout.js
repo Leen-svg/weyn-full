@@ -29,7 +29,7 @@ const DESC =
   "Pick the mood and budget, get three curated Abu Dhabi spots, then send them to the group for a quick vote.";
 
 export const metadata = {
-  metadataBase: new URL("https://goweyn.com"),
+  metadataBase: new URL("https://www.goweyn.com"),
   title: { default: TITLE, template: "%s · Weyn" },
   description: DESC,
   applicationName: "Weyn",
@@ -47,10 +47,10 @@ export const metadata = {
   publisher: "Weyn",
   manifest: "/manifest.webmanifest",
   formatDetection: { email: false, address: false, telephone: false },
-  robots: { index: true, follow: true, "max-image-preview": "large" },
+  robots: { index: false, follow: false, nocache: true },
   icons: {
-    icon: [{ url: "/app-icon.svg", type: "image/svg+xml" }],
-    shortcut: "/app-icon.svg",
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    shortcut: "/favicon.svg",
     apple: "/apple-touch-icon.png",
   },
   appleWebApp: {
@@ -62,13 +62,12 @@ export const metadata = {
     type: "website",
     siteName: "Weyn",
     locale: "en_AE",
-    url: "https://goweyn.com/app",
+    url: "https://www.goweyn.com/app",
     title: TITLE,
     description: DESC,
     images: [{ url: "/og.png", width: 800, height: 420, alt: "Weyn — bringing the social back to going out." }],
   },
   twitter: { card: "summary_large_image", title: TITLE, description: DESC, images: ["/og.png"] },
-  alternates: { canonical: "/app" },
 };
 
 export const viewport = {
@@ -124,3 +123,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
