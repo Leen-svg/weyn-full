@@ -1,8 +1,13 @@
 import { db } from "@/lib/db";
 import CreatorForm from "@/components/CreatorForm";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Creators, Weyn" };
+export const metadata = pageMetadata({
+  title: "Abu Dhabi Creators",
+  description: "Submit your Abu Dhabi place video to Weyn. Featured creators are credited on the venue card with a direct link to their TikTok.",
+  path: "/creators",
+});
 
 async function loadVenues() {
   try {
@@ -32,3 +37,4 @@ export default async function CreatorsPage() {
     </>
   );
 }
+
