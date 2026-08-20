@@ -4,7 +4,7 @@ import { safeUrl } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/client";
 
 const MAX_IMAGE_EDGE = 1600;
-const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 const EMPTY_VENUE = {
   placeId: "", name: "", neighborhood: "", city: "Abu Dhabi", avg_spend_aed: 0,
   description: "", google_maps_url: "", hero_video_url: "", latitude: null, longitude: null,
@@ -26,7 +26,7 @@ async function compressImage(file) {
 
 async function uploadVenueFile(venueId, source) {
   if (!source.type.startsWith("image/") && !source.type.startsWith("video/")) throw new Error(`${source.name} is not an image or video`);
-  if (source.type.startsWith("video/") && source.size > MAX_VIDEO_BYTES) throw new Error(`${source.name} is larger than 100 MB`);
+  if (source.type.startsWith("video/") && source.size > MAX_VIDEO_BYTES) throw new Error(`${source.name} is larger than 50 MB`);
   const file = source.type.startsWith("image/") ? await compressImage(source) : source;
   const signRes = await fetch("/api/admin/venues/media", {
     method: "POST",
@@ -405,7 +405,7 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
 
       <div className="field">
         <label>Photos & videos</label>
-        <p className="venue-media-help">Select several files at once. Photos are resized to 1600px and compressed to WebP before upload. Videos can be up to 100 MB.</p>
+        <p className="venue-media-help">Select several files at once. Photos are resized to 1600px and compressed to WebP before upload. Videos can be up to 50 MB.</p>
         <div className="media-grid">
           {media.map((m) => (
             <div className="media-thumb" key={m.id}>
