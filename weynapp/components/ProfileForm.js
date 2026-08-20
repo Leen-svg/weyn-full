@@ -97,7 +97,8 @@ export default function ProfileForm({ initial, groups }) {
         share_activity_with_friends: shareActivity,
       })
       .eq("id", user.id);
-    if (error) setErr(error.message);
+    if (error?.code === "23505") setErr("That username is already taken.");
+    else if (error) setErr(error.message);
     else setMsg("Saved.");
     setBusy(false);
   }

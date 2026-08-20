@@ -714,6 +714,40 @@ input:focus, select:focus, textarea:focus {
 .group-share-error { padding: 10px 12px; border-radius: 12px; background: var(--pink-wash); color: var(--ink); font-size: 12px; font-weight: 700; }
 @keyframes share-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 
+.onboarding-shell {
+  min-height: calc(100vh - 240px);
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  padding-block: 28px 48px;
+}
+.onboarding-kicker {
+  color: var(--purple-deep);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .9px;
+  text-align: center;
+  text-transform: uppercase;
+}
+.onboarding-card {
+  width: min(100%, 520px);
+  margin-inline: auto;
+  border: 0 !important;
+  box-shadow: 0 20px 56px rgba(31,48,68,.12) !important;
+}
+.username-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.username-field > span {
+  color: var(--purple-deep);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+}
+
 @media (max-width: 640px) {
   :root { --app-reading-width: 100%; }
   .app-shell .nav {

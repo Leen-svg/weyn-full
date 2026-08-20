@@ -25,20 +25,29 @@ export default function AuthForm({ mode }) {
     const supabase = createClient();
 
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
       });
       if (error) setErr(error.message);
+      else if (data.session) {
+        router.push(`/onboarding?next=${encodeURIComponent(next)}`);
+        router.refresh();
+      }
       else {
-        setNotice("Check your email to confirm your account, then you're in, with 200 points waiting.");
+        setNotice("Check your email to confirm your account. Then you'll choose your unique username.");
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setErr(error.message);
       else {
-        router.push(next);
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: profile } = user
+          ? await supabase.from("profile_public").select("display_name").eq("id", user.id).maybeSingle()
+          : { data: null };
+        const hasUsername = /^[a-z0-9_]{3,24}$/.test(profile?.display_name || "");
+        router.push(hasUsername ? next : `/onboarding?next=${encodeURIComponent(next)}`);
         router.refresh();
       }
     }
