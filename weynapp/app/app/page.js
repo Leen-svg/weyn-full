@@ -7,12 +7,14 @@ import { withCovers } from "@/lib/venueMedia";
 import VenueCard from "@/components/VenueCard";
 import VenueActions from "@/components/VenueActions";
 import HomeFeed from "@/components/HomeFeed";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata = {
-  title: "Discover",
-  description: "See Weyn's latest Abu Dhabi picks and fresh community recommendations.",
-};
+export const metadata = pageMetadata({
+  title: "Abu Dhabi Places to Try Today",
+  description: "Discover curated Abu Dhabi restaurants, cafes, activities, and hidden gems. Save favorites, read ratings, and find a plan your group will love.",
+  path: "/app",
+});
 
 async function getHomeVenues() {
   const s = db();
