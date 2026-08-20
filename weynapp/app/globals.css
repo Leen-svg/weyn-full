@@ -295,7 +295,7 @@ input:focus, select:focus, textarea:focus {
    ============================================================ */
 .tabbar { display: none; }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .nav-links .nav-section { display: none; }
   .nav { padding: 8px 10px 8px 18px; }
   main.container { padding-top: 92px; padding-bottom: 96px; }
@@ -344,6 +344,177 @@ input:focus, select:focus, textarea:focus {
 @media(max-width:520px){#ckbar{bottom:10px;padding:13px 15px}#ckbar button{width:100%}}
 
 /* the mobile tab bar owns the bottom of the screen, lift the cookie notice above it */
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   #ckbar { bottom: calc(84px + env(safe-area-inset-bottom)); }
+}
+
+
+/* ============================================================
+   APP SHELL ALIGNMENT + USABILITY PASS
+   This stylesheet is loaded only by the Next.js beta app. The
+   static marketing site under public/ does not load these rules.
+   ============================================================ */
+:root {
+  --app-reading-width: 700px;
+  --app-nav-width: 960px;
+}
+
+/* One calm reading axis across product screens. Admin can opt into .wide. */
+.app-main {
+  width: 100%;
+  max-width: var(--app-reading-width);
+  padding-top: 104px;
+  padding-bottom: 76px;
+}
+.app-main.wide { max-width: 980px; }
+
+/* Product screens are continuous flows, not 100px-padded marketing sections. */
+.app-main section { padding: 0; }
+.app-main > section + section { margin-top: 40px; }
+
+/* Product type hierarchy: strong, but not billboard-sized on laptops. */
+.app-main h1 {
+  font-size: clamp(38px, 4.4vw, 52px);
+  line-height: 1.04;
+  letter-spacing: -1.5px;
+  margin-bottom: 12px;
+}
+.app-main h2:not(.group-label) {
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.12;
+  letter-spacing: -1px;
+}
+.app-main .sub {
+  max-width: 52ch;
+  line-height: 1.55;
+  margin-bottom: 24px;
+}
+.mark { color: var(--pink); }
+
+/* Navigation now exposes the same five core destinations as the tab bar. */
+.app-shell .nav {
+  width: min(var(--app-nav-width), calc(100% - 32px));
+}
+.primary-nav {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.primary-nav .nav-section {
+  padding: 7px 10px;
+  border-radius: var(--radius-pill);
+  line-height: 1;
+}
+.primary-nav .nav-section:hover {
+  background: var(--sky-wash);
+  text-decoration: none;
+}
+.primary-nav .nav-section.active {
+  background: var(--yellow);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.app-shell footer .container { max-width: var(--app-nav-width); }
+
+/* Consistent density across legacy cards and newer component primitives. */
+.app-main .card {
+  padding: 24px;
+}
+.app-main .card.compact {
+  padding: 16px;
+  margin-bottom: 14px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop-sm);
+}
+.app-main .tag-group-card,
+.app-main .details-card {
+  padding: 18px;
+}
+.app-main .cta-row {
+  align-items: center;
+  margin-top: 22px;
+}
+
+/* Laptop cards stay compact; phones get a readable single column. */
+.app-main .venue-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.app-main .venue-card-body { padding: 14px; }
+.app-main .venue-cover { aspect-ratio: 16 / 9; }
+
+/* Interactive elements should feel equally clickable everywhere. */
+.app-main .chip { min-height: 40px; }
+.app-main .btn.small { min-height: 40px; }
+.app-main input:not([type="checkbox"]):not([type="radio"]),
+.app-main select,
+.app-main textarea {
+  min-height: 44px;
+}
+.app-shell :is(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: 3px;
+}
+
+/* /app homepage: remove inherited nested spacing and align its sections. */
+.app-home {
+  width: 100%;
+  margin: 0 auto;
+}
+.app-home__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 24px;
+  padding-bottom: 28px;
+  border-bottom: 2px solid rgba(31, 48, 68, .14);
+}
+.app-home__hero .sub,
+.app-home__hero .cta-row { margin-bottom: 0; }
+.app-home__hero .cta-row { margin-top: 0; }
+.app-home__feed { margin-top: 28px !important; }
+.app-home__feed > div { margin-top: 0 !important; }
+.app-home__section { margin-top: 38px !important; }
+.app-home__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.app-home__section-header .group-label { margin: 0; }
+.app-home__section-header > span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* At small-laptop/tablet widths the uncluttered top bar and bottom tabs win. */
+@media (max-width: 900px) {
+  .primary-nav { display: none; }
+  .app-main {
+    padding-top: 92px;
+    padding-bottom: 104px;
+  }
+}
+
+@media (max-width: 700px) {
+  .app-main { padding-inline: 18px; }
+  .app-main h1 { font-size: clamp(34px, 10vw, 44px); }
+  .app-main .card { padding: 20px; }
+
+  .app-home__hero {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 18px;
+    padding-bottom: 24px;
+  }
+  .app-home__hero .cta-row,
+  .app-home__hero .btn { width: 100%; }
+}
+
+@media (max-width: 560px) {
+  .app-main .venue-grid { grid-template-columns: 1fr; }
+  .app-main .chip { min-height: 44px; }
+  .app-home__section { margin-top: 32px !important; }
+  .app-home__section-header > span { display: none; }
 }
