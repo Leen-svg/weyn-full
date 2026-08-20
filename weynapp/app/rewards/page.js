@@ -3,8 +3,12 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { privatePageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Rewards, Weyn" };
+export const metadata = privatePageMetadata({
+  title: "Your Weyn Points",
+  description: "Track the points you earn for useful ratings, group votes, and approved community contributions.",
+});
 
 const REASON_LABEL = {
   signup_bonus: "Joined weyn",
