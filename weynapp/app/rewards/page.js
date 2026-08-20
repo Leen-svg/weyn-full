@@ -19,15 +19,14 @@ const REASON_LABEL = {
 };
 
 const CATEGORIES = [
-  { emoji: "🏅", label: "New place", body: "Rate somewhere you haven't been before." },
-  { emoji: "👋", label: "New people", body: "Add friends and go with them." },
-  { emoji: "⭐", label: "Rate it", body: "Leave a rating after you go." },
+  { emoji: "⭐", label: "Rate a place", body: "Your first rating for each place earns 15 points." },
+  { emoji: "👋", label: "New people", body: "Vote in a group poll with someone new for 5 points, once per person and up to 3 times a day." },
   { emoji: "📣", label: "Share it", body: "Send a poll to the group." },
 ];
 
 const EARN_MORE = [
-  { emoji: "📍", label: "Add a spot", body: "Know somewhere we're missing? Submit it for review.", href: "/submit", pts: "+10" },
-  { emoji: "🏷️", label: "Rate our tags", body: "Tell us if a place's vibe tags are off.", href: "/rate", pts: "+5" },
+  { emoji: "📍", label: "Add a spot", body: "Submit a missing place. You earn points after it is approved.", href: "/submit", pts: "+10" },
+  { emoji: "🏷️", label: "Rate our tags", body: "Suggest a tag correction. You earn points after it is approved.", href: "/rate", pts: "+5" },
   { emoji: "🎬", label: "Creators", body: "Got a video for a spot? Get featured and credited.", href: "/creators", pts: "" },
 ];
 
@@ -118,3 +117,4 @@ export default async function RewardsPage() {
     </>
   );
 }
+
