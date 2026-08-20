@@ -24,6 +24,22 @@ const CITIES = [
 ];
 
 const GUEST_TRIAL_LIMIT = 4;
+const NEARBY_RADIUS_KM = 15;
+const CITY_CENTERS = [
+  { name: "Abu Dhabi", lat: 24.4539, lng: 54.3773 },
+  { name: "Dubai", lat: 25.2048, lng: 55.2708 },
+];
+
+function distanceSquared(lat, lng, center) {
+  const latitudeScale = Math.cos((lat * Math.PI) / 180);
+  return (lat - center.lat) ** 2 + ((lng - center.lng) * latitudeScale) ** 2;
+}
+
+function nearestSupportedCity(lat, lng) {
+  return CITY_CENTERS.reduce((nearest, center) =>
+    distanceSquared(lat, lng, center) < distanceSquared(lat, lng, nearest) ? center : nearest
+  ).name;
+}
 
 function isColdSeason() {
   const m = new Date().getMonth() + 1; // 1-12
@@ -93,6 +109,9 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
   const [err, setErr] = useState(null);
   const [openSections, setOpenSections] = useState(new Set());
   const [cold] = useState(isColdSeason);
+  const [nearby, setNearby] = useState(null);
+  const [locationState, setLocationState] = useState("idle");
+  const [locationMessage, setLocationMessage] = useState("Suggestions anywhere in the selected city.");
   const sharePanelRef = useRef(null);
 
   useEffect(() => {
@@ -120,6 +139,52 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
     setCity(c);
     setSelectedZones([]);
     setResults(null);
+  }
+
+  function toggleNearby() {
+    if (locationState === "active") {
+      setNearby(null);
+      setLocationState("idle");
+      setLocationMessage("Suggestions anywhere in the selected city.");
+      setResults(null);
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setLocationState("error");
+      setLocationMessage("Location is not supported by this browser. Choose a city or zone instead.");
+      return;
+    }
+
+    setLocationState("loading");
+    setLocationMessage("Finding your location…");
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const nextNearby = {
+          lat: coords.latitude,
+          lng: coords.longitude,
+          radiusKm: NEARBY_RADIUS_KM,
+        };
+        setNearby(nextNearby);
+        setCity(nearestSupportedCity(coords.latitude, coords.longitude));
+        setSelectedZones([]);
+        setResults(null);
+        setLocationState("active");
+        setLocationMessage(`Near me is on, Weyn will only suggest mapped spots within ${NEARBY_RADIUS_KM} km.`);
+      },
+      (error) => {
+        setNearby(null);
+        setLocationState("error");
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationMessage("Location access is blocked. Allow it in your browser settings, then try again.");
+        } else if (error.code === error.TIMEOUT) {
+          setLocationMessage("Location took too long. Move somewhere with a clearer signal and retry.");
+        } else {
+          setLocationMessage("We couldn't find your location. Try again or choose a city or zone.");
+        }
+      },
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 },
+    );
   }
 
   function toggleZone(slug) {
@@ -164,6 +229,7 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
         body: JSON.stringify({
           tags: allTags, maxSpend: budget, aestheticOnly: aesthetic, maxAge, city,
           zones: selectedZones.length ? selectedZones : null,
+          nearby,
         }),
       });
       const data = await res.json();
@@ -233,6 +299,38 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
 
   return (
     <div>
+      <h2 className="group-label">Location</h2>
+      <div className="details-card">
+        <div className="details-row">
+          <div>
+            <strong>Keep suggestions close</strong>
+            <p className="sub" style={{ margin: "4px 0 0", fontSize: 13 }}>
+              Share your location only when you press the button.
+            </p>
+          </div>
+          <button
+            type="button"
+            className={`btn small ${locationState === "active" ? "primary" : "ghost"}`}
+            aria-pressed={locationState === "active"}
+            disabled={locationState === "loading"}
+            onClick={toggleNearby}
+          >
+            {locationState === "loading" ? "Locating…" : locationState === "active" ? "Near me on ✓" : "Near me"}
+          </button>
+        </div>
+        <p
+          className="sub"
+          role={locationState === "error" ? "alert" : "status"}
+          style={{
+            margin: "12px 0 0",
+            fontSize: 13,
+            color: locationState === "error" ? "#c72f55" : undefined,
+          }}
+        >
+          {locationMessage}
+        </p>
+      </div>
+
       <h2 className="group-label">City</h2>
       <div className="city-picker">
         {CITIES.map((c) => (
@@ -449,4 +547,6 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
     </div>
   );
 }
+
+
 

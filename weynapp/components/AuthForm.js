@@ -4,6 +4,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "./PasswordInput";
 
+const AUTH_ERRORS = {
+  auth: "We couldn't complete sign-in. Please try again.",
+  confirmation_failed:
+    "This confirmation link is invalid or has expired. Please create your account again to receive a fresh link.",
+};
+
 export default function AuthForm({ mode }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -13,7 +19,7 @@ export default function AuthForm({ mode }) {
   const [password, setPassword] = useState("");
   const [website, setWebsite] = useState(""); // honeypot, real users never see or fill this
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState(null);
+  const [err, setErr] = useState(() => AUTH_ERRORS[params.get("error")] || null);
   const [notice, setNotice] = useState(null);
 
   async function submit(e) {
