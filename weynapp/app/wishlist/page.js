@@ -24,8 +24,9 @@ export default async function WishlistPage() {
 
   return (
     <>
-      <h1>Your wishlist</h1>
-      <p className="sub">Spots you&apos;ve saved to try.</p>
+      <span className="eyebrow">Private by default</span>
+      <h1>Want to try</h1>
+      <p className="sub">Your saved places, together on one map.</p>
       <WishlistClient initialVenues={venues} />
     </>
   );

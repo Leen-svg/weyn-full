@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState, useEffect } from "react";
 import { safeUrl } from "@/lib/sanitize";
+import MapChooser from "./MapChooser";
 
 function getFingerprint() {
   let fp = localStorage.getItem("weyn_fp");
@@ -65,7 +66,7 @@ export default function RateClient({ venues, allTags }) {
         </div>
         <div className="venue-links" style={{ marginBottom: 14 }}>
           {safeUrl(venue.hero_video_url) && <a className="btn small ghost" href={safeUrl(venue.hero_video_url)} target="_blank" rel="noreferrer">▶ Watch</a>}
-          {safeUrl(venue.google_maps_url) && <a className="btn small ghost" href={safeUrl(venue.google_maps_url)} target="_blank" rel="noreferrer">📍 Maps</a>}
+          <MapChooser venue={venue} compact />
         </div>
 
         <h2 className="group-label">Tagged as</h2>

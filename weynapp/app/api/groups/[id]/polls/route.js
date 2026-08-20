@@ -24,7 +24,7 @@ async function shapePolls(supabase, groupId, currentUserId) {
   const { data: venues } = venueIds.length
     ? await s
         .from("venues")
-        .select("id, name, neighborhood, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description")
+        .select("id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description")
         .in("id", venueIds)
     : { data: [] };
   const venuesWithMedia = await withCovers(venues || []);

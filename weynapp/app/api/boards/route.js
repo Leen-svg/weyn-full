@@ -1,0 +1,3 @@
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+export async function POST(req){const s=await createClient();const{data:{user}}=await s.auth.getUser();if(!user)return NextResponse.json({error:"Log in"},{status:401});const b=await req.json();const title=String(b.title||"").trim().slice(0,80);if(!title)return NextResponse.json({error:"Name your board"},{status:400});const{data,error}=await s.from("trip_boards").insert({owner_id:user.id,title,is_public:!!b.isPublic}).select("*").single();return error?NextResponse.json({error:error.message},{status:500}):NextResponse.json({board:data});}

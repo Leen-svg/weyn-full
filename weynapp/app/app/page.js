@@ -21,14 +21,14 @@ async function getHomeVenues() {
   const [{ data: trending }, { data: fresh }] = await Promise.all([
     s
       .from("venues")
-      .select("id, name, neighborhood, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description")
+      .select("id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description")
       .eq("is_active", true)
       .eq("is_trending", true)
       .order("trending_rank", { ascending: true })
       .limit(7),
     s
       .from("venues")
-      .select("id, name, neighborhood, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description")
+      .select("id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description")
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(6),
