@@ -38,6 +38,7 @@ export default function AdminClient() {
 
   const tabs = [
     ["submissions", "New spots", data.submissions.length],
+    ["content", "Content reports", data.contentReports.length],
     ["tags", "Tag disputes", data.disputes.reduce((n, d) => n + d.issues.length, 0)],
     ["videos", "Videos", data.videos.length],
     ["takedowns", "Takedowns", data.takedowns.length],
@@ -84,6 +85,26 @@ export default function AdminClient() {
                 <button className="btn small" disabled={busy} onClick={() => act("submission", s.id, "approve")}>Approve</button>
                 <button className="btn small ghost" disabled={busy} onClick={() => act("submission", s.id, "duplicate")}>Dupe</button>
                 <button className="btn small ghost" disabled={busy} onClick={() => act("submission", s.id, "reject")}>Reject</button>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+
+      {tab === "content" && (
+        data.contentReports.length === 0 ? <p className="sub">No open content reports.</p> :
+        data.contentReports.map((item) => (
+          <div className="card" key={item.key}>
+            <div className="admin-row">
+              <div>
+                <div className="venue-name">{item.count} report{item.count === 1 ? "" : "s"} · {item.contentType}</div>
+                <div className="venue-meta">{item.content?.venues?.name || "Unknown place"} · {item.content?.status || "missing"}</div>
+                <p style={{ fontSize: 14, margin: "8px 0" }}>{item.content?.body || "(No text)"}</p>
+                <div className="mono">Reasons: {item.reasons.join(", ")}</div>
+              </div>
+              <div className="admin-actions">
+                <button className="btn small" disabled={busy} onClick={() => act("content", item.key, "restore")}>Keep / restore</button>
+                <button className="btn small ghost" disabled={busy} onClick={() => act("content", item.key, "remove")}>Remove</button>
               </div>
             </div>
           </div>
@@ -166,3 +187,4 @@ export default function AdminClient() {
     </>
   );
 }
+
