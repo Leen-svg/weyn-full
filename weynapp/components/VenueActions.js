@@ -5,7 +5,6 @@ import { safeUrl } from "@/lib/sanitize";
 import ShareToGroupButton from "./ShareToGroupButton";
 import ReportButton from "./ReportButton";
 
-const STARS = [1, 2, 3, 4, 5];
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
@@ -13,7 +12,9 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
   const [saved, setSaved] = useState(initialSaved);
   const [busy, setBusy] = useState(false);
   const [rateOpen, setRateOpen] = useState(false);
-  const [rating, setRating] = useState(0);
+  const [aestheticTaste, setAestheticTaste] = useState(50);
+  const [quietLoud, setQuietLoud] = useState(50);
+  const [walletSplurge, setWalletSplurge] = useState(50);
   const [body, setBody] = useState("");
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -63,7 +64,7 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
   }
 
   async function submitReview() {
-    if (!rating) return;
+    const rating = Math.max(1, Math.min(5, Math.round((aestheticTaste + (100 - quietLoud) + (100 - walletSplurge)) / 75)));
     setBusy(true);
     setNeedsLogin(false);
     try {
@@ -90,7 +91,7 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venueId: venue.id, rating, body, photoUrl }),
+        body: JSON.stringify({ venueId: venue.id, rating, body, photoUrl, aestheticTaste, quietLoud, walletSplurge }),
       });
       if (res.status === 401) setNeedsLogin(true);
       else if (res.ok) {
@@ -145,18 +146,10 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
 
       {rateOpen && (
         <div style={{ marginTop: 12 }}>
-          <div className="star-row">
-            {STARS.map((n) => (
-              <button
-                key={n}
-                type="button"
-                className={`star ${n <= rating ? "on" : ""}`}
-                onClick={() => setRating(n)}
-                aria-label={`${n} star`}
-              >
-                ★
-              </button>
-            ))}
+          <div className="details-card">
+            <label className="field"><span>Aesthetic ↔ Taste</span><input type="range" min="0" max="100" value={aestheticTaste} onChange={(e) => setAestheticTaste(Number(e.target.value))} /></label>
+            <label className="field"><span>Quiet ↔ Loud</span><input type="range" min="0" max="100" value={quietLoud} onChange={(e) => setQuietLoud(Number(e.target.value))} /></label>
+            <label className="field"><span>Wallet-friendly ↔ Splurge</span><input type="range" min="0" max="100" value={walletSplurge} onChange={(e) => setWalletSplurge(Number(e.target.value))} /></label>
           </div>
           <textarea
             placeholder="What was it like? (optional)"
@@ -166,7 +159,7 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
             style={{ marginTop: 8 }}
           />
           <div className="mono" style={{ marginTop: 8 }}>Photos are paused while we add stronger safety checks.</div>
-          <button className="btn small block" style={{ marginTop: 8 }} disabled={busy || !rating} onClick={submitReview}>
+          <button className="btn small block" style={{ marginTop: 8 }} disabled={busy} onClick={submitReview}>
             Submit review
           </button>
         </div>
@@ -182,7 +175,7 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
             <div key={r.id} style={{ borderTop: "1px solid var(--ink)", paddingTop: 8, marginTop: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700 }}>
                 <span>{r.profile_public?.display_name || "Someone"}</span>
-                <span>{"★".repeat(r.rating)}</span>
+                <span>{r.aesthetic_taste ?? 50}% taste · {r.quiet_loud ?? 50}% loud · {r.wallet_splurge ?? 50}% splurge</span>
               </div>
               {r.body && <p style={{ fontSize: 14, marginTop: 4 }}>{r.body}</p>}
               {safeUrl(r.photo_url) && (

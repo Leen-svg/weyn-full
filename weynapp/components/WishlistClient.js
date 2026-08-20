@@ -29,6 +29,7 @@ export default function WishlistClient({ initialVenues }) {
 
   return (
     <>
+      <a className="btn primary block" href="/plan" style={{ marginBottom: 18 }}>Plan a day · import · share</a>
       <div className="chips" role="group" aria-label="Saved places view" style={{ marginBottom: 18 }}>
         <button type="button" className={`chip ${view === "list" ? "sel" : ""}`} aria-pressed={view === "list"} onClick={() => setView("list")}>List · {venues.length}</button>
         <button type="button" className={`chip ${view === "map" ? "sel" : ""}`} aria-pressed={view === "map"} onClick={() => setView("map")}>Map · {mappedCount}</button>

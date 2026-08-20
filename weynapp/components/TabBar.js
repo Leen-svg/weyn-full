@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bookmark, Compass, MapPinned, MessagesSquare, Sparkles } from "lucide-react";
+import { Bookmark, Compass, MapPinned, MessagesSquare, Route } from "lucide-react";
 
 const TABS = [
   { href: "/app", label: "Discover", Icon: Compass },
   { href: "/find", label: "Find", Icon: MapPinned },
   { href: "/groups", label: "Groups", Icon: MessagesSquare },
   { href: "/wishlist", label: "Saved", Icon: Bookmark },
-  { href: "/rewards", label: "Points", Icon: Sparkles },
+  { href: "/plan", label: "Plan", Icon: Route },
 ];
 
 export default function TabBar() {
