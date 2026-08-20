@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { safeRelativePath } from "@/lib/request-security.mjs";
 
 // OAuth (Google) redirects here with a ?code= to exchange for a session.
 export async function GET(req) {
@@ -7,7 +8,7 @@ export async function GET(req) {
   const code = searchParams.get("code");
   const type = searchParams.get("type");
   const requestedNext = searchParams.get("next") || "/app";
-  const safeNext = requestedNext.startsWith("/") && !requestedNext.startsWith("//") ? requestedNext : "/app";
+  const safeNext = safeRelativePath(requestedNext);
   const next = type === "recovery" ? "/reset-password" : safeNext;
 
   if (code) {

@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { contentAccountError } from "@/lib/content-safety";
+import { payloadTooLarge } from "@/lib/request-security.mjs";
+import { rateLimit } from "@/lib/request-security";
 
 export async function GET() {
   const supabase = await createClient();
@@ -53,17 +56,23 @@ export async function GET() {
 }
 
 export async function POST(req) {
+  if (payloadTooLarge(req, 16 * 1024)) return NextResponse.json({ error: "Request too large" }, { status: 413 });
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Log in to create a group" }, { status: 401 });
+  const accountError = await contentAccountError(user);
+  if (accountError) return NextResponse.json({ error: accountError }, { status: 403 });
+  const limited = await rateLimit(req, "group-create", 10, 24 * 60 * 60, user.id);
+  if (!limited.allowed) return NextResponse.json({ error: "You've reached today's group limit." }, { status: 429 });
 
   const { name, memberIds } = await req.json();
   const trimmed = (name || "").trim().slice(0, 60);
   const ids = Array.isArray(memberIds) ? [...new Set(memberIds)].filter((id) => id !== user.id) : [];
   if (!trimmed) return NextResponse.json({ error: "Give your group a name" }, { status: 400 });
   if (ids.length === 0) return NextResponse.json({ error: "Add at least one friend" }, { status: 400 });
+  if (ids.length > 20) return NextResponse.json({ error: "Groups can include up to 21 people." }, { status: 400 });
 
   // Every added member must be an accepted friend of the creator, checked
   // server-side against the real friendships table, not trusted from the client.
@@ -80,13 +89,16 @@ export async function POST(req) {
 
   const s = db();
   const { data: group, error } = await s.from("friend_groups").insert({ name: trimmed, created_by: user.id }).select("id").single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Couldn't create that group" }, { status: 500 });
 
   const { error: e2 } = await s.from("friend_group_members").insert([
     { group_id: group.id, user_id: user.id },
     ...ids.map((id) => ({ group_id: group.id, user_id: id })),
   ]);
-  if (e2) return NextResponse.json({ error: e2.message }, { status: 500 });
+  if (e2) {
+    await s.from("friend_groups").delete().eq("id", group.id);
+    return NextResponse.json({ error: "Couldn't add those members" }, { status: 500 });
+  }
 
   return NextResponse.json({ id: group.id });
 }

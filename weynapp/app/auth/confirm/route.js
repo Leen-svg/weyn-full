@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { safeRelativePath } from "@/lib/request-security.mjs";
 
 const OTP_TYPES = new Set([
   "email",
@@ -15,10 +16,7 @@ export async function GET(req) {
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type");
   const requestedNext = searchParams.get("next") || "/app";
-  const safeNext =
-    requestedNext.startsWith("/") && !requestedNext.startsWith("//")
-      ? requestedNext
-      : "/app";
+  const safeNext = safeRelativePath(requestedNext);
   const next = type === "recovery" ? "/reset-password" : safeNext;
 
   if (tokenHash && OTP_TYPES.has(type)) {
@@ -55,4 +53,5 @@ export async function GET(req) {
 
   return NextResponse.redirect(`${origin}/login?error=confirmation_failed`);
 }
+
 

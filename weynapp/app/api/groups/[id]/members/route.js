@@ -1,14 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { contentAccountError } from "@/lib/content-safety";
+import { payloadTooLarge } from "@/lib/request-security.mjs";
+import { rateLimit } from "@/lib/request-security";
 
 export async function POST(req, { params }) {
+  if (payloadTooLarge(req, 8 * 1024)) return NextResponse.json({ error: "Request too large" }, { status: 413 });
   const { id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Log in" }, { status: 401 });
+  const accountError = await contentAccountError(user);
+  if (accountError) return NextResponse.json({ error: accountError }, { status: 403 });
+  const limited = await rateLimit(req, "group-member-add", 30, 24 * 60 * 60, user.id);
+  if (!limited.allowed) return NextResponse.json({ error: "Too many member changes. Try again later." }, { status: 429 });
 
   // Only a current member can add people, and only accepted friends of the
   // *actor* can be added, mirrors the group-creation validation.
@@ -27,6 +35,8 @@ export async function POST(req, { params }) {
   if (!friendIds.has(userId)) return NextResponse.json({ error: "You can only add accepted friends" }, { status: 400 });
 
   const s = db();
+  const { count } = await s.from("friend_group_members").select("user_id", { count: "exact", head: true }).eq("group_id", id);
+  if ((count || 0) >= 21) return NextResponse.json({ error: "Groups can include up to 21 people." }, { status: 400 });
   const { error } = await s.from("friend_group_members").insert({ group_id: id, user_id: userId });
   if (error) {
     if (error.code === "23505") return NextResponse.json({ error: "Already in this group" }, { status: 400 });
@@ -63,3 +73,4 @@ export async function DELETE(req, { params }) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
+
