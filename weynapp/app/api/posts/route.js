@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { awardPoints, POINTS } from "@/lib/points";
+import { db } from "@/lib/db";
+import { contentAccountError, utcDayStart, validateCommunityText } from "@/lib/content-safety";
 import { NextResponse } from "next/server";
 
 export async function GET(req) {
@@ -19,6 +20,7 @@ export async function GET(req) {
   let query = supabase
     .from("posts")
     .select("id, body, photo_url, visibility, created_at, user_id, venue_id, venues (id, name, neighborhood)")
+    .eq("status", "published")
     .order("created_at", { ascending: false })
     .limit(30);
 
@@ -44,21 +46,28 @@ export async function POST(req) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Log in to post" }, { status: 401 });
 
+  const accountError = await contentAccountError(user);
+  if (accountError) return NextResponse.json({ error: accountError }, { status: 403 });
+
   const { venueId, body, visibility, photoUrl } = await req.json();
-  const trimmed = (body || "").trim();
-  if (!venueId || !trimmed) return NextResponse.json({ error: "A venue and a note are required" }, { status: 400 });
-  if (trimmed.length > 500) return NextResponse.json({ error: "Keep it under 500 characters" }, { status: 400 });
+  const checked = validateCommunityText(body, { required: true, maxLength: 500 });
+  if (!venueId) return NextResponse.json({ error: "Choose a place first." }, { status: 400 });
+  if (checked.error) return NextResponse.json({ error: checked.error }, { status: 400 });
+  if (photoUrl) return NextResponse.json({ error: "Photo uploads are paused while we add stronger safety checks." }, { status: 400 });
+  const { count } = await db().from("posts").select("id", { count: "exact", head: true })
+    .eq("user_id", user.id).gte("created_at", utcDayStart());
+  if ((count || 0) >= 3) return NextResponse.json({ error: "You've reached today's posting limit." }, { status: 429 });
   const vis = visibility === "friends" ? "friends" : "public";
 
   const { error } = await supabase.from("posts").insert({
     user_id: user.id,
     venue_id: venueId,
-    body: trimmed,
-    photo_url: photoUrl || null,
+    body: checked.text,
+    photo_url: null,
     visibility: vis,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await awardPoints(user.id, POINTS.posted, "posted");
-  return NextResponse.json({ ok: true, pointsEarned: POINTS.posted });
+  return NextResponse.json({ ok: true, pointsEarned: 0 });
 }
+
