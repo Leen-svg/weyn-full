@@ -1,8 +1,13 @@
 import { getTaxonomy } from "@/lib/taxonomy";
 import SubmitForm from "@/components/SubmitForm";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Add a spot, Weyn" };
+export const metadata = pageMetadata({
+  title: "Add an Abu Dhabi Spot",
+  description: "Know an Abu Dhabi restaurant, cafe, activity, or hidden gem Weyn is missing? Submit it for review and help the community discover it.",
+  path: "/submit",
+});
 
 export default async function SubmitPage() {
   const { groups, zones } = await getTaxonomy();
@@ -14,3 +19,4 @@ export default async function SubmitPage() {
     </>
   );
 }
+
