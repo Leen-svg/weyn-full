@@ -126,11 +126,7 @@ export default function PostComposer({ onPosted }) {
             </div>
             <Textarea placeholder="Why do you recommend it?" value={body} maxLength={500} onChange={(e) => setBody(e.target.value)} />
             <div className="flex items-center gap-2">
-              {photoPreview && <img src={photoPreview} alt="" className="h-10 w-10 rounded object-cover" style={{ border: "2px solid var(--ink)" }} />}
-              <label className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground">
-                <ImageIcon className="h-4 w-4" /> Photo
-                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={pickPhoto} className="hidden" />
-              </label>
+              <span className="text-xs text-muted-foreground">Photos are paused while we add stronger safety checks.</span>
               <div className="ml-auto flex gap-1">
                 <button
                   type="button"
@@ -160,4 +156,5 @@ export default function PostComposer({ onPosted }) {
     </Card>
   );
 }
+
 
