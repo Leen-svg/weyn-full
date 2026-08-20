@@ -1,8 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import GroupsClient from "@/components/GroupsClient";
+import { privatePageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Groups, Weyn" };
+export const metadata = privatePageMetadata({
+  title: "Your Groups",
+  description: "Plan Abu Dhabi outings and vote on places with your Weyn groups.",
+});
 
 export default async function GroupsPage() {
   const supabase = await createClient();
@@ -19,3 +23,4 @@ export default async function GroupsPage() {
     </>
   );
 }
+
