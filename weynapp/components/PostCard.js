@@ -1,6 +1,7 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { safeUrl } from "@/lib/sanitize";
 import ShareToGroupButton from "./ShareToGroupButton";
+import ReportButton from "./ReportButton";
 
 export default function PostCard({ post, isLoggedIn }) {
   const author = post.profile_public;
@@ -33,6 +34,7 @@ export default function PostCard({ post, isLoggedIn }) {
           )}
           {isLoggedIn && (
             <div style={{ marginTop: 8 }}>
+              <ReportButton contentType="post" contentId={post.id} />
               <ShareToGroupButton text={`📣 ${author?.display_name || "Someone"} on ${post.venues?.name}: "${post.body}"`} />
             </div>
           )}
@@ -41,4 +43,5 @@ export default function PostCard({ post, isLoggedIn }) {
     </div>
   );
 }
+
 
