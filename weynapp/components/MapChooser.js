@@ -4,14 +4,15 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Check, ExternalLink, MapPin, X } from "lucide-react";
 import styles from "./MapChooser.module.css";
 
-function finiteCoordinate(value) {
-  const parsed = typeof value === "string" ? Number(value) : value;
-  return Number.isFinite(parsed) ? parsed : null;
+function finiteCoordinate(value, min, max) {
+  if (value === null || value === undefined || (typeof value === "string" && !value.trim())) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : null;
 }
 
 function venueDestination(venue) {
-  const latitude = finiteCoordinate(venue.latitude);
-  const longitude = finiteCoordinate(venue.longitude);
+  const latitude = finiteCoordinate(venue.latitude, -90, 90);
+  const longitude = finiteCoordinate(venue.longitude, -180, 180);
   const label = [venue.name, venue.neighborhood, venue.city || "Abu Dhabi"]
     .filter(Boolean)
     .join(", ");

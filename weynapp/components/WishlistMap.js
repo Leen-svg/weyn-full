@@ -8,15 +8,16 @@ import styles from "./WishlistMap.module.css";
 
 const ABU_DHABI = [54.3773, 24.4539];
 
-function coordinate(value) {
-  const parsed = typeof value === "string" ? Number(value) : value;
-  return Number.isFinite(parsed) ? parsed : null;
+function coordinate(value, min, max) {
+  if (value === null || value === undefined || (typeof value === "string" && !value.trim())) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : null;
 }
 
 function mappedVenues(venues) {
   return venues.flatMap((venue) => {
-    const latitude = coordinate(venue.latitude);
-    const longitude = coordinate(venue.longitude);
+    const latitude = coordinate(venue.latitude, -90, 90);
+    const longitude = coordinate(venue.longitude, -180, 180);
     if (latitude === null || longitude === null) return [];
     return [{ ...venue, latitude, longitude }];
   });
@@ -54,22 +55,28 @@ export default function WishlistMap({ venues }) {
     if (!containerRef.current || !points.length) return undefined;
 
     mapboxgl.accessToken = token;
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: "mapbox://styles/mapbox/standard",
-      center: ABU_DHABI,
-      zoom: 9.8,
-      attributionControl: false,
-      dragRotate: false,
-      touchPitch: false,
-      config: {
-        basemap: {
-          theme: "monochrome",
-          lightPreset: "day",
-          showPointOfInterestLabels: false,
+    let map;
+    try {
+      map = new mapboxgl.Map({
+        container: containerRef.current,
+        style: "mapbox://styles/mapbox/standard",
+        center: ABU_DHABI,
+        zoom: 9.8,
+        attributionControl: false,
+        dragRotate: false,
+        touchPitch: false,
+        config: {
+          basemap: {
+            theme: "monochrome",
+            lightPreset: "day",
+            showPointOfInterestLabels: false,
+          },
         },
-      },
-    });
+      });
+    } catch {
+      setMapError("The map couldn't start. Your saved list is still available.");
+      return undefined;
+    }
     mapRef.current = map;
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-right");
@@ -147,7 +154,11 @@ export default function WishlistMap({ venues }) {
         map.on("mouseleave", layer, () => { map.getCanvas().style.cursor = ""; });
       }
     });
-    map.on("error", () => setMapError("The map couldn't load. Your saved list is still available."));
+    let mapLoaded = false;
+    map.once("load", () => { mapLoaded = true; });
+    map.on("error", () => {
+      if (!mapLoaded) setMapError("The map couldn't load. Your saved list is still available.");
+    });
 
     return () => {
       map.remove();

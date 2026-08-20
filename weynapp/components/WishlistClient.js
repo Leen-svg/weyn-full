@@ -9,11 +9,17 @@ const WishlistMap = dynamic(() => import("./WishlistMap"), {
   loading: () => <div className="home-skeleton__card" aria-label="Loading saved places map" />,
 });
 
+function validCoordinate(value, min, max) {
+  if (value === null || value === undefined || (typeof value === "string" && !value.trim())) return false;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= min && parsed <= max;
+}
+
 export default function WishlistClient({ initialVenues }) {
   const [venues, setVenues] = useState(initialVenues);
   const [view, setView] = useState("list");
   const mappedCount = useMemo(
-    () => venues.filter((venue) => Number.isFinite(Number(venue.latitude)) && Number.isFinite(Number(venue.longitude))).length,
+    () => venues.filter((venue) => validCoordinate(venue.latitude, -90, 90) && validCoordinate(venue.longitude, -180, 180)).length,
     [venues],
   );
 
