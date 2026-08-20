@@ -818,6 +818,10 @@ input:focus, select:focus, textarea:focus {
 .app-home__feed-heading { margin-bottom: 12px; }
 .venue-create-options { display: flex; flex-direction: column; justify-content: center; gap: 8px; padding-bottom: 18px; }
 .venue-create-options .toggle-row { margin-top: 0; }
+.venue-action-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.venue-action-bar > .btn,
+.venue-action-bar > .group-share-control,
+.venue-action-bar .group-share-control > .btn { width: 100%; }
 .admin-tag-search { position: sticky; top: 88px; z-index: 8; padding: 12px; margin: 0 0 14px; border-radius: 16px; background: rgba(249,249,249,.94); backdrop-filter: blur(10px); box-shadow: 0 8px 24px rgba(31,48,68,.08); }
 .tag-admin-category { display: grid; gap: 10px; }
 .tag-admin-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
