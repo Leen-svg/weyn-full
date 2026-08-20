@@ -3,6 +3,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
 import ShareToGroupButton from "./ShareToGroupButton";
+import ReportButton from "./ReportButton";
 
 const STARS = [1, 2, 3, 4, 5];
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
@@ -164,13 +165,7 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
             onChange={(e) => setBody(e.target.value)}
             style={{ marginTop: 8 }}
           />
-          <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10 }}>
-            {photoPreview && (
-              <img src={photoPreview} alt="" style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 10, border: "2px solid var(--ink)" }} />
-            )}
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={pickPhoto} />
-          </div>
-          {photoError && <div className="notice err" style={{ marginTop: 8 }}>{photoError}</div>}
+          <div className="mono" style={{ marginTop: 8 }}>Photos are paused while we add stronger safety checks.</div>
           <button className="btn small block" style={{ marginTop: 8 }} disabled={busy || !rating} onClick={submitReview}>
             Submit review
           </button>
@@ -193,6 +188,7 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
               {safeUrl(r.photo_url) && (
                 <img src={safeUrl(r.photo_url)} alt="" style={{ marginTop: 6, width: 96, height: 96, objectFit: "cover", borderRadius: 10, border: "2px solid var(--ink)" }} />
               )}
+              <ReportButton contentType="review" contentId={r.id} />
             </div>
           ))}
         </div>
