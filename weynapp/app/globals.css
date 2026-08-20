@@ -597,6 +597,12 @@ input:focus, select:focus, textarea:focus {
 .media-upload-status { margin-top: 8px; color: var(--purple-deep); font-size: 12px; font-weight: 800; }
 .media-thumb { width: 104px; height: 104px; }
 .media-thumb video { background: var(--ink-deep); }
+.venue-create-form { display: grid; gap: 4px; }
+.venue-create-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.venue-create-heading strong { font: 800 20px/1.1 var(--font-display); }
+.venue-create-heading p { max-width: 48ch; margin-top: 5px; font-size: 13px; line-height: 1.45; }
+.venue-ai-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+.venue-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
 
 /* Social, group, and voting flows share one modern interaction language. */
 .social-stack,
@@ -735,6 +741,10 @@ input:focus, select:focus, textarea:focus {
   footer .links { display: none; }
   footer { padding-top: 24px; padding-bottom: 102px; }
   .group-share-menu { position: fixed; left: 12px; right: 12px; top: auto; bottom: calc(92px + env(safe-area-inset-bottom)); width: auto; }
+  .venue-create-heading { flex-direction: column; }
+  .venue-ai-row,
+  .venue-form-grid { grid-template-columns: 1fr; }
+  .venue-ai-row .btn { width: 100%; }
 }
 .app-home__hero {
   display: grid;

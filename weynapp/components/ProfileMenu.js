@@ -13,9 +13,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
 
-export default function ProfileMenu({ userId, displayName, email, avatarUrl, points, isAdmin }) {
+export default function ProfileMenu({ userId, displayName, avatarUrl, points, isAdmin }) {
   const router = useRouter();
-  const initials = (displayName || email || "?").slice(0, 2).toUpperCase();
+  const initials = (displayName || "?").slice(0, 2).toUpperCase();
 
   async function signOut() {
     const supabase = createClient();
@@ -49,7 +49,6 @@ export default function ProfileMenu({ userId, displayName, email, avatarUrl, poi
           </Avatar>
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold">{displayName || "Your profile"}</div>
-            <div className="truncate text-xs text-muted-foreground">{email}</div>
             <div className="mt-0.5 text-xs font-bold" style={{ color: "var(--purple)" }}>🏅 {points} pts</div>
           </div>
         </div>

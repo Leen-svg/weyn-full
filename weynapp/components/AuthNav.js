@@ -26,10 +26,10 @@ export default async function AuthNav() {
     <ProfileMenu
       userId={user.id}
       displayName={pub?.display_name}
-      email={user.email}
       avatarUrl={pub?.avatar_url}
       points={profile?.points_balance ?? 0}
       isAdmin={!!profile?.is_admin}
     />
   );
 }
+

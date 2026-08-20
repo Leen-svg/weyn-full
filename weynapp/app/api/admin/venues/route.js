@@ -33,21 +33,38 @@ export async function POST(req) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { name, neighborhood, city, avg_spend_aed } = await req.json();
+  const body = await req.json();
+  const { name, neighborhood, city, avg_spend_aed, description, google_maps_url, hero_video_url, latitude, longitude, tag_ids } = body;
   if (!name?.trim()) return NextResponse.json({ error: "name required" }, { status: 400 });
 
-  const { data, error } = await db()
+  const s = db();
+  const { data, error } = await s
     .from("venues")
     .insert({
       name: name.trim(),
       neighborhood: neighborhood?.trim() || null,
       city: city === "Dubai" ? "Dubai" : "Abu Dhabi",
       avg_spend_aed: Number.isFinite(avg_spend_aed) ? avg_spend_aed : 0,
+      description: description?.trim().slice(0, 1000) || null,
+      google_maps_url: google_maps_url ? safeUrl(google_maps_url) : null,
+      hero_video_url: hero_video_url ? safeUrl(hero_video_url) : null,
+      latitude: Number.isFinite(latitude) ? latitude : null,
+      longitude: Number.isFinite(longitude) ? longitude : null,
       is_active: true,
     })
     .select("id")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (Array.isArray(tag_ids) && tag_ids.length) {
+    const uniqueTagIds = [...new Set(tag_ids.filter((value) => typeof value === "string"))];
+    const { data: validTags, error: tagError } = await s.from("vibe_tags").select("id").in("id", uniqueTagIds).eq("is_active", true);
+    if (tagError || (validTags || []).length !== uniqueTagIds.length) {
+      await s.from("venues").delete().eq("id", data.id);
+      return NextResponse.json({ error: tagError?.message || "One or more tags are invalid" }, { status: 400 });
+    }
+    const { error: insertError } = await s.from("venue_tags").insert(uniqueTagIds.map((tagId) => ({ venue_id: data.id, tag_id: tagId })));
+    if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+  }
   return NextResponse.json({ id: data.id });
 }
 

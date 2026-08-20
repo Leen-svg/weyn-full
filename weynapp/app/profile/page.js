@@ -34,7 +34,8 @@ export default async function ProfilePage() {
         {profile?.points_balance ?? 0} points · member since{" "}
         {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : ", "}
       </p>
-      <ProfileForm initial={pub || {}} email={user.email} groups={groups} />
+      <ProfileForm initial={pub || {}} groups={groups} />
     </>
   );
 }
+
