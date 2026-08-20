@@ -26,7 +26,10 @@ export default function VenueCard({ venue, children, picked, priority = false })
     .filter((item) => item.url);
   if (!media.length && coverUrl) media.push({ type: "image", url: coverUrl });
   const [activeMedia, setActiveMedia] = useState(0);
-  const mediaRef = useRef(null);\n  const scrollFrame = useRef(0);\n\n  useEffect(() => () => cancelAnimationFrame(scrollFrame.current), []);
+  const mediaRef = useRef(null);
+  const scrollFrame = useRef(0);
+
+  useEffect(() => () => cancelAnimationFrame(scrollFrame.current), []);
 
   function goToMedia(index) {
     const next = Math.max(0, Math.min(media.length - 1, index));
@@ -55,7 +58,15 @@ export default function VenueCard({ venue, children, picked, priority = false })
                   {item.type === "video" ? (
                     <video src={item.url} controls playsInline preload="none" aria-label={`${venue.name} video ${index + 1}`} />
                   ) : (
-                    <img\n                      src={item.url}\n                      alt={`${venue.name} photo ${index + 1}`}\n                      width="720"\n                      height="405"\n                      loading={priority && index === 0 ? "eager" : "lazy"}\n                      fetchPriority={priority && index === 0 ? "high" : "auto"}\n                      decoding="async"\n                    />
+                    <img
+                      src={item.url}
+                      alt={`${venue.name} photo ${index + 1}`}
+                      width="720"
+                      height="405"
+                      loading={priority && index === 0 ? "eager" : "lazy"}
+                      fetchPriority={priority && index === 0 ? "high" : "auto"}
+                      decoding="async"
+                    />
                   )}
                 </div>
               ))}
