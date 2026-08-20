@@ -9,6 +9,10 @@ const STATIC_PAGES = new Set(["/", "/about", "/roadmap", "/contact", "/privacy",
 // Refreshes the Supabase auth session cookie on every request so users stay
 // logged in across visits. Standard @supabase/ssr Next.js App Router pattern.
 export async function proxy(request) {
+  const method = request.method.toUpperCase();
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method) && request.headers.get("sec-fetch-site") === "cross-site") {
+    return NextResponse.json({ error: "Cross-site request blocked" }, { status: 403 });
+  }
   if (STATIC_PAGES.has(request.nextUrl.pathname)) return NextResponse.next();
 
   let response = NextResponse.next({ request });
@@ -34,3 +38,4 @@ export async function proxy(request) {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js|html|ico|txt)$).*)"],
 };
+

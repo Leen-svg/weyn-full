@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { withCovers } from "@/lib/venueMedia";
+import { payloadTooLarge } from "@/lib/request-security.mjs";
+import { rateLimit } from "@/lib/request-security";
 
 export async function GET(req, { params }) {
   const { token } = await params;
@@ -44,6 +46,9 @@ export async function GET(req, { params }) {
 }
 
 export async function POST(req, { params }) {
+  if (payloadTooLarge(req, 8 * 1024)) return NextResponse.json({ error: "Request too large" }, { status: 413 });
+  const limited = await rateLimit(req, "guest-group-vote", 60, 60 * 60);
+  if (!limited.allowed) return NextResponse.json({ error: "Too many votes. Try again later." }, { status: 429 });
   const { token } = await params;
   const { optionId, name, fingerprint } = await req.json();
   if (!optionId || !fingerprint) return NextResponse.json({ error: "optionId and fingerprint required" }, { status: 400 });
@@ -62,7 +67,7 @@ export async function POST(req, { params }) {
       { poll_id: poll.id, option_id: optionId, fingerprint, voter_name: (name || "").trim().slice(0, 40) || null },
       { onConflict: "poll_id,fingerprint" }
     );
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Couldn't save that vote" }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
 

@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { contentAccountError, validateCommunityText } from "@/lib/content-safety";
+import { payloadTooLarge } from "@/lib/request-security.mjs";
+import { rateLimit } from "@/lib/request-security";
 
 export async function GET(req, { params }) {
   const { id } = await params;
@@ -17,7 +20,7 @@ export async function GET(req, { params }) {
     .eq("group_id", id)
     .order("created_at", { ascending: false })
     .limit(100);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Couldn't load messages" }, { status: 500 });
 
   const messages = (data || []).reverse();
   const authorIds = [...new Set(messages.map((m) => m.user_id))];
@@ -31,23 +34,28 @@ export async function GET(req, { params }) {
 }
 
 export async function POST(req, { params }) {
+  if (payloadTooLarge(req, 8 * 1024)) return NextResponse.json({ error: "Request too large" }, { status: 413 });
   const { id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Log in" }, { status: 401 });
+  const accountError = await contentAccountError(user);
+  if (accountError) return NextResponse.json({ error: accountError }, { status: 403 });
+  const limited = await rateLimit(req, "group-message", 100, 60 * 60, user.id);
+  if (!limited.allowed) return NextResponse.json({ error: "You're sending messages too quickly." }, { status: 429 });
 
   const { body } = await req.json();
-  const trimmed = (body || "").trim().slice(0, 1000);
-  if (!trimmed) return NextResponse.json({ error: "Say something first" }, { status: 400 });
+  const checked = validateCommunityText(body, { required: true, maxLength: 1000 });
+  if (checked.error) return NextResponse.json({ error: checked.error }, { status: 400 });
 
   const { data: message, error } = await supabase
     .from("group_messages")
-    .insert({ group_id: id, user_id: user.id, body: trimmed })
+    .insert({ group_id: id, user_id: user.id, body: checked.text })
     .select("id, body, user_id, created_at")
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Couldn't send that message" }, { status: 500 });
   return NextResponse.json({ ok: true, message });
 }
 

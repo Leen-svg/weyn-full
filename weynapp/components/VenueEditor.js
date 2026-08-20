@@ -42,7 +42,7 @@ async function uploadVenueFile(venueId, source) {
   const signRes = await fetch("/api/admin/venues/media", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ intent: "sign", venueId, fileName: file.name, contentType: file.type }),
+    body: JSON.stringify({ intent: "sign", venueId, fileName: file.name, contentType: file.type, fileSize: file.size }),
   });
   const signed = await signRes.json();
   if (!signRes.ok) throw new Error(signed.error || "Could not start upload");
@@ -52,7 +52,7 @@ async function uploadVenueFile(venueId, source) {
   const completeRes = await fetch("/api/admin/venues/media", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ intent: "complete", venueId, path: signed.path, publicUrl: signed.publicUrl, mediaType: signed.mediaType }),
+    body: JSON.stringify({ intent: "complete", venueId, path: signed.path, mediaType: signed.mediaType }),
   });
   const completed = await completeRes.json();
   if (!completeRes.ok) throw new Error(completed.error || "Could not save upload");

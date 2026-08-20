@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { withCovers } from "@/lib/venueMedia";
+import { contentAccountError } from "@/lib/content-safety";
+import { cleanStringList, payloadTooLarge } from "@/lib/request-security.mjs";
+import { rateLimit } from "@/lib/request-security";
 
 async function shapePolls(supabase, groupId, currentUserId) {
   const { data: polls, error } = await supabase
@@ -76,28 +79,35 @@ export async function GET(req, { params }) {
 }
 
 export async function POST(req, { params }) {
+  if (payloadTooLarge(req, 16 * 1024)) return NextResponse.json({ error: "Request too large" }, { status: 413 });
   const { id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Log in" }, { status: 401 });
+  const accountError = await contentAccountError(user);
+  if (accountError) return NextResponse.json({ error: accountError }, { status: 403 });
+  const limited = await rateLimit(req, "group-poll", 20, 24 * 60 * 60, user.id);
+  if (!limited.allowed) return NextResponse.json({ error: "You've reached today's group poll limit." }, { status: 429 });
 
   const { tags, maxSpend, aestheticOnly, zones, maxAge } = await req.json();
-  if (!Array.isArray(tags) || tags.length === 0) {
+  const safeTags = cleanStringList(tags);
+  const safeZones = cleanStringList(zones);
+  if (safeTags.length === 0) {
     return NextResponse.json({ error: "Pick at least one tag" }, { status: 400 });
   }
 
   const s = db();
   const { data: venues, error: shortlistErr } = await s.rpc("get_shortlist", {
-    p_tag_slugs: tags,
-    p_max_spend: maxSpend || 99999,
+    p_tag_slugs: safeTags,
+    p_max_spend: Number.isFinite(Number(maxSpend)) ? Math.max(0, Math.min(100000, Number(maxSpend))) : 99999,
     p_aesthetic_only: !!aestheticOnly,
-    p_zone_slugs: zones && zones.length ? zones : null,
+    p_zone_slugs: safeZones.length ? safeZones : null,
     p_max_age: maxAge || "all-ages",
     p_limit: 3,
   });
-  if (shortlistErr) return NextResponse.json({ error: shortlistErr.message }, { status: 500 });
+  if (shortlistErr) return NextResponse.json({ error: "Couldn't build that poll" }, { status: 500 });
   if (!venues?.length) return NextResponse.json({ error: "Nothing matches that combo yet" }, { status: 400 });
 
   // Insert as the caller so RLS's is_group_member(group_id) check applies
@@ -107,17 +117,20 @@ export async function POST(req, { params }) {
     .insert({
       group_id: id,
       created_by: user.id,
-      selected_tag_slugs: tags,
-      max_spend_aed: maxSpend || null,
+      selected_tag_slugs: safeTags,
+      max_spend_aed: Number.isFinite(Number(maxSpend)) ? Math.max(0, Math.min(100000, Number(maxSpend))) : null,
       aesthetic_only: !!aestheticOnly,
-      zone_slugs: zones && zones.length ? zones : null,
+      zone_slugs: safeZones.length ? safeZones : null,
     })
     .select("id")
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Couldn't create that group poll" }, { status: 500 });
 
   const { error: e2 } = await s.from("group_poll_options").insert(venues.map((v) => ({ poll_id: poll.id, venue_id: v.id })));
-  if (e2) return NextResponse.json({ error: e2.message }, { status: 500 });
+  if (e2) {
+    await s.from("group_polls").delete().eq("id", poll.id);
+    return NextResponse.json({ error: "Couldn't add choices to that poll" }, { status: 500 });
+  }
 
   // A group has one current decision. Only archive older polls after the new
   // poll is fully usable, so a failed option insert cannot wipe out the old one.

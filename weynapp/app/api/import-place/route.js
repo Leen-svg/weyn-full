@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { contentAccountError } from "@/lib/content-safety";
+import { payloadTooLarge } from "@/lib/request-security.mjs";
+import { rateLimit } from "@/lib/request-security";
 
 const SOCIAL_HOSTS = new Set(["instagram.com", "www.instagram.com", "tiktok.com", "www.tiktok.com", "vm.tiktok.com"]);
 const UAE_CITIES = /\b(?:abu dhabi|dubai|sharjah|ajman|fujairah|ras al khaimah|umm al quwain|al ain|uae|united arab emirates)\b/i;
@@ -18,9 +21,14 @@ async function socialContext(input) {
 }
 
 export async function POST(req) {
+  if (payloadTooLarge(req, 16 * 1024)) return NextResponse.json({ error: "Request too large" }, { status: 413 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Log in to import a place" }, { status: 401 });
+  const accountError = await contentAccountError(user);
+  if (accountError) return NextResponse.json({ error: accountError }, { status: 403 });
+  const limited = await rateLimit(req, "place-import", 20, 24 * 60 * 60, user.id);
+  if (!limited.allowed) return NextResponse.json({ error: "You've reached today's import limit. Try again tomorrow." }, { status: 429 });
   const { input } = await req.json();
   const raw = clean(input, 4000);
   if (!raw) return NextResponse.json({ error: "Paste a link, caption, or message" }, { status: 400 });
@@ -57,3 +65,4 @@ export async function POST(req) {
   if (error) return NextResponse.json({ error: "Couldn't save that place. Please try again." }, { status: 500 });
   return NextResponse.json({ place: { ...data, kind: "personal" }, matched: false, confidence });
 }
+
