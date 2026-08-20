@@ -27,21 +27,16 @@ export default function ShareToGroupButton({ text }) {
   }
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
+    <div className="group-share-control">
       <button className="btn small ghost" type="button" onClick={toggle}>
         👥 Send to group
       </button>
       {open && (
-        <div
-          style={{
-            position: "absolute", top: "100%", left: 0, marginTop: 6, zIndex: 20,
-            background: "var(--white)", border: "1.5px solid var(--ink)", borderRadius: 10,
-            boxShadow: "3px 3px 0 var(--ink)", padding: 8, minWidth: 180,
-          }}
-        >
-          {groups === null && <div style={{ fontSize: 13 }}>Loading…</div>}
+        <div className="group-share-menu" role="dialog" aria-label="Send to a recent group">
+          <strong>Recent groups</strong>
+          {groups === null && <div className="group-share-empty">Loading…</div>}
           {groups?.length === 0 && (
-            <div style={{ fontSize: 13 }}>
+            <div className="group-share-empty">
               No groups yet, <a href="/groups" style={{ fontWeight: 800 }}>make one</a>.
             </div>
           )}
@@ -50,10 +45,10 @@ export default function ShareToGroupButton({ text }) {
               key={g.id}
               type="button"
               onClick={() => sendTo(g.id)}
-              style={{ display: "block", width: "100%", textAlign: "left", padding: "6px 8px", fontSize: 13, fontWeight: 700, borderRadius: 6 }}
-              className="btn-ghost-row"
+              className="group-share-option"
             >
-              {sentTo === g.id ? "Sent ✓" : g.name}
+              <span>{g.name}</span>
+              <span>{sentTo === g.id ? "Sent ✓" : "Send →"}</span>
             </button>
           ))}
         </div>
@@ -61,3 +56,4 @@ export default function ShareToGroupButton({ text }) {
     </div>
   );
 }
+

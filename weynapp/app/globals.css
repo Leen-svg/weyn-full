@@ -400,6 +400,7 @@ input:focus, select:focus, textarea:focus {
   border: 0;
   box-shadow: 0 10px 34px rgba(31,48,68,.1);
 }
+.app-shell .points-badge { border: 0; }
 .primary-nav {
   display: flex;
   align-items: center;
@@ -660,6 +661,22 @@ input:focus, select:focus, textarea:focus {
 .poll-share-panel details { font-size: 12px; color: var(--ink-soft); }
 .poll-share-panel summary { cursor: pointer; font-weight: 700; }
 .poll-share-panel .link { margin-bottom: 0; }
+.group-share-control { position: relative; display: inline-block; }
+.group-share-menu {
+  position: absolute; z-index: 30; top: calc(100% + 8px); left: 0;
+  width: min(280px, calc(100vw - 32px)); display: grid; gap: 6px; padding: 12px;
+  background: var(--white); border: 0; border-radius: 18px; box-shadow: 0 18px 48px rgba(31,48,68,.18);
+  animation: app-card-in 180ms var(--motion-ease) both;
+}
+.group-share-menu > strong { padding: 2px 4px 6px; font: 800 13px/1 var(--font-display); }
+.group-share-empty { padding: 8px 4px; color: var(--ink-soft); font-size: 13px; }
+.group-share-option {
+  min-height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 9px 10px; border: 0; border-radius: 12px; background: var(--paper); color: var(--ink);
+  text-align: left; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.group-share-option:hover { background: var(--white); color: var(--purple-deep); box-shadow: 0 5px 14px rgba(31,48,68,.09); }
+.group-share-option span:last-child { color: var(--purple-deep); font-size: 11px; }
 
 @media (max-width: 640px) {
   :root { --app-reading-width: 100%; }
@@ -715,6 +732,9 @@ input:focus, select:focus, textarea:focus {
   .vote-flow .field { padding: 14px; }
   .venue-media-arrow { display: none; }
   .venue-media-dots { bottom: 7px; }
+  footer .links { display: none; }
+  footer { padding-top: 24px; padding-bottom: 102px; }
+  .group-share-menu { position: fixed; left: 12px; right: 12px; top: auto; bottom: calc(92px + env(safe-area-inset-bottom)); width: auto; }
 }
 .app-home__hero {
   display: grid;

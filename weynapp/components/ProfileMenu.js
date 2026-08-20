@@ -30,8 +30,7 @@ export default function ProfileMenu({ userId, displayName, email, avatarUrl, poi
         render={
           <button
             type="button"
-            className="flex items-center gap-2 rounded-full border-2 py-1 pr-3 pl-1 transition-transform hover:-translate-y-0.5"
-            style={{ borderColor: "var(--ink)" }}
+            className="profile-menu-trigger flex items-center gap-2 rounded-full border-0 bg-white py-1 pr-3 pl-1 shadow-[0_6px_18px_rgba(31,48,68,.1)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_9px_24px_rgba(31,48,68,.14)]"
           />
         }
       >
@@ -88,3 +87,4 @@ export default function ProfileMenu({ userId, displayName, email, avatarUrl, poi
     </DropdownMenu>
   );
 }
+
