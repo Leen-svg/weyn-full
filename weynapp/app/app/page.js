@@ -36,23 +36,29 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
 
   return (
-    <>
-      <h1>Discover</h1>
-      <p className="sub">What&apos;s buzzing, what&apos;s new, and what your people are up to.</p>
+    <div className="app-home">
+      <header className="app-home__hero">
+        <div>
+          <h1>Discover</h1>
+          <p className="sub">What&apos;s buzzing, what&apos;s new, and what your people are up to.</p>
+        </div>
+        <div className="cta-row">
+          <Link className="btn primary" href="/find">
+            Find a spot →
+          </Link>
+        </div>
+      </header>
 
-      <div className="cta-row" style={{ marginBottom: 8 }}>
-        <Link className="btn primary" href="/find">
-          Find a spot →
-        </Link>
-      </div>
-
-      <section style={{ marginTop: 30 }}>
+      <section className="app-home__feed" aria-label="Community feed">
         <HomeFeed isLoggedIn={!!user} />
       </section>
 
       {trending.length > 0 && (
-        <section style={{ marginTop: 38 }}>
-          <h2 className="group-label">🔥 Trending this week</h2>
+        <section className="app-home__section">
+          <div className="app-home__section-header">
+            <h2 className="group-label">🔥 Trending this week</h2>
+            <span>{trending.length} spots</span>
+          </div>
           <div className="venue-grid">
             {trending.map((v) => (
               <VenueCard key={v.id} venue={v} />
@@ -62,8 +68,11 @@ export default async function HomePage() {
       )}
 
       {fresh.length > 0 && (
-        <section style={{ marginTop: 38 }}>
-          <h2 className="group-label">🆕 Just added</h2>
+        <section className="app-home__section">
+          <div className="app-home__section-header">
+            <h2 className="group-label">🆕 Just added</h2>
+            <span>{fresh.length} spots</span>
+          </div>
           <div className="venue-grid">
             {fresh.map((v) => (
               <VenueCard key={v.id} venue={v} />
@@ -71,6 +80,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-    </>
+    </div>
   );
 }
