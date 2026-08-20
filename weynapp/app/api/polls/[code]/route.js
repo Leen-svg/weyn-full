@@ -14,7 +14,7 @@ export async function GET(_req, { params }) {
 
   const { data: options } = await s
     .from("poll_options")
-    .select("id, venue_id, venues (id, name, neighborhood, avg_spend_aed, is_aesthetic, hero_video_url, google_maps_url)")
+    .select("id, venue_id, venues (id, name, neighborhood, city, latitude, longitude, avg_spend_aed, is_aesthetic, hero_video_url, google_maps_url)")
     .eq("poll_id", poll.id);
 
   const { data: votes } = await s

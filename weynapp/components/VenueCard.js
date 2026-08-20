@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { safeUrl } from "@/lib/sanitize";
+import MapChooser from "./MapChooser";
 
 const PLACEHOLDER_GRADIENTS = [
   "linear-gradient(135deg, var(--purple-wash), var(--sky-wash))",
@@ -19,7 +20,6 @@ export default function VenueCard({ venue, children, picked, priority = false })
   const spend = venue.avg_spend_aed === 0 ? "Free entry" : `~${venue.avg_spend_aed} AED pp`;
   const ageLabel = venue.age_restriction === "21-plus" ? "21+" : venue.age_restriction === "18-plus" ? "18+" : null;
   const videoUrl = safeUrl(venue.hero_video_url);
-  const mapsUrl = safeUrl(venue.google_maps_url);
   const coverUrl = safeUrl(venue.cover_url);
   const media = (venue.media || [])
     .map((item) => ({ type: item.type, url: safeUrl(item.url) }))
@@ -112,11 +112,7 @@ export default function VenueCard({ venue, children, picked, priority = false })
               ▶ Watch
             </a>
           )}
-          {mapsUrl && (
-            <a className="btn small ghost" href={mapsUrl} target="_blank" rel="noreferrer">
-              📍 Maps
-            </a>
-          )}
+          <MapChooser venue={venue} compact />
         </div>
         {children}
       </div>

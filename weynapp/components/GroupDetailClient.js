@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import MapChooser from "@/components/MapChooser";
 
 const BUDGETS = [
   { label: "Under 100", value: 100 },
@@ -176,7 +177,6 @@ function PollResults({ poll, groupId, onVoted, archived = false }) {
         {poll.options.map((o) => {
           const venue = o.venue || {};
           const coverUrl = safeUrl(venue.cover_url);
-          const mapsUrl = safeUrl(venue.google_maps_url) || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.name || "Venue"} ${venue.neighborhood || ""}`)}`;
           const spend = venue.avg_spend_aed === 0
             ? "Free"
             : venue.avg_spend_aed
@@ -203,9 +203,7 @@ function PollResults({ poll, groupId, onVoted, archived = false }) {
                   <p className="vote-venue-meta">{[venue.neighborhood, spend].filter(Boolean).join(" · ")}</p>
                 )}
                 <p className="vote-venue-description">{description}</p>
-                <a className="vote-venue-map" href={mapsUrl} target="_blank" rel="noreferrer">
-                  <MapPin className="h-3.5 w-3.5" aria-hidden="true" /> Maps
-                </a>
+                <MapChooser venue={venue} className="vote-venue-map" compact />
                 <div className="result-bar" aria-label={`${o.votes} vote${o.votes === 1 ? "" : "s"}`}>
                   <div className={`result-fill${o.votes === max && o.votes > 0 ? " lead" : ""}`} style={{ width: `${(o.votes / max) * 100}%` }} />
                 </div>
