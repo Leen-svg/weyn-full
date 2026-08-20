@@ -1,8 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import WishlistClient from "@/components/WishlistClient";
+import { privatePageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Your wishlist, Weyn" };
+export const metadata = privatePageMetadata({
+  title: "Your Saved Places",
+  description: "Your private list of Abu Dhabi places saved on Weyn.",
+});
 
 export default async function WishlistPage() {
   const supabase = await createClient();
@@ -26,3 +30,4 @@ export default async function WishlistPage() {
     </>
   );
 }
+
