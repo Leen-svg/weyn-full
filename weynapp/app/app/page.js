@@ -51,6 +51,7 @@ async function getInitialPublicPosts(supabase) {
     .from("posts")
     .select("id, body, photo_url, visibility, created_at, user_id, venue_id, venues (id, name, neighborhood)")
     .eq("visibility", "public")
+    .eq("status", "published")
     .order("created_at", { ascending: false })
     .limit(8);
   const posts = data || [];
@@ -160,3 +161,4 @@ export default function HomePage() {
     </div>
   );
 }
+
