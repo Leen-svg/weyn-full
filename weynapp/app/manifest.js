@@ -11,7 +11,7 @@ export default function manifest() {
     orientation: "portrait-primary",
     icons: [
       {
-        src: "/app-icon.svg",
+        src: "/favicon.svg",
         sizes: "any",
         type: "image/svg+xml",
         purpose: "any maskable",
@@ -19,3 +19,4 @@ export default function manifest() {
     ],
   };
 }
+
