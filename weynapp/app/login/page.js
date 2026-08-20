@@ -1,7 +1,11 @@
 import { Suspense } from "react";
 import AuthForm from "@/components/AuthForm";
+import { privatePageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Log in, Weyn" };
+export const metadata = privatePageMetadata({
+  title: "Log In",
+  description: "Log in to your Weyn account.",
+});
 
 export default function LoginPage() {
   return (
@@ -10,3 +14,4 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
