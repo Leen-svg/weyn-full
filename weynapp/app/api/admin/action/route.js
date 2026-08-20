@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
+import { awardPoints, POINTS } from "@/lib/points";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -14,6 +15,7 @@ export async function POST(req) {
     if (kind === "submission") {
       const { data: sub } = await s.from("venue_submissions").select("*").eq("id", id).single();
       if (!sub) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      if (sub.status !== "pending") return NextResponse.json({ error: "This submission was already reviewed." }, { status: 409 });
 
       if (action === "approve") {
         const { data: venue, error } = await s.from("venues").insert({
@@ -36,6 +38,7 @@ export async function POST(req) {
           }
         }
         await s.from("venue_submissions").update({ status: "approved", approved_venue_id: venue.id, reviewed_at: now }).eq("id", id);
+        if (sub.user_id) await awardPoints(sub.user_id, POINTS.suggested_a_place, "suggested_a_place");
       } else {
         await s.from("venue_submissions").update({ status: action === "duplicate" ? "duplicate" : "rejected", reviewed_at: now }).eq("id", id);
       }
@@ -45,6 +48,7 @@ export async function POST(req) {
     else if (kind === "tagvote") {
       const { data: vote } = await s.from("tag_votes").select("*").eq("id", id).single();
       if (!vote) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      if (vote.status !== "new") return NextResponse.json({ error: "This tag vote was already reviewed." }, { status: 409 });
 
       if (action === "apply") {
         if (vote.vote === "wrong_tag" && vote.tag_slug) {
@@ -56,9 +60,24 @@ export async function POST(req) {
           if (tag) await s.from("venue_tags").upsert({ venue_id: vote.venue_id, tag_id: tag.id }, { onConflict: "venue_id,tag_id" });
         }
         await s.from("tag_votes").update({ status: "applied" }).eq("id", id);
+        if (vote.user_id && vote.vote !== "fits") {
+          await awardPoints(vote.user_id, POINTS.suggested_a_tag_fix, "suggested_a_tag_fix");
+        }
       } else {
         await s.from("tag_votes").update({ status: "dismissed" }).eq("id", id);
       }
+    }
+
+    // ---- Reported community content ----
+    else if (kind === "content") {
+      const [contentType, contentId] = String(id || "").split(":");
+      const table = contentType === "post" ? "posts" : contentType === "review" ? "reviews" : null;
+      if (!table || !contentId) return NextResponse.json({ error: "Invalid content target" }, { status: 400 });
+      const status = action === "remove" ? "removed" : "published";
+      const { error } = await s.from(table).update({ status }).eq("id", contentId);
+      if (error) throw error;
+      await s.from("content_reports").update({ status: action === "remove" ? "resolved" : "dismissed", reviewed_at: now })
+        .eq("content_type", contentType).eq("content_id", contentId).eq("status", "open");
     }
 
     // ---- Video submissions ----
@@ -106,3 +125,4 @@ export async function POST(req) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
+
