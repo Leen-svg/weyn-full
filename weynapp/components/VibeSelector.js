@@ -20,8 +20,8 @@ const AGES = [
 ];
 
 const CITIES = [
-  { value: "Abu Dhabi", label: "Abu Dhabi", note: "The full spread, updated weekly." },
-  { value: "Dubai", label: "Dubai", note: "Just getting started, more added every week." },
+  { value: "Abu Dhabi", label: "Abu Dhabi", note: "Live now, updated weekly." },
+  { value: "Dubai", label: "Dubai", note: "Live now, updated weekly." },
 ];
 
 const GUEST_TRIAL_LIMIT = 4;
@@ -46,6 +46,14 @@ function isColdSeason() {
   const m = new Date().getMonth() + 1; // 1-12
   const d = new Date().getDate();
   return m >= 11 || m <= 4 || (m === 10 && d >= 15);
+}
+
+function isAccessRules(category) {
+  return category?.slug === "access-rules" || category?.name?.trim().toLowerCase() === "access & rules";
+}
+
+function isDuplicateAgeTag(tag) {
+  return tag?.slug === "21-plus" || tag?.display_name?.trim() === "21+";
 }
 
 function groupBySubgroup(tags) {
@@ -80,6 +88,7 @@ function AccordionSection({ id, label, count, forceOpen, open, onToggle, childre
 
 export default function VibeSelector({ groups, isLoggedIn = false }) {
   const router = useRouter();
+  const orderedGroups = [...groups].sort((a, b) => Number(isAccessRules(a)) - Number(isAccessRules(b)));
   const [city, setCity] = useState("Abu Dhabi");
   const [selected, setSelected] = useState({});
   const [budget, setBudget] = useState(99999);
@@ -92,7 +101,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
   const [sharedGroupId, setSharedGroupId] = useState(null);
   const [shareBusy, setShareBusy] = useState(false);
   const [err, setErr] = useState(null);
-  const [openSections, setOpenSections] = useState(() => new Set(groups[0] ? [`category::${groups[0].slug}`] : []));
+  const [openSections, setOpenSections] = useState(() => new Set(orderedGroups[0] ? [`category::${orderedGroups[0].slug}`] : []));
   const [cold] = useState(isColdSeason);
   const [tagQuery, setTagQuery] = useState("");
   const [nearby, setNearby] = useState(null);
@@ -332,9 +341,10 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
         />
       </div>
 
-      {groups.map((cat) => {
+      {orderedGroups.map((cat) => {
         const q = tagQuery.trim().toLowerCase();
         let visibleTags = cold ? cat.tags.filter((t) => !t.seasonal_exclude) : cat.tags;
+        if (isAccessRules(cat)) visibleTags = visibleTags.filter((tag) => !isDuplicateAgeTag(tag));
         if (q) visibleTags = visibleTags.filter((t) => t.display_name.toLowerCase().includes(q));
         if (visibleTags.length === 0) return null;
         const clusters = groupBySubgroup(visibleTags);
