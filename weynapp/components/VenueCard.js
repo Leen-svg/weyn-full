@@ -101,7 +101,7 @@ export default function VenueCard({ venue, children, picked, priority = false })
           {ageLabel ? ` · 🔞 ${ageLabel}` : ""}
         </div>
         {venue.description && <p className="venue-desc">{venue.description}</p>}
-        {venue.tags && (
+        {Array.isArray(venue.tags) && venue.tags.length > 0 && (
           <div className="tag-row">
             {venue.tags.map((t) => <span key={t} className="tag-pill">{t}</span>)}
           </div>
@@ -119,4 +119,5 @@ export default function VenueCard({ venue, children, picked, priority = false })
     </div>
   );
 }
+
 

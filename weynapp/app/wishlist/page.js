@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import WishlistClient from "@/components/WishlistClient";
 import { privatePageMetadata } from "@/lib/seo";
+import { withCovers } from "@/lib/venueMedia";
 
 export const metadata = privatePageMetadata({
   title: "Your Saved Places",
@@ -20,7 +21,7 @@ export default async function WishlistPage() {
     .select("venue_id, venues (*)")
     .order("created_at", { ascending: false });
 
-  const venues = (data || []).map((row) => row.venues).filter(Boolean);
+  const venues = await withCovers((data || []).map((row) => row.venues).filter(Boolean));
 
   return (
     <>
@@ -31,5 +32,4 @@ export default async function WishlistPage() {
     </>
   );
 }
-
 

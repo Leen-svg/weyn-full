@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import VenueCard from "@/components/VenueCard";
+import { withCovers } from "@/lib/venueMedia";
 
 export const metadata = { title: "Shared list", robots: { index: false, follow: false } };
 
@@ -26,7 +27,7 @@ export default async function SharedListPage({ params }) {
     }
   }
   if (!allowed) redirect(`/login?next=/lists/${encodeURIComponent(slug)}`);
-  const venues = (list.saved_list_items || []).map((item) => item.venues).filter(Boolean);
+  const venues = await withCovers((list.saved_list_items || []).map((item) => item.venues).filter(Boolean));
   return <>
     <span className="eyebrow">Shared Weyn list</span>
     <h1>{list.title}</h1>
@@ -35,5 +36,4 @@ export default async function SharedListPage({ params }) {
     <div className="venue-list-single saved-shared-list">{venues.map((venue) => <VenueCard key={venue.id} venue={venue} />)}</div>
   </>;
 }
-
 

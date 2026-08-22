@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { payloadTooLarge, validCoordinates } from "@/lib/request-security.mjs";
 import { rateLimit } from "@/lib/request-security";
+import { withCovers } from "@/lib/venueMedia";
 
 export async function POST(req) {
   if (payloadTooLarge(req, 8 * 1024)) return NextResponse.json({ error: "Request too large" }, { status: 413 });
@@ -18,6 +19,7 @@ export async function POST(req) {
     p_limit: 6,
   });
   if (error) return NextResponse.json({ error: "Nearby search is temporarily unavailable" }, { status: 500 });
-  return NextResponse.json({ venues: data || [] });
+  return NextResponse.json({ venues: await withCovers(data || []) });
 }
+
 
