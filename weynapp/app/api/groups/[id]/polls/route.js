@@ -58,6 +58,7 @@ async function shapePolls(supabase, groupId, currentUserId) {
         };
       }),
       myVote: (votes || []).find((v) => v.poll_id === p.id && v.user_id === currentUserId) || null,
+      memberVotersCount: new Set((votes || []).filter((v) => v.poll_id === p.id).map((v) => v.user_id)).size,
     };
   });
 }

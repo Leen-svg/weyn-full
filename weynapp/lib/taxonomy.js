@@ -1,11 +1,17 @@
+import { unstable_cache } from "next/cache";
 import { db } from "./db";
 
 // Fetch the live taxonomy (tags grouped by category + zones) server-side.
 // Returns empty arrays if the DB is unreachable so a missing env var degrades
 // the page instead of crashing the whole build.
+//
+// Tags/zones change rarely (admin-curated), so this is cached for a few
+// minutes instead of hitting the DB on every /find and group-page load.
+const loadTaxonomyCached = unstable_cache(loadTaxonomy, ["weyn-taxonomy"], { revalidate: 300 });
+
 export async function getTaxonomy() {
   try {
-    return await loadTaxonomy();
+    return await loadTaxonomyCached();
   } catch (e) {
     console.error("getTaxonomy failed:", e.message);
     return { groups: [], zones: [] };

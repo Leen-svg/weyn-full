@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { safeUrl } from "@/lib/sanitize";
+import { isCurationFormat, importCurationRecords } from "@/lib/venueImport";
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
@@ -65,6 +66,28 @@ export async function POST(req) {
   }
   if (!Array.isArray(rows) || rows.length === 0) return NextResponse.json({ error: "No rows found in file" }, { status: 400 });
   if (rows.length > 2000) return NextResponse.json({ error: "Max 2000 rows per import, split the file" }, { status: 400 });
+
+  // The scraping/tagging pipeline's export ({ venue_id, name, curation: {...}, metadata: {...} })
+  // gets its own richer path: tag buckets -> categories/vibe_tags, price band -> avg_spend_aed,
+  // lat/lng -> city + nearest zone, gallery_images -> venue_media (with junk/duplicate filtering).
+  if (isCurationFormat(rows[0])) {
+    try {
+      const summary = await importCurationRecords(rows);
+      return NextResponse.json({
+        inserted: summary.inserted,
+        updated: summary.updated,
+        skipped: summary.errors.length,
+        total: rows.length,
+        errors: summary.errors.slice(0, 20),
+        newTagsCreated: summary.newTagsCreated,
+        mediaAdded: summary.mediaAdded,
+        mediaSkippedJunk: summary.mediaSkippedJunk,
+        mediaSkippedDuplicate: summary.mediaSkippedDuplicate,
+      });
+    } catch (e) {
+      return NextResponse.json({ error: `Import failed: ${e.message}` }, { status: 500 });
+    }
+  }
 
   const s = db();
   let inserted = 0,

@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Vote, Loader2, ArrowLeft, Share2, UserPlus, UserMinus, Archive, ChevronDown, MapPin } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Send, Vote, Loader2, ArrowLeft, Share2, UserPlus, UserMinus, Archive, ChevronDown, MapPin, Search, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
@@ -41,6 +42,12 @@ function PollComposer({ groups, zones, onCreated, hasCurrent = false }) {
   const [budget, setBudget] = useState(99999);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  const [query, setQuery] = useState("");
+
+  const q = query.trim().toLowerCase();
+  const visibleGroups = q
+    ? groups.map((cat) => ({ ...cat, tags: cat.tags.filter((t) => t.display_name.toLowerCase().includes(q)) })).filter((cat) => cat.tags.length > 0)
+    : groups;
 
   function toggleTag(cat, slug) {
     setSelected((prev) => {
@@ -89,7 +96,17 @@ function PollComposer({ groups, zones, onCreated, hasCurrent = false }) {
   return (
     <Card>
       <CardContent className="space-y-3 pt-6">
-        {groups.map((cat) => (
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search tags…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+        {visibleGroups.length === 0 && <p className="text-sm text-muted-foreground">No tags match &ldquo;{query}&rdquo;.</p>}
+        {visibleGroups.map((cat) => (
           <div key={cat.slug}>
             <div className="mb-1.5 text-xs font-bold text-muted-foreground uppercase">{cat.name}</div>
             <div className="flex flex-wrap gap-1.5">
@@ -131,7 +148,7 @@ function PollComposer({ groups, zones, onCreated, hasCurrent = false }) {
   );
 }
 
-function PollResults({ poll, groupId, onVoted, archived = false }) {
+function PollResults({ poll, groupId, memberCount = 0, onVoted, archived = false }) {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const max = Math.max(1, ...poll.options.map((o) => o.votes));
@@ -145,6 +162,20 @@ function PollResults({ poll, groupId, onVoted, archived = false }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ optionId }),
     });
+    setBusy(false);
+    onVoted();
+  }
+
+  async function removeVote() {
+    setBusy(true);
+    await fetch(`/api/groups/${groupId}/polls/${poll.id}/vote`, { method: "DELETE" });
+    setBusy(false);
+    onVoted();
+  }
+
+  async function getMore() {
+    setBusy(true);
+    await fetch(`/api/groups/${groupId}/polls/${poll.id}/more`, { method: "POST" });
     setBusy(false);
     onVoted();
   }
@@ -216,8 +247,83 @@ function PollResults({ poll, groupId, onVoted, archived = false }) {
             </article>
           );
         })}
+        {!archived && !poll.expired && (
+          <div className="flex gap-2 pt-1">
+            <Button size="sm" variant="outline" className="flex-1" disabled={busy} onClick={getMore}>
+              <Sparkles className="h-3.5 w-3.5" /> Get 3 more spots
+            </Button>
+            {poll.myVote && (
+              <Button size="sm" variant="ghost" className="flex-1" disabled={busy} onClick={removeVote}>
+                Remove my vote
+              </Button>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+function CelebrationOverlay({ onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 3200);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  const confetti = useMemo(
+    () =>
+      Array.from({ length: 40 }, (_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        delay: Math.random() * 0.4,
+        duration: 1.8 + Math.random() * 1.2,
+        rotate: Math.random() * 360,
+        color: ["var(--purple)", "var(--pink)", "var(--yellow)", "var(--sky)"][i % 4],
+      })),
+    []
+  );
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[100] flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.45)" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onDone}
+    >
+      {confetti.map((c) => (
+        <motion.span
+          key={c.id}
+          style={{
+            position: "absolute",
+            top: -20,
+            left: `${c.left}%`,
+            width: 10,
+            height: 10,
+            background: c.color,
+            borderRadius: 2,
+          }}
+          initial={{ y: -20, opacity: 1, rotate: 0 }}
+          animate={{ y: "110vh", opacity: [1, 1, 0], rotate: c.rotate }}
+          transition={{ duration: c.duration, delay: c.delay, ease: "easeIn" }}
+        />
+      ))}
+      <motion.div
+        initial={{ scale: 0.6, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 18 }}
+        className="rounded-3xl px-8 py-6 text-center"
+        style={{ background: "var(--white)", border: "3px solid var(--ink)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="text-3xl font-black">Yay! Let&apos;s go out! 🎉</div>
+        <p className="mt-1 text-sm text-muted-foreground">Everyone in the group has voted.</p>
+        <Button size="sm" className="mt-4" onClick={onDone}>
+          Nice!
+        </Button>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -309,6 +415,8 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [sendBusy, setSendBusy] = useState(false);
   const [chatError, setChatError] = useState(null);
+  const [celebratingPollId, setCelebratingPollId] = useState(null);
+  const celebratedRef = useRef(new Set());
   const bottomRef = useRef(null);
 
   const loadMembers = useCallback(async () => {
@@ -341,11 +449,31 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "group_messages", filter: `group_id=eq.${groupId}` }, () => {
         loadMessages();
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "group_poll_votes" }, () => {
+        loadPolls();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "group_poll_guest_votes" }, () => {
+        loadPolls();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "group_poll_options" }, () => {
+        loadPolls();
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [groupId, loadMessages]);
+  }, [groupId, loadMessages, loadPolls]);
+
+  useEffect(() => {
+    if (!polls) return;
+    for (const p of polls) {
+      const allVoted = members.length > 0 && p.memberVotersCount >= members.length;
+      if (allVoted && !p.expired && !celebratedRef.current.has(p.id)) {
+        celebratedRef.current.add(p.id);
+        setCelebratingPollId(p.id);
+      }
+    }
+  }, [polls, members]);
 
   useEffect(() => {
     if (messages?.length) bottomRef.current?.scrollIntoView({ behavior: "auto" });
@@ -430,7 +558,7 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
           )}
         </div>
         {polls === null && <div className="group-loading-card">Loading the latest vote…</div>}
-        {polls !== null && currentPoll && <PollResults poll={currentPoll} groupId={groupId} onVoted={loadPolls} />}
+        {polls !== null && currentPoll && <PollResults poll={currentPoll} groupId={groupId} memberCount={members.length} onVoted={loadPolls} />}
         {polls !== null && !currentPoll && (
           <div className="group-empty-vote">
             <Vote className="h-5 w-5" />
@@ -476,6 +604,10 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
           </form>
         </CardContent>
       </Card>
+
+      <AnimatePresence>
+        {celebratingPollId && <CelebrationOverlay key="celebration" onDone={() => setCelebratingPollId(null)} />}
+      </AnimatePresence>
 
       {archiveOpen && archivedPolls.length > 0 && (
         <section id="vote-archive" className="vote-archive app-reveal" aria-labelledby="vote-archive-heading">

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
 import VenueCard from "./VenueCard";
 
 function getFingerprint() {
@@ -26,9 +27,21 @@ export default function PollClient({ code }) {
     load();
     setName(localStorage.getItem("weyn_name") || "");
     setVoted(localStorage.getItem(`weyn_voted_${code}`));
-    const t = setInterval(load, 8000);
-    return () => clearInterval(t);
   }, [code, load]);
+
+  useEffect(() => {
+    if (!data?.poll?.id) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`poll-${data.poll.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "votes", filter: `poll_id=eq.${data.poll.id}` }, () => {
+        load();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [data?.poll?.id, load]);
 
   async function vote(optionId) {
     setBusy(true); setErr(null);

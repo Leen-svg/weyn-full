@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 import VenueCard from "./VenueCard";
 import VenueActions from "./VenueActions";
 
@@ -109,6 +110,7 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
   const [err, setErr] = useState(null);
   const [openSections, setOpenSections] = useState(new Set());
   const [cold] = useState(isColdSeason);
+  const [tagQuery, setTagQuery] = useState("");
   const [nearby, setNearby] = useState(null);
   const [locationState, setLocationState] = useState("idle");
   const [locationMessage, setLocationMessage] = useState("Suggestions anywhere in the selected city.");
@@ -341,8 +343,24 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
         ))}
       </div>
 
+      <div className="field" style={{ position: "relative", marginBottom: 20 }}>
+        <Search
+          className="h-4 w-4"
+          style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: 0.5 }}
+        />
+        <input
+          type="text"
+          placeholder="Search tags, rooftop, date night, shisha…"
+          value={tagQuery}
+          onChange={(e) => setTagQuery(e.target.value)}
+          style={{ paddingLeft: 36 }}
+        />
+      </div>
+
       {groups.map((cat) => {
-        const visibleTags = cold ? cat.tags.filter((t) => !t.seasonal_exclude) : cat.tags;
+        const q = tagQuery.trim().toLowerCase();
+        let visibleTags = cold ? cat.tags.filter((t) => !t.seasonal_exclude) : cat.tags;
+        if (q) visibleTags = visibleTags.filter((t) => t.display_name.toLowerCase().includes(q));
         if (visibleTags.length === 0) return null;
         const clusters = groupBySubgroup(visibleTags);
         return (
@@ -354,7 +372,7 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
               const id = `${cat.slug}::${cluster.subgroup || "_"}`;
               const picks = selected[cat.slug] || [];
               const hasSelection = cluster.tags.some((t) => picks.includes(t.slug));
-              if (!cluster.subgroup) {
+              if (!cluster.subgroup || q) {
                 return (
                   <div className="chips" key={id} style={{ marginBottom: 8 }}>
                     {cluster.tags.map((t) => (

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
+import { notifyMany } from "@/lib/notify";
 import { NextResponse } from "next/server";
 import { contentAccountError, validateCommunityText } from "@/lib/content-safety";
 import { payloadTooLarge } from "@/lib/request-security.mjs";
@@ -56,6 +57,25 @@ export async function POST(req, { params }) {
     .select("id, body, user_id, created_at")
     .single();
   if (error) return NextResponse.json({ error: "Couldn't send that message" }, { status: 500 });
+
+  notifyGroupMembers({ groupId: id, senderId: user.id, body: checked.text }).catch(() => {});
+
   return NextResponse.json({ ok: true, message });
+}
+
+async function notifyGroupMembers({ groupId, senderId, body }) {
+  const s = db();
+  const [{ data: group }, { data: members }, { data: sender }] = await Promise.all([
+    s.from("friend_groups").select("name").eq("id", groupId).single(),
+    s.from("friend_group_members").select("user_id").eq("group_id", groupId),
+    s.from("profile_public").select("display_name").eq("id", senderId).single(),
+  ]);
+  const others = (members || []).map((m) => m.user_id).filter((id) => id !== senderId);
+  await notifyMany(others, "group_message", {
+    groupId,
+    groupName: group?.name,
+    senderName: sender?.display_name,
+    preview: body.slice(0, 80),
+  });
 }
 

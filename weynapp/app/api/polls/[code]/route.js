@@ -25,7 +25,7 @@ export async function GET(_req, { params }) {
   const venueMap = Object.fromEntries(venuesWithMedia.map((venue) => [venue.id, venue]));
 
   return NextResponse.json({
-    poll: { code: poll.short_code, expiresAt: poll.expires_at, expired: new Date(poll.expires_at) < new Date() },
+    poll: { id: poll.id, code: poll.short_code, expiresAt: poll.expires_at, expired: new Date(poll.expires_at) < new Date() },
     options: (options || []).map((o) => ({
       optionId: o.id,
       venue: venueMap[o.venue_id] || o.venues,

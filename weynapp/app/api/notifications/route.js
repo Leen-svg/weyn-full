@@ -1,0 +1,34 @@
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Log in" }, { status: 401 });
+
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("id, type, payload, read, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ notifications: data || [] });
+}
+
+export async function PATCH(req) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Log in" }, { status: 401 });
+
+  const { ids } = await req.json();
+  let query = supabase.from("notifications").update({ read: true }).eq("user_id", user.id);
+  query = Array.isArray(ids) && ids.length ? query.in("id", ids) : query.eq("read", false);
+  const { error } = await query;
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ProfileMenu from "./ProfileMenu";
+import NotificationBell from "./NotificationBell";
 
 export default async function AuthNav() {
   const supabase = await createClient();
@@ -23,13 +24,16 @@ export default async function AuthNav() {
   ]);
 
   return (
-    <ProfileMenu
-      userId={user.id}
-      displayName={pub?.display_name}
-      avatarUrl={pub?.avatar_url}
-      points={profile?.points_balance ?? 0}
-      isAdmin={!!profile?.is_admin}
-    />
+    <>
+      <NotificationBell userId={user.id} />
+      <ProfileMenu
+        userId={user.id}
+        displayName={pub?.display_name}
+        avatarUrl={pub?.avatar_url}
+        points={profile?.points_balance ?? 0}
+        isAdmin={!!profile?.is_admin}
+      />
+    </>
   );
 }
 
