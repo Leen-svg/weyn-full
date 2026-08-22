@@ -6,7 +6,7 @@ workflows:
     working_directory: weynapp
     environment:
       node: 22.14.0
-      java: 17
+      java: 21
     scripts:
       - name: Install dependencies
         script: npm ci
