@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Users, Plus, Loader2 } from "lucide-react";
+import { Users, Plus, Loader2, MessageCircle, Clock3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +59,11 @@ export default function GroupsClient() {
 
   return (
     <div className="social-stack groups-view space-y-5">
-      <Card>
+      <div className="groups-overview">
+        <div><MessageCircle /><span><strong>{groups?.length || 0}</strong><small>active groups</small></span></div>
+        <div><Users /><span><strong>{friends.length}</strong><small>friends available</small></span></div>
+      </div>
+      <Card className="group-create-card">
         <CardContent className="space-y-3 pt-6">
           {!creating ? (
             <Button className="w-full" onClick={() => setCreating(true)} disabled={!friends.length}>
@@ -109,24 +113,25 @@ export default function GroupsClient() {
       </Card>
 
       {groups === null && <p className="sub">Loading your groups…</p>}
-      {groups?.length === 0 && <p className="sub">No groups yet, start one above.</p>}
+      {groups?.length === 0 && <div className="group-list-empty"><MessageCircle /><strong>Your group chats will live here</strong><span>Add a friend, start a group, then plan and vote without leaving the conversation.</span></div>}
 
       {groups?.map((g) => (
           <div className="app-reveal" key={g.id}>
             <Link href={`/groups/${g.id}`}>
-              <Card className="transition-colors hover:bg-accent">
+              <Card className="group-list-card transition-colors hover:bg-accent">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Users className="h-4 w-4" /> {g.name}
                   </CardTitle>
+                  <span className="group-recent"><Clock3 /> {new Date(g.recent_at).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
                 </CardHeader>
-                <CardContent className="flex -space-x-2 pt-0">
-                  {g.members.slice(0, 6).map((m) => (
+                <CardContent className="group-list-members pt-0">
+                  <div className="flex -space-x-2">{g.members.slice(0, 6).map((m) => (
                     <Avatar key={m.id} className="h-7 w-7 border-2" style={{ borderColor: "var(--white)" }}>
                       <AvatarImage src={safeUrl(m.avatar_url)} alt="" />
                       <AvatarFallback className="text-[10px] font-bold">{(m.display_name || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                  ))}
+                  ))}</div><span>{g.members.length} member{g.members.length === 1 ? "" : "s"} · open chat →</span>
                 </CardContent>
               </Card>
             </Link>
@@ -135,4 +140,5 @@ export default function GroupsClient() {
     </div>
   );
 }
+
 

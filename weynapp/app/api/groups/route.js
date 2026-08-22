@@ -31,7 +31,7 @@ export async function GET() {
         .in("id", [...new Set((allMembers || []).map((m) => m.user_id))])
     : { data: [] };
   const { data: recentMessages } = groupIds.length
-    ? await s.from("group_messages").select("group_id, created_at").in("group_id", groupIds).order("created_at", { ascending: false })
+    ? await s.from("group_messages").select("group_id, created_at").in("group_id", groupIds).order("created_at", { ascending: false }).limit(Math.min(1000, Math.max(100, groupIds.length * 20)))
     : { data: [] };
   const authorMap = Object.fromEntries((authors || []).map((a) => [a.id, a]));
   const recentMap = {};
@@ -102,4 +102,5 @@ export async function POST(req) {
 
   return NextResponse.json({ id: group.id });
 }
+
 

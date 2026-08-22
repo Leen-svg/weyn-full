@@ -5,8 +5,8 @@ import ComingSoonMap from "@/components/ComingSoonMap";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "Find Where to Go in Abu Dhabi",
-  description: "Choose your mood, activity, budget, and optional Near me filter. Weyn gives you three curated Abu Dhabi places and a quick group vote.",
+  title: "Find Where to Go in Abu Dhabi and Dubai",
+  description: "Choose your city, mood, activity, budget, and optional Near Me filter. Weyn gives you three curated places and a quick group vote.",
   path: "/find",
 });
 
@@ -29,6 +29,7 @@ export default async function FindPage() {
     </>
   );
 }
+
 
 
 

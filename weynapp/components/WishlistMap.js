@@ -187,7 +187,7 @@ export default function WishlistMap({ venues }) {
           <button type="button" className={styles.selectionClose} onClick={() => setSelectedId(null)} aria-label="Close selected place">×</button>
           <div>
             <strong>{selectedVenue.name}</strong>
-            <span>{selectedVenue.neighborhood || "Abu Dhabi"}</span>
+            <span>{selectedVenue.neighborhood || selectedVenue.city || "UAE"}</span>
           </div>
           <MapChooser venue={selectedVenue} className="btn small primary" />
         </div>
@@ -195,3 +195,4 @@ export default function WishlistMap({ venues }) {
     </section>
   );
 }
+

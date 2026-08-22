@@ -4,7 +4,7 @@ import { privatePageMetadata } from "@/lib/seo";
 
 export const metadata = privatePageMetadata({
   title: "Create Your Weyn Account",
-  description: "Create a Weyn account to save Abu Dhabi places, join group votes, write ratings, and earn points.",
+  description: "Create a Weyn beta account to save Abu Dhabi and Dubai places, join group votes, write ratings, and earn points.",
 });
 
 export default function SignupPage() {
@@ -14,4 +14,5 @@ export default function SignupPage() {
     </Suspense>
   );
 }
+
 

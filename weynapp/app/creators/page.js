@@ -4,8 +4,8 @@ import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 export const metadata = pageMetadata({
-  title: "Abu Dhabi Creators",
-  description: "Submit your Abu Dhabi place video to Weyn. Featured creators are credited on the venue card with a direct link to their TikTok.",
+  title: "UAE Creators",
+  description: "Submit your Abu Dhabi or Dubai place video to Weyn. Featured creators are credited on the venue card with a direct link to their TikTok.",
   path: "/creators",
 });
 
@@ -37,4 +37,5 @@ export default async function CreatorsPage() {
     </>
   );
 }
+
 

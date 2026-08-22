@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: weynapp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: weynapp/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Verify production Supabase migration
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const base = "https://itnonbrlfoafqhknncit.supabase.co/rest/v1";
+          const key = "sb_publishable_lA14C58eXlCuL0Q4j0Y7Zw_wXWghRul";
+          const checks = [
+            "beta_invitation_codes?select=id&limit=1",
+            "legal_consents?select=user_id&limit=1",
+            "saved_lists?select=id&limit=1",
+            "saved_list_items?select=list_id,venue_id&limit=1",
+            "saved_list_group_shares?select=list_id&limit=1",
+            "saved_list_friend_shares?select=list_id&limit=1",
+            "posts?select=saved_list_id&limit=1"
+          ];
+          for (const path of checks) {
+            const response = await fetch(`${base}/${path}`, {
+              headers: { apikey: key, Authorization: `Bearer ${key}` }
+            });
+            if (!response.ok) {
+              throw new Error(`${path}: ${response.status} ${await response.text()}`);
+            }
+          }
+          NODE

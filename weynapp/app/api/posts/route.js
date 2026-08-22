@@ -20,7 +20,7 @@ export async function GET(req) {
   // slice of what's visible to show for this toggle.
   let query = supabase
     .from("posts")
-    .select("id, body, photo_url, visibility, created_at, user_id, venue_id, venues (id, name, neighborhood)")
+    .select("id, body, photo_url, visibility, created_at, user_id, venue_id, saved_list_id, venues (id, name, neighborhood), saved_lists (title, share_slug, tags)")
     .order("created_at", { ascending: false })
     .limit(30);
 
@@ -48,9 +48,13 @@ export async function POST(req) {
   const accountError = await contentAccountError(user);
   if (accountError) return NextResponse.json({ error: accountError }, { status: 403 });
 
-  const { venueId, body, visibility, photoUrl } = await req.json();
+  const { venueId, savedListId, body, visibility, photoUrl } = await req.json();
   const checked = validateCommunityText(body, { required: true, maxLength: 500 });
-  if (!venueId || checked.error) return NextResponse.json({ error: checked.error || "Choose a venue" }, { status: 400 });
+  if ((!venueId && !savedListId) || checked.error) return NextResponse.json({ error: checked.error || "Choose a venue or list" }, { status: 400 });
+  if (savedListId) {
+    const { data: list } = await supabase.from("saved_lists").select("id").eq("id", savedListId).maybeSingle();
+    if (!list) return NextResponse.json({ error: "List not found" }, { status: 404 });
+  }
   if (photoUrl) return NextResponse.json({ error: "Photo uploads are paused while we add stronger safety checks." }, { status: 400 });
   const vis = visibility === "friends" ? "friends" : "public";
   const { count } = await db().from("posts").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", utcDayStart());
@@ -58,7 +62,8 @@ export async function POST(req) {
 
   const { error } = await supabase.from("posts").insert({
     user_id: user.id,
-    venue_id: venueId,
+    venue_id: venueId || null,
+    saved_list_id: savedListId || null,
     body: checked.text,
     photo_url: null,
     visibility: vis,
@@ -68,3 +73,4 @@ export async function POST(req) {
   await awardPoints(user.id, POINTS.posted, "posted");
   return NextResponse.json({ ok: true, pointsEarned: POINTS.posted });
 }
+

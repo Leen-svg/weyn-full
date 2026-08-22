@@ -329,6 +329,9 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
   const [mediaError, setMediaError] = useState(null);
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaType, setMediaType] = useState("image");
+  const [mediaBusy, setMediaBusy] = useState(false);
 
   const loadMedia = useCallback(async () => {
     const res = await fetch(`/api/admin/venues/media?venueId=${venue.id}`);
@@ -359,6 +362,53 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
     } finally {
       setUploading(false);
     }
+  }
+
+  async function addMediaLink() {
+    const rawUrl = mediaUrl.trim();
+    const url = /^https?:\/\//i.test(rawUrl) ? safeUrl(rawUrl) : null;
+    if (!url) {
+      setMediaError("Enter a valid http(s) image or video URL.");
+      return;
+    }
+    setMediaBusy(true);
+    setMediaError(null);
+    const res = await fetch("/api/admin/venues/media", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ intent: "link", venueId: venue.id, url, mediaType }),
+    });
+    const data = await res.json();
+    if (!res.ok) setMediaError(data.error || "Could not add media link");
+    else {
+      setMediaUrl("");
+      await loadMedia();
+    }
+    setMediaBusy(false);
+  }
+
+  async function moveMedia(index, direction) {
+    const destination = index + direction;
+    if (destination < 0 || destination >= media.length || mediaBusy) return;
+    const previous = media;
+    const reordered = [...media];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(destination, 0, moved);
+    setMedia(reordered);
+    setMediaBusy(true);
+    setMediaError(null);
+    const res = await fetch("/api/admin/venues/media", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ venueId: venue.id, orderedIds: reordered.map((item) => item.id) }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setMedia(previous);
+      setMediaError(data.error || "Could not reorder media");
+      await loadMedia();
+    }
+    setMediaBusy(false);
   }
 
   async function removeMedia(id) {
@@ -443,20 +493,35 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
 
       <div className="field">
         <label>Photos & videos</label>
-        <p className="venue-media-help">Select several files at once. Every photo is resized to at most 1600px, converted to WebP, and compressed below 1.5 MB before upload. Videos can be up to 50 MB.</p>
-        <div className="media-grid">
-          {media.map((m) => (
-            <div className="media-thumb" key={m.id}>
+        <p className="venue-media-help">Upload files or add direct image/video links. Use the arrow controls to choose the order shown on venue cards; the first item is the cover.</p>
+        <div className="media-grid admin-media-grid">
+          {media.map((m, index) => (
+            <div className="media-thumb admin-media-thumb" key={m.id}>
               {m.media_type === "video" ? (
                 <video src={safeUrl(m.url)} muted preload="metadata" controls />
               ) : (
-                <img src={safeUrl(m.url)} alt="" />
+                <img src={safeUrl(m.url)} alt={`${venue.name} media ${index + 1}`} />
               )}
-              <button type="button" className="media-remove" aria-label="Remove media" onClick={() => removeMedia(m.id)}>✕</button>
+              {index === 0 && <span className="media-cover-label">Cover</span>}
+              <button type="button" className="media-remove" aria-label={`Remove media ${index + 1}`} onClick={() => removeMedia(m.id)} disabled={mediaBusy}>✕</button>
+              <div className="media-order-controls">
+                <button type="button" aria-label={`Move media ${index + 1} earlier`} onClick={() => moveMedia(index, -1)} disabled={index === 0 || mediaBusy}>←</button>
+                <span>{index + 1}</span>
+                <button type="button" aria-label={`Move media ${index + 1} later`} onClick={() => moveMedia(index, 1)} disabled={index === media.length - 1 || mediaBusy}>→</button>
+              </div>
             </div>
           ))}
         </div>
-        <input type="file" accept="image/*,video/*" multiple onChange={uploadFile} disabled={uploading} />
+        <div className="media-link-row">
+          <select aria-label="Media link type" value={mediaType} onChange={(e) => setMediaType(e.target.value)} disabled={mediaBusy}>
+            <option value="image">Image link</option>
+            <option value="video">Video link</option>
+          </select>
+          <input type="url" value={mediaUrl} onChange={(e) => setMediaUrl(e.target.value)} placeholder="https://…" aria-label="Image or video URL" />
+          <button type="button" className="btn small" onClick={addMediaLink} disabled={mediaBusy || !mediaUrl.trim()}>Add link</button>
+        </div>
+        <div className="media-upload-divider"><span>or upload files</span></div>
+        <input type="file" accept="image/*,video/*" multiple onChange={uploadFile} disabled={uploading || mediaBusy} />
         {uploadStatus && <div className="media-upload-status" role="status">{uploadStatus}</div>}
         {mediaError && <div className="notice err" role="alert">{mediaError}</div>}
       </div>

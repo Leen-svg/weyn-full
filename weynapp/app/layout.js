@@ -7,6 +7,8 @@ import TabBar from "@/components/TabBar";
 import PrimaryNav from "@/components/PrimaryNav";
 import CookieBar from "@/components/CookieBar";
 import { Analytics } from "@vercel/analytics/next";
+import InvitationGate from "@/components/InvitationGate";
+import { hasBetaAccess } from "@/lib/beta-access";
 
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -26,7 +28,7 @@ const kufam = Kufam({
 
 const TITLE = "Weyn App — Find your next spot in 30 seconds";
 const DESC =
-  "Pick the mood and budget, get three curated Abu Dhabi spots, then send them to the group for a quick vote.";
+  "Pick the mood and budget, discover curated UAE spots, then send them to the group for a quick vote.";
 
 export const metadata = {
   metadataBase: new URL("https://www.goweyn.com"),
@@ -35,9 +37,10 @@ export const metadata = {
   applicationName: "Weyn",
   category: "lifestyle",
   keywords: [
-    "where to go Abu Dhabi",
-    "things to do Abu Dhabi",
+    "where to go UAE",
+    "things to do Dubai",
     "Abu Dhabi restaurants",
+    "Dubai restaurants",
     "group plans",
     "weyn",
     "وين",
@@ -78,10 +81,12 @@ export const viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const betaAccess = await hasBetaAccess();
   return (
     <html lang="en">
       <body className={`app-shell ${bricolage.variable} ${space.variable} ${kufam.variable}`}>
+        {!betaAccess && <InvitationGate />}
         <a className="skip-link" href="#app-content">Skip to content</a>
         <header className="nav">
           <Link href="/app" className="logo" aria-label="Weyn home">
@@ -105,6 +110,8 @@ export default function RootLayout({ children }) {
               weyn<span className="q ar">؟</span> · beta · made in the UAE
             </span>
             <div className="links">
+              <a href="/terms">Terms</a>
+              <a href="/privacy">Privacy</a>
               <a href="/">Home</a>
               <Link href="/submit">Add a spot</Link>
               <Link href="/creators">Creators</Link>
@@ -123,4 +130,5 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
 
