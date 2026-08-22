@@ -30,7 +30,7 @@ function TimeSelect({ value, onChange }) {
 
   const selected = START_TIME_OPTIONS.find((option) => option.value === value) || START_TIME_OPTIONS[0];
   const filtered = query.trim()
-    ? START_TIME_OPTIONS.filter((option) => normalizeTimeQuery(option.label).includes(normalizeTimeQuery(query)) || option.value.replace(":", "").includes(normalizeTimeQuery(query)))
+    ? START_TIME_OPTIONS.filter((option) => normalizeTimeQuery(option.label).includes(normalizeTimeQuery(query)))
     : START_TIME_OPTIONS;
 
   useEffect(() => {
