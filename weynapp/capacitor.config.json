@@ -1,0 +1,17 @@
+{
+  "appId": "com.goweyn.app",
+  "appName": "Weyn",
+  "webDir": "public",
+  "server": {
+    "url": "https://goweyn.com",
+    "androidScheme": "https",
+    "iosScheme": "https"
+  },
+  "backgroundColor": "#F9F9F9",
+  "ios": {
+    "contentInset": "always"
+  },
+  "android": {
+    "backgroundColor": "#F9F9F9"
+  }
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Weyn</string>
+    <string name="title_activity_main">Weyn</string>
+    <string name="package_name">com.goweyn.app</string>
+    <string name="custom_url_scheme">com.goweyn.app</string>
+</resources>
