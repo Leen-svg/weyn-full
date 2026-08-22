@@ -227,11 +227,13 @@ input:focus, select:focus, textarea:focus {
 .favorite-pill.c3 { background: var(--purple-wash); }
 
 /* ---------- venue-card v2: image-forward, softer than the brand .card ---------- */
+/* Column layout, not grid: cards vary a lot in height (description length,
+   tag count, media count), and a strict grid row stretches to its tallest
+   card, leaving a big empty gap under every shorter neighbor. Columns let
+   each card stack immediately under the next in its own column instead. */
 .venue-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  align-items: start;
-  gap: 16px;
+  column-width: 240px;
+  column-gap: 16px;
 }
 .venue-card {
   background: var(--white);
@@ -241,6 +243,8 @@ input:focus, select:focus, textarea:focus {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  break-inside: avoid;
+  margin-bottom: 16px;
 }
 .venue-card.picked { outline: 2.5px solid var(--purple); outline-offset: -2.5px; }
 .venue-cover {
@@ -458,9 +462,10 @@ input:focus, select:focus, textarea:focus {
 
 /* Laptop cards stay compact; phones get a readable single column. */
 .app-main .venue-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  column-count: 2;
+  column-gap: 14px;
 }
+.app-main .venue-card { margin-bottom: 14px; }
 .app-main .venue-card-body { padding: 14px; }
 .app-main .venue-cover { aspect-ratio: 16 / 9; }
 .app-main .venue-card {
@@ -897,7 +902,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 @media (max-width: 560px) {
-  .app-main .venue-grid { grid-template-columns: 1fr; }
+  .app-main .venue-grid { column-count: 1; }
   .app-main .chip { min-height: 44px; }
   .app-home__section { margin-top: 32px !important; }
   .app-home__section-header > span { display: none; }

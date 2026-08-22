@@ -162,6 +162,12 @@ p .ar,li .ar{font-weight:700}
 .card.dark{background:var(--ink-deep);color:var(--paper)}
 .card.dark p{color:rgba(249,249,249,.75)}
 
+/* A vertical stack of page sections (e.g. the Plan page): deliberate,
+   consistent spacing on an 8pt grid instead of leaning on default heading/
+   paragraph margins, which produces uneven, accidental-looking gaps. */
+.planner-stack{display:flex;flex-direction:column;gap:24px}
+@media(max-width:640px){.planner-stack{gap:20px}}
+
 /* ---------- 8. SMALL PARTS ---------- */
 
 /* Eyebrow above a heading */
