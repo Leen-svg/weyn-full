@@ -35,7 +35,7 @@ export default function InvitationGate() {
         <p>Weyn is currently an experimental beta for invited testers in Abu Dhabi and Dubai. Enter your invitation code to continue.</p>
         <form onSubmit={submit}>
           <label htmlFor="invitation-code">Invitation code</label>
-          <input id="invitation-code" value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} autoCapitalize="characters" autoComplete="one-time-code" placeholder="WEYN-XXXX" required autoFocus />
+          <input type="text" id="invitation-code" value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} autoCapitalize="characters" autoComplete="one-time-code" placeholder="WEYN-XXXX" required autoFocus />
           {error && <div className="notice err" role="alert">{error}</div>}
           <button className="btn primary block" type="submit" disabled={busy || !code.trim()}>
             {busy ? <><Loader2 className="invite-spinner" /> Checking…</> : "Enter the beta"}
