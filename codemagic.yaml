@@ -1,12 +1,12 @@
 workflows:
   android-debug:
     name: Weyn Android validation
-    instance_type: linux_x2
+    instance_type: mac_mini_m2
     max_build_duration: 60
     working_directory: weynapp
     environment:
       node: 22.14.0
-      java: 21
+      java: 17
     scripts:
       - name: Install dependencies
         script: npm ci
