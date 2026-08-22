@@ -5,8 +5,8 @@
 > instead of a list of fifty. You turn those three into a poll, drop the link in your group chat,
 > and everyone votes. Your friends don't need an account or an app to vote.
 
-Live in Abu Dhabi with 730 places, and starting to fill in Dubai. Every Middle Eastern city next.
-Made in Abu Dhabi. Contact: hello@goweyn.com
+Live across Abu Dhabi and Dubai, with a curated catalogue that changes as the beta grows.
+Made in the UAE. Contact: hello@goweyn.com
 
 ## What it does today
 
@@ -48,3 +48,4 @@ padel, spas, markets and desert trips.
 
 - Instagram: https://www.instagram.com/goweynapp
 - TikTok: https://www.tiktok.com/@goweynapp
+

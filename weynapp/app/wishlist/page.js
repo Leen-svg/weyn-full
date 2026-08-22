@@ -5,7 +5,7 @@ import { privatePageMetadata } from "@/lib/seo";
 
 export const metadata = privatePageMetadata({
   title: "Your Saved Places",
-  description: "Your private list of Abu Dhabi places saved on Weyn.",
+  description: "Create and share your own tagged lists of saved UAE places on Weyn.",
 });
 
 export default async function WishlistPage() {
@@ -24,11 +24,12 @@ export default async function WishlistPage() {
 
   return (
     <>
-      <span className="eyebrow">Private by default</span>
-      <h1>Want to try</h1>
-      <p className="sub">Your saved places, together on one map.</p>
+      <span className="eyebrow">Yours to organise and share</span>
+      <h1>Saved</h1>
+      <p className="sub">Build custom lists, add your own tags, and share only with the people you choose.</p>
       <WishlistClient initialVenues={venues} />
     </>
   );
 }
+
 

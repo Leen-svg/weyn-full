@@ -5,7 +5,7 @@ import { privatePageMetadata } from "@/lib/seo";
 
 export const metadata = privatePageMetadata({
   title: "Your Groups",
-  description: "Plan Abu Dhabi outings and vote on places with your Weyn groups.",
+  description: "Plan outings in Abu Dhabi and Dubai, chat, and vote on places with your Weyn groups.",
 });
 
 export default async function GroupsPage() {
@@ -23,4 +23,5 @@ export default async function GroupsPage() {
     </>
   );
 }
+
 

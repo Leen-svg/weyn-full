@@ -8,7 +8,7 @@ const ITEMS = [
   { href: "/find", label: "Find" },
   { href: "/groups", label: "Groups" },
   { href: "/wishlist", label: "Saved" },
-  { href: "/rewards", label: "Points" },
+  { href: "/plan", label: "Plan" },
 ];
 
 export default function PrimaryNav() {
@@ -32,3 +32,4 @@ export default function PrimaryNav() {
     </div>
   );
 }
+

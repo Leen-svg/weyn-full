@@ -13,7 +13,7 @@ function finiteCoordinate(value, min, max) {
 function venueDestination(venue) {
   const latitude = finiteCoordinate(venue.latitude, -90, 90);
   const longitude = finiteCoordinate(venue.longitude, -180, 180);
-  const label = [venue.name, venue.neighborhood, venue.city || "Abu Dhabi"]
+  const label = [venue.name, venue.neighborhood, venue.city || "UAE"]
     .filter(Boolean)
     .join(", ");
 
@@ -198,3 +198,4 @@ export default function MapChooser({ venue, className = "btn small ghost", compa
     </>
   );
 }
+

@@ -4,8 +4,8 @@ import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 export const metadata = pageMetadata({
-  title: "Add an Abu Dhabi Spot",
-  description: "Know an Abu Dhabi restaurant, cafe, activity, or hidden gem Weyn is missing? Submit it for review and help the community discover it.",
+  title: "Add a UAE Spot",
+  description: "Know an Abu Dhabi or Dubai restaurant, cafe, activity, or hidden gem Weyn is missing? Submit it for review and help the community discover it.",
   path: "/submit",
 });
 
@@ -19,4 +19,5 @@ export default async function SubmitPage() {
     </>
   );
 }
+
 
