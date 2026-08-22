@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Send, Vote, Loader2, ArrowLeft, Share2, UserPlus, UserMinus, Archive, ChevronDown, MapPin, Search, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -411,6 +412,24 @@ function MembersManager({ groupId, members, creatorId, currentUserId, onChanged 
 }
 
 export default function GroupDetailClient({ groupId, group, members: initialMembers, taxonomy, currentUserId }) {
+  const router = useRouter();
+  const isGroupOwner = group.created_by === currentUserId;
+  const [leaveBusy, setLeaveBusy] = useState(false);
+
+  async function leaveOrDeleteGroup() {
+    const verb = isGroupOwner ? "delete this group for everyone" : "leave this group";
+    if (!confirm(`Are you sure you want to ${verb}? This can't be undone.`)) return;
+    setLeaveBusy(true);
+    const res = await fetch(`/api/groups/${groupId}`, { method: "DELETE" });
+    if (res.ok) {
+      router.push("/groups");
+      router.refresh();
+    } else {
+      setLeaveBusy(false);
+      alert("Something went wrong, try again.");
+    }
+  }
+
   const [members, setMembers] = useState(initialMembers);
   const [messages, setMessages] = useState(null);
   const [text, setText] = useState("");
@@ -527,8 +546,11 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
         <ArrowLeft className="h-4 w-4" /> Groups
       </Link>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2">
         <h1 style={{ marginBottom: 0 }}>{group.name}</h1>
+        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={leaveBusy} onClick={leaveOrDeleteGroup}>
+          {leaveBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : isGroupOwner ? "Delete group" : "Leave group"}
+        </Button>
       </div>
       <div className="flex items-center gap-3">
         <div className="flex -space-x-2">

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getTaxonomy } from "@/lib/taxonomy";
 import ProfileForm from "@/components/ProfileForm";
+import AccountSecurity from "@/components/AccountSecurity";
 
 export const metadata = { title: "Your profile, Weyn" };
 
@@ -35,6 +36,9 @@ export default async function ProfilePage() {
         {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : ", "}
       </p>
       <ProfileForm initial={pub || {}} groups={groups} />
+      <div className="space-y-5" style={{ marginTop: 20 }}>
+        <AccountSecurity email={user.email} />
+      </div>
     </>
   );
 }

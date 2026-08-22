@@ -33,7 +33,16 @@ export async function DELETE(req, { params }) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Log in" }, { status: 401 });
 
+  const { data: group } = await supabase.from("friend_groups").select("created_by").eq("id", id).maybeSingle();
+  if (!group) return NextResponse.json({ error: "Group not found" }, { status: 404 });
+
+  if (group.created_by === user.id) {
+    const { error } = await supabase.from("friend_groups").delete().eq("id", id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, deleted: true });
+  }
+
   const { error } = await supabase.from("friend_group_members").delete().eq("group_id", id).eq("user_id", user.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, left: true });
 }
