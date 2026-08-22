@@ -18,7 +18,7 @@ export async function POST(req) {
   const normalized = String(code || "").trim().toUpperCase().slice(0, 80);
   if (!normalized) return NextResponse.json({ error: "Enter your invitation code." }, { status: 400 });
 
-  const configured = String(process.env.BETA_INVITATION_CODE || "").trim().toUpperCase();
+  const configured = String(process.env.BETA_INVITATION_CODE || "YALLA WEYN").trim().toUpperCase();
   let valid = configured && normalized === configured;
   let inviteId = null;
   if (!valid) {
