@@ -109,8 +109,33 @@ main.container { flex: 1; max-width: 760px; padding-top: 110px; padding-bottom: 
 
 /* ---------- forms ---------- */
 .field { margin-bottom: 18px; }
-.field label { display: block; font-weight: 800; font-size: 14px; margin-bottom: 7px; }
+.field label, .field > span:first-child { display: block; font-weight: 800; font-size: 14px; margin-bottom: 7px; }
 .field .hint { font-weight: 600; color: var(--ink-soft); font-size: 12px; }
+
+/* A fully custom dropdown: native <select>/<input type="time"> hand their
+   open list to the OS, which can't be restyled and looks out of place. */
+.time-select { position: relative; }
+.time-select-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 15px; border: 2px solid var(--ink); border-radius: 12px;
+  background: var(--white); font-family: inherit; font-size: 15px; font-weight: 600; color: var(--ink);
+  cursor: pointer;
+}
+.time-select-trigger:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
+.time-select-caret { width: 18px; height: 18px; color: var(--ink-soft); transition: transform var(--motion-fast) ease; }
+.time-select-trigger[aria-expanded="true"] .time-select-caret { transform: rotate(180deg); }
+.time-select-list {
+  position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0;
+  max-height: 260px; overflow-y: auto; margin: 0; padding: 6px;
+  list-style: none; background: var(--white); border: 1.5px solid var(--ink);
+  border-radius: 16px; box-shadow: 0 16px 40px rgba(31,48,68,.18);
+}
+.time-select-option {
+  width: 100%; text-align: left; padding: 10px 12px; border: 0; border-radius: 10px;
+  background: none; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer;
+}
+.time-select-option:hover { background: var(--purple-wash); }
+.time-select-option.selected { background: var(--purple-wash); color: var(--purple-deep); font-weight: 800; }
 input[type="text"], input[type="url"], input[type="email"],
 input[type="number"], input[type="password"], select, textarea {
   width: 100%; padding: 13px 15px; border: 2px solid var(--ink); border-radius: 12px;

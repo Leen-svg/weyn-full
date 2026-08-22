@@ -1,12 +1,12 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import MapChooser from "./MapChooser";
 import { buildTimeline, coordinates, orderStops } from "@/lib/planner-utils.mjs";
 
-// Native <input type="time"> opens the OS's own picker popup, which can't be
-// restyled and looks jarring against the app's design system. A plain select
-// with half-hour options covers this use case fully and matches every other
-// input on the page.
+// Both <input type="time"> and a native <select> hand the open picker/options
+// list off to the OS or browser to render, which can't be restyled and looks
+// jarring against the app's design system. This renders every pixel itself.
 const START_TIME_OPTIONS = Array.from({ length: 36 }, (_, i) => {
   const totalMinutes = 6 * 60 + i * 30; // 06:00 through 23:30
   const hours24 = Math.floor(totalMinutes / 60) % 24;
@@ -16,6 +16,59 @@ const START_TIME_OPTIONS = Array.from({ length: 36 }, (_, i) => {
   const label = `${hours12}:${String(minutes).padStart(2, "0")} ${hours24 < 12 ? "AM" : "PM"}`;
   return { value, label };
 });
+
+function TimeSelect({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const listRef = useRef(null);
+
+  useEffect(() => {
+    function onDocPointerDown(event) {
+      if (rootRef.current && !rootRef.current.contains(event.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocPointerDown);
+    return () => document.removeEventListener("mousedown", onDocPointerDown);
+  }, []);
+
+  useEffect(() => {
+    if (open) listRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
+  }, [open]);
+
+  const selected = START_TIME_OPTIONS.find((option) => option.value === value) || START_TIME_OPTIONS[0];
+
+  return (
+    <div className="time-select" ref={rootRef}>
+      <button
+        type="button"
+        className="time-select-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((wasOpen) => !wasOpen)}
+        onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}
+      >
+        <span>{selected.label}</span>
+        <ChevronDown className="time-select-caret" aria-hidden="true" />
+      </button>
+      {open && (
+        <ul className="time-select-list" role="listbox" ref={listRef}>
+          {START_TIME_OPTIONS.map((option) => (
+            <li key={option.value}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={option.value === value}
+                className={`time-select-option${option.value === value ? " selected" : ""}`}
+                onClick={() => { onChange(option.value); setOpen(false); }}
+              >
+                {option.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 async function optimizedStops(items) {
   if (items.length < 3 || items.some((place) => !coordinates(place))) return orderStops(items);
@@ -110,12 +163,10 @@ export default function PlannerClient() {
       <section className="card">
         <h2>Build a Perfect Day</h2>
         <p className="sub">Choose up to four places. Weyn optimizes the stop order, estimates travel time, and lets each person open their preferred map app.</p>
-        <label className="field">
+        <div className="field">
           <span>Start time</span>
-          <select value={startTime} onChange={(event) => setStartTime(event.target.value)}>
-            {START_TIME_OPTIONS.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
-          </select>
-        </label>
+          <TimeSelect value={startTime} onChange={setStartTime} />
+        </div>
         <div className="venue-list-single">
           {places.map((place) => {
             const key = `${place.kind}:${place.id}`;
@@ -149,7 +200,9 @@ export default function PlannerClient() {
       <section className="card">
         <span className="eyebrow">Burner list + trip board</span>
         <h2>Share this plan</h2>
-        <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="Oman Roadtrip 2026" />
+        <div className="field">
+          <input type="text" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="Oman Roadtrip 2026" />
+        </div>
         <button className="btn primary block" disabled={busy || !picked.length || !title.trim()} onClick={createBoard}>Create collaborative board</button>
         {data.boards.map((board) => (
           <div className="details-row" key={board.id}>
