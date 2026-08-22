@@ -17,14 +17,25 @@ const START_TIME_OPTIONS = Array.from({ length: 36 }, (_, i) => {
   return { value, label };
 });
 
+function normalizeTimeQuery(text) {
+  return text.toLowerCase().replace(/[\s:]/g, "");
+}
+
 function TimeSelect({ value, onChange }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const rootRef = useRef(null);
   const listRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const selected = START_TIME_OPTIONS.find((option) => option.value === value) || START_TIME_OPTIONS[0];
+  const filtered = query.trim()
+    ? START_TIME_OPTIONS.filter((option) => normalizeTimeQuery(option.label).includes(normalizeTimeQuery(query)) || option.value.replace(":", "").includes(normalizeTimeQuery(query)))
+    : START_TIME_OPTIONS;
 
   useEffect(() => {
     function onDocPointerDown(event) {
-      if (rootRef.current && !rootRef.current.contains(event.target)) setOpen(false);
+      if (rootRef.current && !rootRef.current.contains(event.target)) { setOpen(false); setQuery(""); }
     }
     document.addEventListener("mousedown", onDocPointerDown);
     return () => document.removeEventListener("mousedown", onDocPointerDown);
@@ -34,31 +45,42 @@ function TimeSelect({ value, onChange }) {
     if (open) listRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
   }, [open]);
 
-  const selected = START_TIME_OPTIONS.find((option) => option.value === value) || START_TIME_OPTIONS[0];
+  function commit(option) {
+    onChange(option.value);
+    setQuery("");
+    setOpen(false);
+  }
 
   return (
     <div className="time-select" ref={rootRef}>
-      <button
-        type="button"
-        className="time-select-trigger"
+      <input
+        ref={inputRef}
+        type="text"
+        role="combobox"
         aria-haspopup="listbox"
         aria-expanded={open}
-        onClick={() => setOpen((wasOpen) => !wasOpen)}
-        onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}
-      >
-        <span>{selected.label}</span>
-        <ChevronDown className="time-select-caret" aria-hidden="true" />
-      </button>
+        className="time-select-trigger"
+        value={open ? query : selected.label}
+        onFocus={(event) => { setQuery(selected.label); setOpen(true); event.target.select(); }}
+        onChange={(event) => { setQuery(event.target.value); setOpen(true); }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") { setQuery(""); setOpen(false); inputRef.current?.blur(); }
+          else if (event.key === "Enter") { event.preventDefault(); if (filtered.length) commit(filtered[0]); }
+        }}
+      />
+      <ChevronDown className="time-select-caret" aria-hidden="true" />
       {open && (
         <ul className="time-select-list" role="listbox" ref={listRef}>
-          {START_TIME_OPTIONS.map((option) => (
+          {filtered.length === 0 && <li className="time-select-empty">No matching time</li>}
+          {filtered.map((option) => (
             <li key={option.value}>
               <button
                 type="button"
                 role="option"
                 aria-selected={option.value === value}
                 className={`time-select-option${option.value === value ? " selected" : ""}`}
-                onClick={() => { onChange(option.value); setOpen(false); }}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => commit(option)}
               >
                 {option.label}
               </button>
