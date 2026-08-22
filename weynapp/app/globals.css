@@ -230,6 +230,7 @@ input:focus, select:focus, textarea:focus {
 .venue-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  align-items: start;
   gap: 16px;
 }
 .venue-card {
@@ -848,7 +849,7 @@ input:focus, select:focus, textarea:focus {
 }
 .app-home__picks { margin-top: 24px !important; }
 .venue-rail {
-  display: grid; grid-auto-flow: column; grid-auto-columns: min(380px, 84vw); gap: 14px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: min(380px, 84vw); align-items: start; gap: 14px;
   overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
   padding: 2px 3px 16px; overscroll-behavior-inline: contain;
 }
