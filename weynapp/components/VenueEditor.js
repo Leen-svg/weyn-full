@@ -365,7 +365,8 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
   }
 
   async function addMediaLink() {
-    const url = safeUrl(mediaUrl.trim());
+    const rawUrl = mediaUrl.trim();
+    const url = /^https?:\/\//i.test(rawUrl) ? safeUrl(rawUrl) : null;
     if (!url) {
       setMediaError("Enter a valid http(s) image or video URL.");
       return;
