@@ -33,7 +33,7 @@ jobs:
             "beta_invitation_codes?select=id&limit=1",
             "legal_consents?select=user_id&limit=1",
             "saved_lists?select=id&limit=1",
-            "saved_list_items?select=id&limit=1",
+            "saved_list_items?select=list_id,venue_id&limit=1",
             "saved_list_group_shares?select=list_id&limit=1",
             "saved_list_friend_shares?select=list_id&limit=1",
             "posts?select=saved_list_id&limit=1"
