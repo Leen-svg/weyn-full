@@ -80,6 +80,12 @@ main.container { flex: 1; max-width: 760px; padding-top: 110px; padding-bottom: 
 .accordion-chevron.open { transform: rotate(90deg); }
 .accordion-body { padding: 4px 16px 14px; border-top: 2px solid var(--ink); }
 .accordion-body .chips { padding-top: 12px; }
+.tag-category-dropdown { margin-bottom: 10px; }
+.tag-category-dropdown > .accordion-section { border-width: 1.5px; border-radius: 16px; box-shadow: 0 5px 18px rgba(31,48,68,.045); }
+.tag-category-dropdown > .accordion-section > .accordion-header { min-height: 54px; padding: 13px 16px; font-size: 15px; text-align: left; }
+.tag-category-dropdown > .accordion-section > .accordion-body { display: grid; gap: 8px; padding: 10px 12px 12px; border-top-width: 1px; background: rgba(249,249,249,.72); }
+.tag-category-dropdown .accordion-body .accordion-section { margin: 0; border-width: 1px; box-shadow: none; }
+.tag-category-dropdown .accordion-body .accordion-body { background: var(--white); }
 
 /* ---------- button size/layout modifiers (colour variants are in design-system.css) ---------- */
 .btn.small { padding: 8px 15px; font-size: 13px; box-shadow: 3px 3px 0 var(--ink); }

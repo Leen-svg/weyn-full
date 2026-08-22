@@ -63,21 +63,6 @@ function groupBySubgroup(tags) {
   return clusters;
 }
 
-function groupZonesByEmirate(zones) {
-  const clusters = [];
-  const byEmirate = new Map();
-  for (const z of zones) {
-    const key = z.emirate || "Other";
-    if (!byEmirate.has(key)) {
-      const cluster = { emirate: key, zones: [] };
-      byEmirate.set(key, cluster);
-      clusters.push(cluster);
-    }
-    byEmirate.get(key).zones.push(z);
-  }
-  return clusters;
-}
-
 function AccordionSection({ id, label, count, forceOpen, open, onToggle, children }) {
   const isOpen = forceOpen || open;
   return (
@@ -93,11 +78,10 @@ function AccordionSection({ id, label, count, forceOpen, open, onToggle, childre
   );
 }
 
-export default function VibeSelector({ groups, zones = [], isLoggedIn = false }) {
+export default function VibeSelector({ groups, isLoggedIn = false }) {
   const router = useRouter();
   const [city, setCity] = useState("Abu Dhabi");
   const [selected, setSelected] = useState({});
-  const [selectedZones, setSelectedZones] = useState([]);
   const [budget, setBudget] = useState(99999);
   const [maxAge, setMaxAge] = useState("all-ages");
   const [aesthetic, setAesthetic] = useState(false);
@@ -108,7 +92,7 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
   const [sharedGroupId, setSharedGroupId] = useState(null);
   const [shareBusy, setShareBusy] = useState(false);
   const [err, setErr] = useState(null);
-  const [openSections, setOpenSections] = useState(new Set());
+  const [openSections, setOpenSections] = useState(() => new Set(groups[0] ? [`category::${groups[0].slug}`] : []));
   const [cold] = useState(isColdSeason);
   const [tagQuery, setTagQuery] = useState("");
   const [nearby, setNearby] = useState(null);
@@ -139,7 +123,6 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
 
   function pickCity(c) {
     setCity(c);
-    setSelectedZones([]);
     setResults(null);
   }
 
@@ -154,7 +137,7 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
 
     if (!navigator.geolocation) {
       setLocationState("error");
-      setLocationMessage("Location is not supported by this browser. Choose a city or zone instead.");
+      setLocationMessage("Location is not supported by this browser. Choose a city instead.");
       return;
     }
 
@@ -169,7 +152,6 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
         };
         setNearby(nextNearby);
         setCity(nearestSupportedCity(coords.latitude, coords.longitude));
-        setSelectedZones([]);
         setResults(null);
         setLocationState("active");
         setLocationMessage(`Near me is on, Weyn will only suggest mapped spots within ${NEARBY_RADIUS_KM} km.`);
@@ -182,16 +164,11 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
         } else if (error.code === error.TIMEOUT) {
           setLocationMessage("Location took too long. Move somewhere with a clearer signal and retry.");
         } else {
-          setLocationMessage("We couldn't find your location. Try again or choose a city or zone.");
+          setLocationMessage("We couldn't find your location. Try again or choose a city.");
         }
       },
       { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 },
     );
-  }
-
-  function toggleZone(slug) {
-    setSelectedZones((prev) => (prev.includes(slug) ? prev.filter((z) => z !== slug) : [...prev, slug]));
-    setResults(null);
   }
 
   function toggleTag(cat, slug) {
@@ -230,7 +207,7 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tags: allTags, maxSpend: budget, aestheticOnly: aesthetic, maxAge, city,
-          zones: selectedZones.length ? selectedZones : null,
+          zones: null,
           nearby,
         }),
       });
@@ -297,8 +274,6 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
     }
   }
 
-  const zoneClusters = groupZonesByEmirate(zones);
-
   return (
     <div>
       <h2 className="group-label">Location</h2>
@@ -363,14 +338,20 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
         if (q) visibleTags = visibleTags.filter((t) => t.display_name.toLowerCase().includes(q));
         if (visibleTags.length === 0) return null;
         const clusters = groupBySubgroup(visibleTags);
+        const categoryId = `category::${cat.slug}`;
+        const picks = selected[cat.slug] || [];
         return (
-          <div key={cat.slug} className="tag-group-card">
-            <h2 className="group-label" style={{ margin: "0 0 10px" }}>
-              {cat.name} {cat.max_select > 1 ? `· pick up to ${cat.max_select}` : ""}
-            </h2>
-            {clusters.map((cluster) => {
+          <div key={cat.slug} className="tag-category-dropdown">
+            <AccordionSection
+              id={categoryId}
+              label={`${cat.name}${cat.max_select > 1 ? ` · pick up to ${cat.max_select}` : ""}`}
+              count={picks.length ? `${picks.length} selected · ${visibleTags.length}` : visibleTags.length}
+              forceOpen={!!q}
+              open={openSections.has(categoryId)}
+              onToggle={toggleSection}
+            >
+              {clusters.map((cluster) => {
               const id = `${cat.slug}::${cluster.subgroup || "_"}`;
-              const picks = selected[cat.slug] || [];
               const hasSelection = cluster.tags.some((t) => picks.includes(t.slug));
               if (!cluster.subgroup || q) {
                 return (
@@ -402,7 +383,8 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
                   </div>
                 </AccordionSection>
               );
-            })}
+              })}
+            </AccordionSection>
           </div>
         );
       })}
@@ -411,45 +393,6 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
         <p className="sub" style={{ marginTop: -8, marginBottom: 24, fontSize: 13 }}>
           🍂 It&apos;s outdoor off-season, hiding non-beach outdoor picks until May. Beach spots stay open year-round.
         </p>
-      )}
-
-      {zoneClusters.length > 0 && (
-        <div className="tag-group-card">
-          <h2 className="group-label" style={{ margin: "0 0 10px" }}>Zone (optional)</h2>
-          {zoneClusters.length === 1 ? (
-            <div className="chips">
-              {zoneClusters[0].zones.map((z) => (
-                <button key={z.slug} className={`chip ${selectedZones.includes(z.slug) ? "sel" : ""}`} onClick={() => toggleZone(z.slug)}>
-                  {z.name}
-                </button>
-              ))}
-            </div>
-          ) : (
-            zoneClusters.map((cluster) => {
-              const id = `zone::${cluster.emirate}`;
-              const hasSelection = cluster.zones.some((z) => selectedZones.includes(z.slug));
-              return (
-                <AccordionSection
-                  key={id}
-                  id={id}
-                  label={cluster.emirate}
-                  count={cluster.zones.length}
-                  forceOpen={hasSelection}
-                  open={openSections.has(id)}
-                  onToggle={toggleSection}
-                >
-                  <div className="chips">
-                    {cluster.zones.map((z) => (
-                      <button key={z.slug} className={`chip ${selectedZones.includes(z.slug) ? "sel" : ""}`} onClick={() => toggleZone(z.slug)}>
-                        {z.name}
-                      </button>
-                    ))}
-                  </div>
-                </AccordionSection>
-              );
-            })
-          )}
-        </div>
       )}
 
       <h2 className="group-label">Details</h2>
@@ -565,6 +508,7 @@ export default function VibeSelector({ groups, zones = [], isLoggedIn = false })
     </div>
   );
 }
+
 
 
 
