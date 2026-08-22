@@ -21,6 +21,8 @@ function MessageBubble({ msg, mine }) {
   const author = msg.profile_public;
   const initials = (author?.display_name || "?").slice(0, 2).toUpperCase();
   const sentAt = new Date(msg.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const listPath = msg.body.match(/\/lists\/[a-z0-9]+/i)?.[0];
+  const messageText = listPath ? msg.body.replace(listPath, "").trim() : msg.body;
   return (
     <div className={`message-row flex items-end gap-2 ${mine ? "mine flex-row-reverse" : ""}`}>
       <Avatar className="h-7 w-7 shrink-0">
@@ -29,7 +31,8 @@ function MessageBubble({ msg, mine }) {
       </Avatar>
       <div className="message-bubble max-w-[78%] rounded-2xl px-3 py-2 text-sm">
         {!mine && <div className="mb-0.5 text-[11px] font-bold opacity-70">{author?.display_name || "Someone"}</div>}
-        <div>{msg.body}</div>
+        <div>{messageText}</div>
+        {listPath && <Link className="message-list-link" href={listPath}>Open shared list →</Link>}
         <div className="message-time">{sentAt}</div>
       </div>
     </div>
@@ -625,4 +628,5 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
     </div>
   );
 }
+
 

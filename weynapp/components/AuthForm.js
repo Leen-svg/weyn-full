@@ -18,6 +18,9 @@ export default function AuthForm({ mode }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [website, setWebsite] = useState(""); // honeypot, real users never see or fill this
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [betaAcknowledged, setBetaAcknowledged] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(() => AUTH_ERRORS[params.get("error")] || null);
   const [notice, setNotice] = useState(null);
@@ -25,6 +28,10 @@ export default function AuthForm({ mode }) {
   async function submit(e) {
     e.preventDefault();
     if (website) return; // bot filled the hidden field, silently drop
+    if (mode === "signup" && (!termsAccepted || !privacyAccepted || !betaAcknowledged)) {
+      setErr("Accept the Terms, Privacy Policy, and beta notice before creating an account.");
+      return;
+    }
     setBusy(true);
     setErr(null);
     setNotice(null);
@@ -34,7 +41,14 @@ export default function AuthForm({ mode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          data: {
+            terms_version: "2026-08-22",
+            privacy_version: "2026-08-22",
+            beta_acknowledged: true,
+          },
+        },
       });
       if (error) setErr(error.message);
       else if (data.session) {
@@ -61,6 +75,10 @@ export default function AuthForm({ mode }) {
   }
 
   async function google() {
+    if (mode === "signup" && (!termsAccepted || !privacyAccepted || !betaAcknowledged)) {
+      setErr("Accept the Terms, Privacy Policy, and beta notice before continuing with Google.");
+      return;
+    }
     setBusy(true);
     setErr(null);
     const supabase = createClient();
@@ -79,11 +97,11 @@ export default function AuthForm({ mode }) {
       <h1>{mode === "signup" ? "Join weyn" : "Welcome back"}</h1>
       <p className="sub">
         {mode === "signup"
-          ? "Free spots, saved wishlists, and 200 points to start. Beta perk, no catch."
+          ? "Invitation-only experimental beta for adults 18+. Features and data may change during testing."
           : "Log in to pick up where you left off."}
       </p>
 
-      <button className="btn ghost block" disabled={busy} onClick={google} type="button">
+      <button className="btn ghost block" disabled={busy || (mode === "signup" && (!termsAccepted || !privacyAccepted || !betaAcknowledged))} onClick={google} type="button">
         Continue with Google
       </button>
 
@@ -104,6 +122,24 @@ export default function AuthForm({ mode }) {
           <label htmlFor="auth-email">Email</label>
           <input id="auth-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
         </div>
+
+        {mode === "signup" && (
+          <fieldset className="legal-consent">
+            <legend>Required before signup</legend>
+            <label>
+              <input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} required />
+              <span>I have read and agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.</span>
+            </label>
+            <label>
+              <input type="checkbox" checked={privacyAccepted} onChange={(event) => setPrivacyAccepted(event.target.checked)} required />
+              <span>I have read and accept the <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</span>
+            </label>
+            <label>
+              <input type="checkbox" checked={betaAcknowledged} onChange={(event) => setBetaAcknowledged(event.target.checked)} required />
+              <span>I am 18 or older and understand Weyn is an experimental beta with features that may change, reset, or contain errors.</span>
+            </label>
+          </fieldset>
+        )}
         <div className="field">
           <label htmlFor="auth-password">
             Password
@@ -126,7 +162,7 @@ export default function AuthForm({ mode }) {
         {err && <div className="notice err">{err}</div>}
         {notice && <div className="notice">{notice}</div>}
 
-        <button className="btn primary block" disabled={busy} type="submit">
+        <button className="btn primary block" disabled={busy || (mode === "signup" && (!termsAccepted || !privacyAccepted || !betaAcknowledged))} type="submit">
           {busy ? "…" : mode === "signup" ? "Create account" : "Log in"}
         </button>
       </form>
@@ -141,4 +177,5 @@ export default function AuthForm({ mode }) {
     </>
   );
 }
+
 
