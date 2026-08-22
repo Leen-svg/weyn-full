@@ -59,7 +59,8 @@ export async function POST(req) {
 
   if (intent === "link") {
     const mediaType = String(body.mediaType || "");
-    const url = safeUrl(String(body.url || "").trim());
+    const rawUrl = String(body.url || "").trim();
+    const url = /^https?:\/\//i.test(rawUrl) ? safeUrl(rawUrl) : null;
     if (!url || url.length > 2000) return NextResponse.json({ error: "Enter a valid http(s) media URL" }, { status: 400 });
     if (!["image", "video"].includes(mediaType)) return NextResponse.json({ error: "Choose image or video" }, { status: 400 });
     const displayOrder = await nextDisplayOrder(s, venueId);
