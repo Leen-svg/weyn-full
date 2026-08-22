@@ -3,6 +3,20 @@ import { useEffect, useMemo, useState } from "react";
 import MapChooser from "./MapChooser";
 import { buildTimeline, coordinates, orderStops } from "@/lib/planner-utils.mjs";
 
+// Native <input type="time"> opens the OS's own picker popup, which can't be
+// restyled and looks jarring against the app's design system. A plain select
+// with half-hour options covers this use case fully and matches every other
+// input on the page.
+const START_TIME_OPTIONS = Array.from({ length: 36 }, (_, i) => {
+  const totalMinutes = 6 * 60 + i * 30; // 06:00 through 23:30
+  const hours24 = Math.floor(totalMinutes / 60) % 24;
+  const minutes = totalMinutes % 60;
+  const value = `${String(hours24).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+  const label = `${hours12}:${String(minutes).padStart(2, "0")} ${hours24 < 12 ? "AM" : "PM"}`;
+  return { value, label };
+});
+
 async function optimizedStops(items) {
   if (items.length < 3 || items.some((place) => !coordinates(place))) return orderStops(items);
   try {
@@ -96,7 +110,12 @@ export default function PlannerClient() {
       <section className="card">
         <h2>Build a Perfect Day</h2>
         <p className="sub">Choose up to four places. Weyn optimizes the stop order, estimates travel time, and lets each person open their preferred map app.</p>
-        <label className="field"><span>Start time</span><input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></label>
+        <label className="field">
+          <span>Start time</span>
+          <select value={startTime} onChange={(event) => setStartTime(event.target.value)}>
+            {START_TIME_OPTIONS.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
         <div className="venue-list-single">
           {places.map((place) => {
             const key = `${place.kind}:${place.id}`;
