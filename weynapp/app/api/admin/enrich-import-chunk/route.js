@@ -5,7 +5,10 @@ import { NextResponse } from "next/server";
 
 export const maxDuration = 280;
 
-function priceLevelToBand(level) {
+function priceLevelToBand(row) {
+  if (Number.isFinite(row.price_level)) {
+    return ["Under 100 AED", "Under 100 AED", "100 - 250 AED", "250 - 500 AED", "500+ AED"][Math.min(4, Math.max(0, row.price_level))];
+  }
   return (
     {
       PRICE_LEVEL_FREE: "Under 100 AED",
@@ -13,7 +16,7 @@ function priceLevelToBand(level) {
       PRICE_LEVEL_MODERATE: "100 - 250 AED",
       PRICE_LEVEL_EXPENSIVE: "250 - 500 AED",
       PRICE_LEVEL_VERY_EXPENSIVE: "500+ AED",
-    }[level] || "100 - 250 AED"
+    }[row.priceLevel] || "100 - 250 AED"
   );
 }
 
@@ -30,7 +33,7 @@ async function fetchPlaceDetails(placeId, googleKey) {
   return place;
 }
 
-async function suggestTags(place, allowedTags, aiKey, aiUrl, aiModel) {
+async function suggestTags(placeSummary, allowedTags, aiKey, aiUrl, aiModel) {
   const res = await fetch(aiUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${aiKey}` },
@@ -40,7 +43,7 @@ async function suggestTags(place, allowedTags, aiKey, aiUrl, aiModel) {
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: "You tag UAE venues for Weyn. Return strict JSON with keys tag_slugs (array) and description (one factual sentence, no hype). Only use supplied tag slugs." },
-        { role: "user", content: JSON.stringify({ place, allowed_tags: allowedTags.map(({ slug, display_name, category }) => ({ slug, display_name, category })) }) },
+        { role: "user", content: JSON.stringify({ place: placeSummary, allowed_tags: allowedTags.map(({ slug, display_name, category }) => ({ slug, display_name, category })) }) },
       ],
     }),
   });
@@ -50,11 +53,30 @@ async function suggestTags(place, allowedTags, aiKey, aiUrl, aiModel) {
   return { tag_slugs: Array.isArray(parsed.tag_slugs) ? parsed.tag_slugs : [], description: typeof parsed.description === "string" ? parsed.description : "" };
 }
 
+// Handles two input shapes:
+// 1. Pre-geocoded (lat/lng/price_level/category already present) - skips
+//    Google Places entirely, only calls AI for vibe tags.
+// 2. Raw scrape (only id/name/address) - falls back to a Google Places
+//    lookup for location + price before tagging.
 async function enrichOne(row, allowedTags, tagCategoryBySlug, googleKey, aiKey, aiUrl, aiModel) {
-  const place = await fetchPlaceDetails(row.id, googleKey);
-  const { tag_slugs, description } = await suggestTags(place, allowedTags, aiKey, aiUrl, aiModel);
+  const preGeocoded = Number.isFinite(row.lat) && Number.isFinite(row.lng);
+  let lat = row.lat,
+    lng = row.lng,
+    canonicalType = row.category || null,
+    placeSummary = { name: row.name, address: row.address, category: row.category, types: row.types, rating: row.rating };
 
-  const curation = { estimated_spend_aed: priceLevelToBand(place.priceLevel), canonical_type: place.primaryTypeDisplayName?.text || null, cuisine_primary: null };
+  if (!preGeocoded) {
+    if (!googleKey) throw new Error("no coordinates in row and GOOGLE_PLACES_API_KEY is not configured");
+    const place = await fetchPlaceDetails(row.id, googleKey);
+    lat = place.location?.latitude ?? null;
+    lng = place.location?.longitude ?? null;
+    canonicalType = place.primaryTypeDisplayName?.text || canonicalType;
+    placeSummary = place;
+  }
+
+  const { tag_slugs, description } = await suggestTags(placeSummary, allowedTags, aiKey, aiUrl, aiModel);
+
+  const curation = { estimated_spend_aed: priceLevelToBand(row), canonical_type: canonicalType, cuisine_primary: Array.isArray(row.cuisine) ? row.cuisine[0] || null : row.cuisine || null };
   for (const [key] of CURATION_CATEGORIES) curation[key] = [];
   for (const slug of tag_slugs) {
     const catKey = tagCategoryBySlug[slug];
@@ -66,8 +88,8 @@ async function enrichOne(row, allowedTags, tagCategoryBySlug, googleKey, aiKey, 
     venue_id: row.id,
     curation,
     metadata: {
-      lat: place.location?.latitude ?? null,
-      lng: place.location?.longitude ?? null,
+      lat,
+      lng,
       gallery_images: Array.isArray(row.images) ? row.images : [],
       opening_hours: [],
       description,
@@ -83,7 +105,6 @@ export async function POST(req) {
   const aiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
   const aiUrl = process.env.AI_API_URL || "https://api.openai.com/v1/chat/completions";
   const aiModel = process.env.AI_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
-  if (!googleKey) return NextResponse.json({ error: "GOOGLE_PLACES_API_KEY is not configured" }, { status: 503 });
   if (!aiKey) return NextResponse.json({ error: "AI_API_KEY (or OPENAI_API_KEY) is not configured" }, { status: 503 });
 
   const { rows } = await req.json();
