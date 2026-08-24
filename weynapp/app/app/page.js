@@ -30,6 +30,32 @@ async function getHomeVenues() {
   return { trending: trendingWithCovers, fresh: freshWithCovers };
 }
 
+async function getCuratedLists() {
+  const s = db();
+  const { data: lists } = await s
+    .from("curated_lists")
+    .select("id, title, description")
+    .eq("is_active", true)
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: false });
+  if (!lists?.length) return [];
+
+  const { data: links } = await s
+    .from("curated_list_venues")
+    .select("list_id, position, venues (id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description)")
+    .in("list_id", lists.map((list) => list.id))
+    .order("position", { ascending: true });
+
+  const venuesByList = {};
+  for (const link of links || []) {
+    if (link.venues) (venuesByList[link.list_id] ||= []).push(link.venues);
+  }
+  const withVenues = await Promise.all(
+    lists.map(async (list) => ({ ...list, venues: await withCovers(venuesByList[list.id] || []) }))
+  );
+  return withVenues.filter((list) => list.venues.length > 0);
+}
+
 async function getInitialPublicPosts(supabase) {
   const { data } = await supabase
     .from("posts")
@@ -53,7 +79,7 @@ async function getInitialPublicPosts(supabase) {
 }
 
 export default async function HomePage() {
-  const [{ trending, fresh }, supabase] = await Promise.all([getHomeVenues(), createClient()]);
+  const [{ trending, fresh }, supabase, curatedLists] = await Promise.all([getHomeVenues(), createClient(), getCuratedLists()]);
   const [{ data: { user } }, initialPosts] = await Promise.all([
     supabase.auth.getUser(),
     getInitialPublicPosts(supabase),
@@ -91,6 +117,24 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {curatedLists.map((list) => (
+        <section className="app-home__section app-home__picks" aria-label={list.title} key={list.id}>
+          <div className="app-home__section-header">
+            <div>
+              <h2>{list.title}</h2>
+              {list.description && <p>{list.description}</p>}
+            </div>
+          </div>
+          <div className="venue-rail" aria-label={`Scroll through ${list.title}`}>
+            {list.venues.map((v) => (
+              <VenueCard key={v.id} venue={v}>
+                <VenueActions venue={v} />
+              </VenueCard>
+            ))}
+          </div>
+        </section>
+      ))}
 
       <section className="app-home__feed" aria-label="Community feed">
         <div className="app-home__section-header app-home__feed-heading">

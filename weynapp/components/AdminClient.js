@@ -4,6 +4,7 @@ import VenueEditor from "./VenueEditor";
 import AdminUsers from "./AdminUsers";
 import AdminTagsZones from "./AdminTagsZones";
 import AdminImport from "./AdminImport";
+import AdminCuratedLists from "./AdminCuratedLists";
 import { safeUrl } from "@/lib/sanitize";
 
 export default function AdminClient() {
@@ -43,6 +44,7 @@ export default function AdminClient() {
     ["videos", "Videos", data.videos.length],
     ["takedowns", "Takedowns", data.takedowns.length],
     ["venues", "Venues", 0],
+    ["curated", "Curated lists", 0],
     ["import", "Bulk import", 0],
     ["taxonomy", "Tags & zones", 0],
     ["users", "Users", 0],
@@ -181,6 +183,7 @@ export default function AdminClient() {
       )}
 
       {tab === "venues" && <VenueEditor />}
+      {tab === "curated" && <AdminCuratedLists />}
       {tab === "import" && <AdminImport />}
       {tab === "taxonomy" && <AdminTagsZones />}
       {tab === "users" && <AdminUsers />}
