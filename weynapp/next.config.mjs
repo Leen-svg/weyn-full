@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // The preview is served through a proxy hostname that changes whenever the
+  // environment is recreated, so allow the derived dev origin explicitly.
+  // (Next.js wildcards only cover subdomains, so a bare "*" does not match.)
+  allowedDevOrigins: process.env.BASE44_PUBLIC_HOST_SUFFIX
+    ? ["3000-" + process.env.BASE44_PUBLIC_HOST_SUFFIX]
+    : [],
   async headers() {
     const securityHeaders = [
       { key: "X-Content-Type-Options", value: "nosniff" },

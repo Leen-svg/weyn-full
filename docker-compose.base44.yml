@@ -1,0 +1,28 @@
+# Base44 dev environment for the weynapp Next.js app.
+# Runs the app from the cloned source with live reload so edits appear without
+# rebuilding the image. The Supabase backend is hosted (not local), so the only
+# service here is the Next.js dev server.
+services:
+  web:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    volumes:
+      - ./weynapp:/app
+      # keep the container's node_modules independent of the host bind mount
+      - /app/node_modules
+    environment:
+      - BASE44_PUBLIC_HOST_SUFFIX
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+    env_file:
+      - ./.env.base44-defaults
+      - /run/base44/app.env
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npx next dev -H 0.0.0.0 -p 3000"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s

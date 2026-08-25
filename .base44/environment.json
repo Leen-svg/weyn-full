@@ -1,0 +1,17 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "SUPABASE_SERVICE_ROLE_KEY",
+      "description": "Supabase service_role key (Supabase Dashboard -> Project Settings -> API keys). Required for the /app beta to read/write the database; without it /app returns 500 while the static landing page still works.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "ADMIN_PASSWORD",
+      "description": "Password that guards the /admin page. Pick anything strong. Optional for the landing page and beta app.",
+      "requiredAtBoot": false
+    }
+  ]
+}
