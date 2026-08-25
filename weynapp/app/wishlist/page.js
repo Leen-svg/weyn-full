@@ -25,9 +25,9 @@ export default async function WishlistPage() {
 
   return (
     <>
-      <span className="eyebrow">Yours to organise and share</span>
+      <p className="eyebrow">Yours</p>
       <h1>Saved</h1>
-      <p className="sub">Build custom lists, add your own tags, and share only with the people you choose.</p>
+      <p className="sub">Lists you can tag, keep private, or send to the group.</p>
       <WishlistClient initialVenues={venues} />
     </>
   );

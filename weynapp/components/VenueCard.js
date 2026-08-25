@@ -96,9 +96,7 @@ export default function VenueCard({ venue, children, picked, priority = false })
       <div className="venue-card-body">
         <div className="venue-name">{venue.name}</div>
         <div className="venue-meta">
-          {venue.neighborhood} · {spend}
-          {venue.is_aesthetic ? " · 📸 aesthetic" : ""}
-          {ageLabel ? ` · 🔞 ${ageLabel}` : ""}
+          {[venue.neighborhood, spend, ageLabel].filter(Boolean).join(" · ")}
         </div>
         {venue.description && <p className="venue-desc">{venue.description}</p>}
         {Array.isArray(venue.tags) && venue.tags.length > 0 && (

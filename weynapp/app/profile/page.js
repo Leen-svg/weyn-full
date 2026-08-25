@@ -27,8 +27,8 @@ export default async function ProfilePage() {
     <>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <h1 style={{ marginBottom: 0 }}>Your profile</h1>
-        <a className="btn small" href={`/u/${user.id}`} target="_blank" rel="noopener noreferrer">
-          👀 See how others see you
+        <a className="btn small ghost" href={`/u/${user.id}`} target="_blank" rel="noopener noreferrer">
+          Public view
         </a>
       </div>
       <p className="sub">

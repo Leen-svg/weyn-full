@@ -1130,8 +1130,8 @@ input:focus, select:focus, textarea:focus {
    does not load this stylesheet.
    ============================================================ */
 :root {
-  --font-display: var(--font-bricolage), "Bricolage Grotesque", sans-serif;
-  --font-body: var(--font-space), "Space Grotesk", sans-serif;
+  --font-display: var(--font-syne), "Syne", sans-serif;
+  --font-body: var(--font-hanken), "Hanken Grotesk", sans-serif;
   --font-ar: var(--font-kufam), "Kufam", sans-serif;
   --glass-surface: rgba(255, 255, 255, .74);
   --glass-surface-strong: rgba(255, 255, 255, .9);

@@ -13,6 +13,7 @@
 
 @import "./design-system.css" layer(weyn);
 @import "./globals.css" layer(weyn);
+@import "./stitch.css" layer(weyn);
 
 @import "tailwindcss";
 @import "tw-animate-css";

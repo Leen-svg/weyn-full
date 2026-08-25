@@ -89,8 +89,9 @@ export default async function HomePage() {
     <div className="app-home">
       <header className="app-home__hero">
         <div>
+          <p className="eyebrow">Abu Dhabi · Dubai</p>
           <h1>Discover</h1>
-          <p className="sub">What&apos;s buzzing, what&apos;s new, and what your people are up to.</p>
+          <p className="sub">Picks worth leaving the group chat for.</p>
         </div>
         <div className="cta-row">
           <Link className="btn primary" href="/find">

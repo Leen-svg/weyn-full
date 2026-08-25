@@ -1,0 +1,855 @@
+/* ============================================================
+   WEYN, LIQUID VIOLET.
+   The redesign layer. Loaded LAST inside layer(weyn), so it wins
+   over design-system.css and globals.css without either file
+   being edited. Nothing here removes a component, a class name
+   or a behaviour, it only re-skins what is already there.
+
+   Delete the one @import in tailwind.css to fall straight back
+   to Pastel Pop, everything still works.
+
+   Read this in three parts:
+     1. tokens        the palette swap. does 80% of the work.
+     2. glass + parts the surfaces the tokens cannot express alone.
+     3. motion        the "alive" layer.
+   ============================================================ */
+
+/* ---------- 1. TOKENS ----------
+   Same names as Pastel Pop, new values. Because every rule in
+   design-system.css and globals.css is written against these
+   variables, re-pointing them re-skins the whole app at once.
+   The old accent hues stay defined (retuned to sit under violet)
+   because feature CSS still references them. */
+:root{
+  /* surfaces. a lilac-tinted paper instead of neutral grey, so
+     white cards read as "lit" rather than flat. */
+  --paper:#F1EEFA;
+  --white:#FFFFFF;
+
+  /* ink. cooler and slightly deeper than Pastel Pop's navy. */
+  --ink:#191320;
+  --ink-deep:#120D1A;
+  --ink-soft:#4A4455;
+
+  /* PRIMARY. electric indigo. the whole identity hangs off this. */
+  --purple:#7C3AED;
+  --purple-deep:#630ED4;
+  --purple-wash:#EDE4FF;
+
+  /* retuned supporting hues. still used by tags, polls, admin. */
+  --blue:#6E8BF5;
+  --blue-deep:#4F63D2;
+  --sky:#8B7CF6;          /* the AI colour, now violet-family */
+  --sky-wash:#EFEBFE;
+  --yellow:#FFD84D;
+  --yellow-wash:#FFF6D6;
+  --pink:#FF5C93;
+  --pink-deep:#EE3E7B;
+  --pink-wash:#FFE9F1;
+
+  /* shape. rounder than before, "puddled" not boxed. */
+  --radius-lg:30px;
+  --radius-md:20px;
+  --radius-pill:999px;
+
+  /* THE SWAP THAT MATTERS.
+     Pastel Pop: 2.5px ink border + hard 6px offset shadow.
+     Liquid Violet: a violet hairline + a soft, long, tinted
+     ambient shadow. Every .card/.btn/.chip/.tag inherits this. */
+  --hairline:rgba(124,58,237,.16);
+  --border:1px solid var(--hairline);
+  --shadow-pop:0 20px 44px -16px rgba(76,17,161,.26), 0 2px 8px -2px rgba(76,17,161,.10);
+  --shadow-pop-sm:0 10px 24px -10px rgba(76,17,161,.22), 0 1px 4px -1px rgba(76,17,161,.08);
+  --shadow-bloom:0 0 0 6px rgba(124,58,237,.12);
+
+  /* glass. extends the tokens globals.css already declared. */
+  --glass-surface:rgba(255,255,255,.66);
+  --glass-surface-strong:rgba(255,255,255,.82);
+  --glass-edge:rgba(255,255,255,.72);
+  --glass-line:rgba(124,58,237,.14);
+  --glass-shadow:0 22px 50px -18px rgba(76,17,161,.28), inset 0 1px 0 rgba(255,255,255,.85);
+  --glass-shadow-soft:0 12px 30px -14px rgba(76,17,161,.20), inset 0 1px 0 rgba(255,255,255,.75);
+
+  /* type. Syne is sculptural and wide, Hanken is the workhorse.
+     Kufam stays LAST in every stack, it is the only face here
+     with Arabic glyphs so any stray Arabic resolves to it. */
+  --font-display:var(--font-syne),"Syne",var(--font-kufam),"Kufam",sans-serif;
+  --font-body:var(--font-hanken),"Hanken Grotesk",var(--font-kufam),"Kufam",sans-serif;
+  --font-ar:var(--font-kufam),"Kufam",sans-serif;
+
+  --ease-spring:cubic-bezier(.22,1,.36,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+}
+
+/* ---------- 2. ATMOSPHERE ----------
+   Two slow violet auroras behind everything. This is what stops
+   the light background reading as plain white. Fixed layer,
+   desktop only, same reasoning as the old dot grid. */
+body{background:var(--paper)}
+
+@media(min-width:961px){
+  body::before{
+    background-image:
+      radial-gradient(60ch 60ch at 12% 8%, rgba(124,58,237,.16), transparent 62%),
+      radial-gradient(50ch 50ch at 88% 78%, rgba(110,139,245,.14), transparent 62%),
+      radial-gradient(rgba(124,58,237,.05) 1px, transparent 1px);
+    background-size:auto,auto,26px 26px;
+    animation:aurora 28s ease-in-out infinite alternate;
+  }
+}
+@keyframes aurora{
+  0%  {background-position:0% 0%, 100% 100%, 0 0;}
+  100%{background-position:14% 10%, 86% 88%, 0 0;}
+}
+
+/* mobile gets the same colour story as a cheap static gradient,
+   no fixed layer, no repaint on scroll. */
+@media(max-width:960px){
+  body{
+    background:
+      radial-gradient(38ch 38ch at 8% -4%, rgba(124,58,237,.16), transparent 60%),
+      radial-gradient(34ch 34ch at 104% 22%, rgba(110,139,245,.12), transparent 58%),
+      var(--paper);
+    background-attachment:scroll;
+  }
+}
+
+/* THE APP SHELL.
+   globals.css "LIQUID GLASS v2" paints .app-shell with a yellow /
+   purple / pink Pastel Pop wash on #f7f8fb, and that selector beats
+   bare `body`. Re-point it at the violet story. Same three-radial
+   structure, same scroll attachment, so the perf profile is
+   unchanged, only the hues move. */
+.app-shell{
+  background:
+    radial-gradient(60rem 34rem at -8% -4%, rgba(124,58,237,.22), transparent 60%),
+    radial-gradient(48rem 34rem at 108% 4%, rgba(110,139,245,.18), transparent 62%),
+    radial-gradient(40rem 36rem at 54% 72%, rgba(139,124,246,.14), transparent 68%),
+    var(--paper);
+  background-attachment:scroll;
+}
+
+/* ---------- 3. TYPE ----------
+   Syne wants tighter tracking and more weight than Bricolage did.
+   These override design-system.css section 4 + 5. */
+h1,h2,h3,.display{font-family:var(--font-display);font-weight:800;letter-spacing:-.03em}
+h1{letter-spacing:-.04em;line-height:1.02}
+h2{letter-spacing:-.032em}
+h3{letter-spacing:-.02em}
+
+body,p,li,.lead{font-family:var(--font-body)}
+.lead,p{color:var(--ink-soft)}
+.btn,.tag,.kicker,.eyebrow{font-family:var(--font-display)}
+
+/* uppercase micro-labels get technical tracking, the counterpoint
+   to Syne's expressive headlines. */
+.eyebrow{color:var(--purple-deep);letter-spacing:.18em}
+.tag{letter-spacing:.08em}
+
+::selection{background:var(--purple-wash);color:var(--ink)}
+button,a{-webkit-tap-highlight-color:rgba(124,58,237,.16)}
+
+/* ---------- 4. GLASS PRIMITIVES ----------
+   backdrop-filter is the single most expensive thing on a phone,
+   and this ships as a Capacitor app. So the rule is:
+
+     real backdrop blur  ->  ONLY on fixed, always-composited
+                             chrome (nav, tabbar, sheets). At most
+                             three such layers on screen at once.
+     everything else     ->  a pre-blended translucent fill that
+                             LOOKS like glass and costs nothing.
+
+   That keeps the aesthetic and the mobile performance guardrails
+   in globals.css section 14 both intact. */
+.glass{
+  background:var(--glass-surface);
+  border:1px solid var(--glass-edge);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--glass-shadow-soft);
+}
+.glass-strong{background:var(--glass-surface-strong);box-shadow:var(--glass-shadow)}
+
+/* the blur is opt-in and reserved for fixed chrome. */
+.glass-blur{
+  backdrop-filter:blur(24px) saturate(1.5);
+  -webkit-backdrop-filter:blur(24px) saturate(1.5);
+}
+
+/* ---------- 5. BUTTONS ----------
+   Pastel Pop pushed the button up-LEFT and grew a hard shadow.
+   Liquid Violet lifts it straight up and blooms an indigo glow.
+   Same .btn / .btn.primary / .btn.ghost API. */
+.btn{
+  font-weight:700;
+  background:var(--white);
+  color:var(--ink);
+  border:1px solid var(--hairline);
+  box-shadow:var(--shadow-pop-sm);
+  padding:13px 26px;
+  transition:transform .28s var(--ease-spring),
+             box-shadow .28s var(--ease-spring),
+             background .2s ease, color .2s ease;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-pop)}
+.btn:active{transform:translateY(0) scale(.985);box-shadow:var(--shadow-pop-sm);transition-duration:.09s}
+
+.btn.primary{
+  background:linear-gradient(170deg,#8B4BF0 0%,var(--purple) 46%,var(--purple-deep) 100%);
+  color:#fff;border-color:transparent;
+  box-shadow:0 12px 26px -10px rgba(99,14,212,.55), inset 0 1px 0 rgba(255,255,255,.28);
+}
+.btn.primary:hover{
+  background:linear-gradient(170deg,#9560F5 0%,#7530E8 46%,var(--purple-deep) 100%);
+  box-shadow:0 18px 38px -12px rgba(99,14,212,.62), var(--shadow-bloom), inset 0 1px 0 rgba(255,255,255,.32);
+}
+.btn.ghost{background:var(--glass-surface-strong)}
+.btn:focus-visible{outline:none;box-shadow:var(--shadow-pop-sm),0 0 0 4px rgba(124,58,237,.32)}
+
+/* ---------- 6. CARDS ----------
+   Lighter padding than the brutalist card, because a soft shadow
+   needs less internal room than a 6px hard offset did. */
+.card{
+  background:var(--white);
+  border:1px solid var(--hairline);
+  box-shadow:var(--shadow-pop-sm);
+  padding:32px 34px;
+  transition:transform .38s var(--ease-spring), box-shadow .38s var(--ease-spring);
+}
+.card.big{box-shadow:var(--shadow-pop);padding:44px 46px}
+.card.tilt{transform:none}          /* the tilt was a Pastel Pop joke, retire it */
+.card.lift:hover{transform:translateY(-5px);box-shadow:var(--shadow-pop)}
+@media(max-width:640px){.card{padding:24px 20px}.card.big{padding:28px 22px}}
+
+.card.sky{background:var(--sky-wash)}
+.card.purple{background:linear-gradient(160deg,#F6F1FF,var(--purple-wash))}
+.card.dark{background:linear-gradient(160deg,#241733,var(--ink-deep));color:#F3EFFA}
+.card.dark p{color:rgba(243,239,250,.72)}
+
+/* ---------- 7. SMALL PARTS ---------- */
+.chip{
+  font-family:var(--font-body);font-weight:600;
+  background:var(--white);
+  border:1px solid var(--hairline);
+  box-shadow:0 2px 6px -2px rgba(76,17,161,.14);
+  transition:transform .24s var(--ease-spring), background .2s, box-shadow .24s, color .2s;
+}
+.chip:hover{transform:translateY(-2px);background:var(--purple-wash);color:var(--purple-deep)}
+.chip.sel{
+  background:linear-gradient(170deg,#8B4BF0,var(--purple));
+  color:#fff;border-color:transparent;transform:translateY(-2px);
+  box-shadow:0 10px 20px -8px rgba(99,14,212,.5);
+}
+
+.tag{border:1px solid var(--hairline);background:var(--purple-wash);color:var(--purple-deep)}
+.tag.now{background:var(--yellow-wash);color:#8A6A00}
+.tag.next{background:var(--sky-wash);color:var(--purple-deep)}
+.tag.soon{background:var(--purple);color:#fff;border-color:transparent}
+.tag.later{background:var(--pink);color:#fff;border-color:transparent}
+
+.kicker{
+  background:var(--glass-surface-strong);
+  border:1px solid var(--glass-edge);
+  box-shadow:var(--shadow-pop-sm);
+  transform:none;                    /* no rotation in this system */
+  color:var(--purple-deep);
+}
+
+.note{
+  background:var(--purple-wash);
+  border:1px solid var(--hairline);
+  border-radius:var(--radius-md);
+  color:var(--ink-soft);
+}
+
+/* the cookie bar hard-codes its own everything, including the old
+   2.5px ink border and the 6px hard shadow. Bring it in line. */
+#ckbar{
+  background:var(--glass-surface-strong);
+  border:1px solid var(--glass-edge);
+  border-radius:var(--radius-md);
+  box-shadow:var(--glass-shadow);
+}
+#ckbar button{
+  background:linear-gradient(170deg,#8B4BF0,var(--purple-deep));
+  border:1px solid transparent;
+  box-shadow:0 10px 22px -9px rgba(99,14,212,.55);
+  transition:transform .28s var(--ease-spring),box-shadow .28s var(--ease-spring);
+}
+#ckbar button:hover{transform:translateY(-2px);box-shadow:0 16px 30px -10px rgba(99,14,212,.62)}
+
+/* ---------- 8. TOP NAV ----------
+   Already a floating capsule. Now it is a glass one. */
+.nav{
+  background:var(--glass-surface-strong);
+  border:1px solid var(--glass-edge);
+  box-shadow:var(--glass-shadow-soft);
+}
+@media(min-width:961px){
+  .nav{
+    background:var(--glass-surface);
+    backdrop-filter:blur(28px) saturate(1.6);
+    -webkit-backdrop-filter:blur(28px) saturate(1.6);
+  }
+}
+.nav-links a:hover{text-decoration:none;color:var(--purple-deep)}
+
+/* wordmark. keeps the lowercase weyn + rotated pink question mark,
+   that mark is the brand, only the blue moves to indigo. */
+.logo{color:var(--ink);letter-spacing:-.04em}
+.logo .q{color:var(--purple)}
+
+/* ---------- 9. BOTTOM TAB BAR ----------
+   The floating glass capsule from the mockups. The active pill
+   itself is animated by motion's layoutId in TabBar.js, so the
+   only job here is the capsule, the resting state and the icon. */
+.tabbar{
+  background:var(--glass-surface-strong);
+  border:1px solid var(--glass-edge);
+  box-shadow:var(--glass-shadow);
+  padding:7px;
+  gap:0;
+}
+.tabbar .tab{
+  position:relative;
+  color:var(--ink-soft);
+  font-family:var(--font-body);font-weight:600;
+  transition:color .26s var(--ease-out);
+}
+.tabbar .tab-icon{
+  display:grid;place-items:center;
+  transition:transform .4s var(--ease-spring);
+}
+.tabbar .tab-icon svg{width:19px;height:19px}
+.tabbar .tab.active{background:transparent;box-shadow:none;transform:none;color:#fff}
+.tabbar .tab.active .tab-icon{transform:translateY(-1px) scale(1.08)}
+
+/* the moving pill motion renders behind the labels */
+.tab-pill{
+  position:absolute;inset:0;z-index:0;
+  border-radius:var(--radius-pill);
+  background:linear-gradient(170deg,#8B4BF0,var(--purple-deep));
+  box-shadow:0 8px 20px -8px rgba(99,14,212,.62), inset 0 1px 0 rgba(255,255,255,.26);
+}
+.tabbar .tab-icon,.tabbar .tab-label{position:relative;z-index:1}
+
+@media(min-width:961px){
+  .tabbar{
+    backdrop-filter:blur(30px) saturate(1.6);
+    -webkit-backdrop-filter:blur(30px) saturate(1.6);
+    background:var(--glass-surface);
+  }
+}
+
+/* ---------- 10. VENUE CARDS ----------
+   Image-forward, borderless, the shadow does the separating.
+   Matches the Discover mockup. */
+.venue-card{
+  border:1px solid var(--hairline);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-pop-sm);
+  overflow:hidden;
+  transition:transform .38s var(--ease-spring), box-shadow .38s var(--ease-spring);
+}
+.venue-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-pop)}
+.venue-cover{border-bottom:0}
+.venue-card img{transition:transform .7s var(--ease-out)}
+.venue-card:hover img{transform:scale(1.045)}
+
+/* ---------- 10b. DISCOVER SCREEN ----------
+   Rebuilt to match the Discover mockup: a glass hero card, a rail of
+   collection tiles, a segmented feed switch, and a rating badge on
+   the cover image. */
+
+/* THE HERO.
+   Was a bordered page header with a rule under it. Now it is the
+   floating glass slab from the mockup, with a violet wash bleeding
+   out of the top-left corner. */
+.app-home__hero{
+  position:relative;overflow:hidden;isolation:isolate;
+  display:flex;flex-direction:column;justify-content:center;
+  gap:14px;
+  min-height:232px;
+  padding:34px 32px;
+  border:1px solid var(--glass-edge);
+  border-bottom:1px solid var(--glass-edge);   /* kill the old divider rule */
+  border-radius:var(--radius-lg);
+  background:linear-gradient(150deg,rgba(255,255,255,.9),rgba(255,255,255,.7));
+  box-shadow:var(--glass-shadow);
+}
+.app-home__hero::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(28rem 20rem at 0% 0%, rgba(124,58,237,.20), transparent 62%),
+    radial-gradient(22rem 18rem at 100% 100%, rgba(110,139,245,.14), transparent 66%);
+}
+.app-home__hero h1{margin-bottom:0;font-size:clamp(38px,10vw,52px);line-height:1.02}
+.app-home__hero .sub{max-width:34ch;font-size:16px;line-height:1.55}
+.app-home__hero .cta-row{margin-top:6px}
+@media(max-width:700px){
+  .app-home__hero{min-height:0;padding:28px 22px;border-radius:26px}
+}
+
+/* COLLECTION TILES.
+   Cover image, dark scrim, title and count bottom-left. The image
+   scales on hover, the tile itself does not, so neighbouring tiles
+   in the rail never get shoved. */
+.collection-rail{
+  display:flex;gap:14px;
+  overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  padding:4px 2px 10px;
+  scrollbar-width:none;
+}
+.collection-rail::-webkit-scrollbar{display:none}
+
+.collection-card{
+  position:relative;flex:0 0 auto;
+  width:252px;height:158px;
+  scroll-snap-align:start;
+  border-radius:26px;overflow:hidden;
+  box-shadow:var(--shadow-pop-sm);
+  transition:transform .3s var(--ease-spring),box-shadow .3s var(--ease-spring);
+}
+.collection-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-pop)}
+.collection-card img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform .7s var(--ease-out);
+}
+.collection-card:hover img{transform:scale(1.08)}
+.collection-card__fallback{
+  position:absolute;inset:0;
+  background:linear-gradient(150deg,var(--purple),var(--purple-deep));
+}
+.collection-card__scrim{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;justify-content:flex-end;gap:2px;
+  padding:16px 18px;
+  background:linear-gradient(to top,rgba(12,6,24,.86),rgba(12,6,24,.18) 52%,transparent);
+}
+.collection-card__title{
+  font-family:var(--font-display);font-weight:800;font-size:21px;
+  letter-spacing:-.02em;color:#fff;line-height:1.15;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.collection-card__count{
+  font-family:var(--font-body);font-weight:600;font-size:12.5px;
+  color:rgba(255,255,255,.8);
+}
+@media(max-width:420px){.collection-card{width:224px;height:146px}}
+
+/* SEGMENTED CONTROL.
+   One track, one sliding thumb. Replaces two separate chips, which
+   read as two unrelated toggles rather than one either/or choice. */
+.segmented{
+  display:inline-flex;align-items:center;gap:2px;
+  margin-bottom:16px;padding:5px;
+  border:1px solid var(--glass-edge);
+  border-radius:var(--radius-pill);
+  background:var(--glass-surface-strong);
+  box-shadow:var(--shadow-pop-sm);
+}
+.segmented__option{
+  position:relative;
+  appearance:none;border:0;cursor:pointer;background:none;
+  padding:9px 26px;border-radius:var(--radius-pill);
+  font-family:var(--font-body);font-weight:600;font-size:14px;
+  color:var(--ink-soft);
+  transition:color .26s var(--ease-out);
+}
+.segmented__option.active{color:#fff}
+.segmented__thumb{
+  position:absolute;inset:0;z-index:0;
+  border-radius:var(--radius-pill);
+  background:linear-gradient(170deg,#8B4BF0,var(--purple-deep));
+  box-shadow:0 8px 18px -8px rgba(99,14,212,.6), inset 0 1px 0 rgba(255,255,255,.24);
+}
+.segmented__label{position:relative;z-index:1}
+.segmented__option:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+
+/* RATING BADGE, sits on the cover image top-right. */
+.venue-rating-badge{
+  position:absolute;top:12px;right:12px;z-index:3;
+  display:inline-flex;align-items:center;gap:4px;
+  padding:6px 11px;border-radius:var(--radius-pill);
+  background:rgba(255,255,255,.92);
+  border:1px solid var(--glass-edge);
+  box-shadow:0 6px 16px -6px rgba(76,17,161,.34);
+  font-family:var(--font-body);font-weight:700;font-size:12.5px;
+  color:var(--ink);
+  line-height:1;
+}
+.venue-rating-badge>[aria-hidden]:first-child{color:var(--purple)}
+
+/* COLLECTION DETAIL PAGE. */
+.collection-page{display:flex;flex-direction:column;gap:22px}
+.collection-hero{
+  position:relative;overflow:hidden;isolation:isolate;
+  border-radius:var(--radius-lg);
+  padding:30px 28px;
+  border:1px solid var(--glass-edge);
+  box-shadow:var(--glass-shadow);
+  background:linear-gradient(150deg,#2A1A44,var(--ink-deep));
+}
+.collection-hero__bg{
+  position:absolute;inset:0;z-index:-2;
+  width:100%;height:100%;object-fit:cover;
+  opacity:.34;filter:saturate(1.1);
+}
+.collection-hero::after{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(150deg,rgba(124,58,237,.45),rgba(18,13,26,.82));
+}
+.collection-hero__body{display:flex;flex-direction:column;gap:8px}
+.collection-hero__back{
+  align-self:flex-start;margin-bottom:6px;
+  font-family:var(--font-body);font-weight:600;font-size:13.5px;
+  color:rgba(255,255,255,.82);
+}
+.collection-hero__back:hover{color:#fff}
+.collection-hero .eyebrow{color:var(--primary-fixed,#D2BBFF);margin-bottom:0}
+.collection-hero h1{color:#fff;margin-bottom:0;font-size:clamp(32px,8vw,46px)}
+.collection-hero .sub{color:rgba(255,255,255,.78);max-width:44ch}
+.collection-hero__count{
+  margin-top:4px;
+  font-family:var(--font-body);font-weight:600;font-size:13px;
+  color:rgba(255,255,255,.66);
+}
+@media(max-width:640px){.collection-hero{padding:24px 20px;border-radius:26px}}
+
+/* ---------- 10c. POLL RESULTS ----------
+   The results mockup gives the winning option a badge and a ring, and
+   puts a percentage next to every bar. The winner ring only ever
+   appears on a closed poll with a single leader, PollClient decides
+   that, never the styling. */
+.poll-result{position:relative;margin-top:14px;display:grid;gap:8px}
+.poll-result-head{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-family:var(--font-body);font-weight:700;font-size:13px;
+  color:var(--ink);
+}
+.poll-result-share{
+  flex:0 0 auto;
+  padding:3px 10px;border-radius:var(--radius-pill);
+  background:var(--purple-wash);color:var(--purple-deep);
+  font-size:12px;font-weight:700;
+}
+.poll-your-pick{
+  justify-self:start;
+  font-family:var(--font-body);font-weight:700;font-size:12.5px;
+  color:var(--purple);
+}
+.poll-winner-badge{
+  justify-self:start;
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:var(--radius-pill);
+  background:linear-gradient(170deg,#8B4BF0,var(--purple-deep));
+  color:#fff;
+  font-family:var(--font-display);font-weight:800;font-size:11.5px;
+  letter-spacing:.09em;text-transform:uppercase;
+  box-shadow:0 8px 18px -8px rgba(99,14,212,.6);
+}
+/* lift the whole winning card, not just its bar */
+.venue-card:has(.poll-result.winner){
+  outline:2px solid var(--purple);
+  outline-offset:-2px;
+  box-shadow:var(--shadow-pop), 0 0 0 6px rgba(124,58,237,.12);
+}
+
+/* the bar fills rather than appears, and the leader is the gradient. */
+.result-bar{overflow:hidden;border-radius:var(--radius-pill)}
+.result-fill{
+  height:100%;border-radius:var(--radius-pill);
+  background:var(--outline,#B8A6E8);
+  transform-origin:left center;
+  transition:width .8s var(--ease-out);
+  animation:lv-bar .8s var(--ease-out) both;
+}
+.result-fill.lead{background:linear-gradient(90deg,#8B4BF0,var(--purple-deep))}
+@keyframes lv-bar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* ---------- 10d. NOTIFICATION CENTRE ----------
+   Each notification is a glass card: unread dot on the far left, a
+   tinted type icon, then the text, the relative time and one action. */
+.notif-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:20px 0 14px;
+}
+.notif-count{
+  font-family:var(--font-body);font-weight:700;font-size:13px;
+  color:var(--ink-soft);
+}
+
+.notif-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+
+.notif-item{
+  position:relative;
+  display:grid;
+  grid-template-columns:auto auto minmax(0,1fr);
+  align-items:start;gap:14px;
+  padding:18px 20px 18px 26px;
+  border:1px solid var(--glass-edge);
+  border-radius:var(--radius-md);
+  background:linear-gradient(145deg,rgba(255,255,255,.9),rgba(255,255,255,.7));
+  box-shadow:var(--glass-shadow-soft);
+  transition:transform .28s var(--ease-spring),box-shadow .28s var(--ease-spring);
+}
+.notif-item:hover{transform:translateY(-2px);box-shadow:var(--glass-shadow)}
+.notif-item.unread{background:linear-gradient(145deg,#fff,var(--purple-wash))}
+
+.notif-dot{
+  position:absolute;left:11px;top:50%;
+  width:7px;height:7px;margin-top:-3.5px;
+  border-radius:50%;
+  background:var(--purple);
+  box-shadow:0 0 0 4px rgba(124,58,237,.16);
+}
+
+.notif-icon{
+  display:grid;place-items:center;
+  width:44px;height:44px;border-radius:50%;
+  background:var(--purple-wash);
+  color:var(--purple-deep);
+}
+.notif-icon svg{width:20px;height:20px}
+/* the dot column is empty on read items, keep the grid aligned */
+.notif-item:not(.unread) .notif-icon{grid-column:2}
+
+.notif-body{display:grid;justify-items:start;gap:6px;min-width:0}
+.notif-text{
+  margin:0;
+  font-family:var(--font-body);font-size:15px;line-height:1.45;
+  color:var(--ink);font-weight:500;
+}
+.notif-time{font-size:12px;font-weight:600;color:var(--ink-soft)}
+.notif-body .btn{margin-top:4px}
+
+.notif-empty{
+  display:grid;place-items:center;align-content:center;gap:10px;
+  min-height:300px;margin-top:22px;padding:32px;
+  border:1px dashed var(--hairline);
+  border-radius:var(--radius-lg);
+  background:var(--glass-surface);
+  text-align:center;
+}
+.notif-empty svg{width:32px;height:32px;color:var(--purple)}
+.notif-empty p{margin:0;max-width:34ch}
+
+@media(max-width:600px){
+  .notif-item{grid-template-columns:auto minmax(0,1fr);padding:16px 16px 16px 24px;gap:12px}
+  .notif-item:not(.unread) .notif-icon{grid-column:1}
+  .notif-icon{width:38px;height:38px}
+  .notif-text{font-size:14.5px}
+}
+
+/* ---------- 10e. INVITATION GATE ----------
+   The mockup draws a 6-box OTP input. Weyn's codes are NOT six digits
+   (the built-in one is a two-word phrase, and admin-issued codes are
+   free-form rows in beta_invitation_codes), so a fixed six-box control
+   would make valid codes unenterable. Keeping the single field and
+   taking the mockup's glass card, lock badge and centred layout. */
+.invitation-gate{background:rgba(18,13,26,.55)}
+.invitation-card{
+  border:1px solid var(--glass-edge);
+  border-radius:var(--radius-lg);
+  background:linear-gradient(160deg,#fff,#F7F4FF);
+  box-shadow:0 40px 90px -30px rgba(20,6,48,.6);
+}
+.invitation-icon{
+  display:grid;place-items:center;
+  width:76px;height:76px;margin:0 auto 18px;
+  border-radius:50%;
+  background:radial-gradient(circle at 50% 35%, #EFE5FF, var(--purple-wash));
+  color:var(--purple-deep);
+}
+.invitation-icon svg{width:30px;height:30px}
+.invitation-card h1{text-align:center;font-size:clamp(28px,7vw,36px)}
+.invitation-card > .eyebrow{display:block;text-align:center}
+.invitation-card > p{text-align:center}
+.invitation-card input{
+  text-align:center;
+  font-family:var(--font-display);font-weight:700;font-size:19px;
+  letter-spacing:.14em;
+}
+.invite-spinner{animation:lv-spin .9s linear infinite}
+@keyframes lv-spin{to{transform:rotate(360deg)}}
+
+/* ---------- 10f. GROUP CHAT ----------
+   Bubble treatment from the chat mockup: own messages are the violet
+   gradient aligned right, everyone else's are white aligned left. */
+.group-chat-log{background:rgba(124,58,237,.045)}
+.message-bubble{
+  border:1px solid var(--hairline);
+  border-radius:20px 20px 20px 6px;
+  background:#fff;
+  box-shadow:0 4px 14px -6px rgba(76,17,161,.22);
+  animation:lv-rise .34s var(--ease-spring) both;
+}
+.message-row.mine .message-bubble{
+  border-color:transparent;
+  border-radius:20px 20px 6px 20px;
+  background:linear-gradient(170deg,#8B4BF0,var(--purple-deep));
+  color:#fff;
+  box-shadow:0 8px 20px -8px rgba(99,14,212,.5);
+}
+.message-time{opacity:.62;font-size:10.5px;margin-top:3px}
+.message-row.mine .message-list-link{background:rgba(255,255,255,.2);color:#fff}
+
+/* ---------- 11. FORMS ----------
+   Semi-translucent, pill focus ring in indigo. */
+.app-main input[type=text],.app-main input[type=email],.app-main input[type=password],
+.app-main input[type=search],.app-main input[type=number],.app-main input[type=url],
+.app-main textarea,.app-main select{
+  background:var(--white);
+  border:1px solid var(--hairline);
+  border-radius:var(--radius-md);
+  transition:border-color .2s, box-shadow .24s var(--ease-out), background .2s;
+}
+.app-main input:focus,.app-main textarea:focus,.app-main select:focus{
+  outline:none;
+  border-color:var(--purple);
+  box-shadow:0 0 0 4px rgba(124,58,237,.16);
+}
+
+/* ---------- 12. MOTION ----------
+   The "alive" layer. Everything here is transform/opacity only,
+   so it composites on the GPU and never triggers layout. */
+
+/* scroll reveal. design-system.css already ships .fade-up/.in and
+   an IntersectionObserver contract, this just makes it springier
+   and adds more stagger steps. */
+.fade-up{transform:translateY(20px) scale(.995);transition:opacity .66s var(--ease-out),transform .66s var(--ease-spring)}
+.fade-up.in{transform:none}
+.d5{transition-delay:.40s}.d6{transition-delay:.48s}.d7{transition-delay:.56s}.d8{transition-delay:.64s}
+
+/* the page enter, replayed on every route change by AppMain.js.
+   `backwards` fill only applies during the (zero) delay, so if
+   animations never run at all the element simply sits visible.
+   Content is never hidden waiting on JS. */
+.lv-page{animation:lv-rise .34s var(--ease-out) backwards}
+
+/* enter animations, for anything mounted client-side. */
+@keyframes lv-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes lv-pop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+@keyframes lv-fade{from{opacity:0}to{opacity:1}}
+.lv-rise{animation:lv-rise .5s var(--ease-spring) both}
+.lv-pop{animation:lv-pop .42s var(--ease-spring) both}
+.lv-fade{animation:lv-fade .4s ease both}
+
+/* stagger children. */
+.lv-stagger>*{animation:lv-rise .52s var(--ease-spring) both}
+.lv-stagger>*:nth-child(1){animation-delay:.02s}
+.lv-stagger>*:nth-child(2){animation-delay:.07s}
+.lv-stagger>*:nth-child(3){animation-delay:.12s}
+.lv-stagger>*:nth-child(4){animation-delay:.17s}
+.lv-stagger>*:nth-child(5){animation-delay:.22s}
+.lv-stagger>*:nth-child(6){animation-delay:.27s}
+.lv-stagger>*:nth-child(7){animation-delay:.32s}
+.lv-stagger>*:nth-child(8){animation-delay:.37s}
+
+/* a slow breathing glow, for the one hero element per screen. */
+@keyframes lv-breathe{
+  0%,100%{box-shadow:0 12px 26px -10px rgba(99,14,212,.5), 0 0 0 0 rgba(124,58,237,.22)}
+  50%    {box-shadow:0 18px 34px -10px rgba(99,14,212,.55), 0 0 0 12px rgba(124,58,237,0)}
+}
+.lv-breathe{animation:lv-breathe 3.4s ease-in-out infinite}
+
+/* gentle float, for map pins and stickers. */
+@keyframes lv-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.lv-float{animation:lv-float 4.5s ease-in-out infinite}
+
+/* sheen sweep across a surface, for skeletons and hero cards. */
+@keyframes lv-sheen{to{transform:translateX(180%)}}
+.lv-sheen{position:relative;overflow:hidden}
+.lv-sheen::after{
+  content:"";position:absolute;inset:0 auto 0 -60%;width:55%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.62),transparent);
+  transform:translateX(-120%);
+  animation:lv-sheen 2.6s ease-in-out infinite;
+  pointer-events:none;
+}
+
+/* press feedback for any tappable surface. */
+.lv-press{transition:transform .2s var(--ease-spring)}
+.lv-press:active{transform:scale(.972)}
+
+/* globals.css already staggers the first THREE cards in a list by
+   45ms each, then stops, so a long feed enters as "three, then a
+   slab". Carry the rhythm out to eight and give it the spring
+   easing. Same animation name, same selectors, so this extends the
+   existing behaviour rather than competing with it. */
+.venue-grid>*,
+.venue-list-single>*,
+.social-stack>[data-slot="card"],
+.social-stack>div>[data-slot="card"]{
+  animation:app-card-in 340ms var(--ease-spring) both;
+}
+.venue-grid>:nth-child(4),.venue-list-single>:nth-child(4),.social-stack>:nth-child(4){animation-delay:135ms}
+.venue-grid>:nth-child(5),.venue-list-single>:nth-child(5),.social-stack>:nth-child(5){animation-delay:180ms}
+.venue-grid>:nth-child(6),.venue-list-single>:nth-child(6),.social-stack>:nth-child(6){animation-delay:225ms}
+.venue-grid>:nth-child(7),.venue-list-single>:nth-child(7),.social-stack>:nth-child(7){animation-delay:270ms}
+.venue-grid>:nth-child(n+8),.venue-list-single>:nth-child(n+8),.social-stack>:nth-child(n+8){animation-delay:310ms}
+
+/* everything you can tap should acknowledge the tap. Applied by
+   selector rather than by editing each component. */
+.venue-card,.chip,.tag-pill,.group-list-card,.saved-list-card,
+.recent-group-button,.saved-pick,.vote-option{
+  transition:transform .2s var(--ease-spring),box-shadow .28s var(--ease-spring),background .2s ease;
+}
+.venue-card:active,.chip:active,.group-list-card:active,
+.saved-list-card:active,.recent-group-button:active,
+.saved-pick:active,.vote-option:active{transform:scale(.978)}
+
+/* the poll result bar should fill, not appear. */
+.result-bar>*{transition:width .7s var(--ease-out)}
+
+/* ---------- 12b. LEGACY HARD-CODED NAVY ----------
+   Most of globals.css is written against the tokens, so it re-skinned
+   itself. These few rules baked rgba(31,48,68,...) straight into the
+   declaration and so survived the token swap. They are all in the
+   phone breakpoints, which is the experience that matters most for a
+   Capacitor build, so they get re-tinted by hand.
+   Selectors mirror the originals exactly, only the colour moves. */
+@media(max-width:700px){
+  .app-shell{
+    background:
+      radial-gradient(28rem 22rem at -20% -4%, rgba(124,58,237,.20), transparent 64%),
+      radial-gradient(26rem 22rem at 118% 6%, rgba(110,139,245,.16), transparent 66%),
+      var(--paper);
+  }
+  .app-main .venue-card,
+  .app-main .card,
+  .app-main .tag-group-card,
+  .app-main .details-card{
+    background:rgba(255,255,255,.9);
+    box-shadow:0 10px 28px -10px rgba(76,17,161,.20), inset 0 1px 0 #fff;
+  }
+}
+.group-list-card{
+  border:1px solid var(--hairline)!important;
+  box-shadow:0 8px 28px -12px rgba(76,17,161,.18)!important;
+}
+.saved-list-card{
+  border:1px solid var(--hairline);
+  box-shadow:0 8px 28px -12px rgba(76,17,161,.18);
+}
+
+/* ---------- 13. MOBILE GUARDRAILS ----------
+   globals.css section 14 stays in force. These are the additions
+   Liquid Violet needs: strip decorative loops on phones, and keep
+   the blur budget to the two pieces of fixed chrome. */
+@media(max-width:960px){
+  .lv-float,.lv-breathe{animation:none}
+  .lv-sheen::after{display:none}
+  /* only nav + tabbar may blur, and only if the device can afford it */
+  .glass-blur{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--glass-surface-strong)}
+}
+
+/* ---------- 14. REDUCED MOTION ----------
+   design-system.css already zeroes durations globally. This kills
+   the infinite decorative loops outright rather than running them
+   at 0.01ms, which would still pin a compositor thread. */
+@media(prefers-reduced-motion:reduce){
+  .lv-float,.lv-breathe,body::before{animation:none!important}
+  .lv-sheen::after{display:none}
+}

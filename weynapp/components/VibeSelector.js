@@ -107,6 +107,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
   const [nearby, setNearby] = useState(null);
   const [locationState, setLocationState] = useState("idle");
   const [locationMessage, setLocationMessage] = useState("Suggestions anywhere in the selected city.");
+  const [showMore, setShowMore] = useState(false);
   const sharePanelRef = useRef(null);
 
   useEffect(() => {
@@ -283,75 +284,42 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
     }
   }
 
-  return (
-    <div>
-      <h2 className="group-label">Location</h2>
-      <div className="details-card">
-        <div className="details-row">
-          <div>
-            <strong>Keep suggestions close</strong>
-            <p className="sub" style={{ margin: "4px 0 0", fontSize: 13 }}>
-              Share your location only when you press the button.
-            </p>
-          </div>
-          <button
-            type="button"
-            className={`btn small ${locationState === "active" ? "primary" : "ghost"}`}
-            aria-pressed={locationState === "active"}
-            disabled={locationState === "loading"}
-            onClick={toggleNearby}
-          >
-            {locationState === "loading" ? "Locating…" : locationState === "active" ? "Near me on ✓" : "Near me"}
-          </button>
-        </div>
-        <p
-          className="sub"
-          role={locationState === "error" ? "alert" : "status"}
-          style={{
-            margin: "12px 0 0",
-            fontSize: 13,
-            color: locationState === "error" ? "#c72f55" : undefined,
-          }}
-        >
-          {locationMessage}
-        </p>
-      </div>
+  function isMoodGroup(cat) {
+    const key = `${cat.slug || ""} ${cat.name || ""}`.toLowerCase();
+    return /mood|vibe|occasion|feeling/.test(key);
+  }
 
-      <h2 className="group-label">City</h2>
-      <div className="city-picker">
-        {CITIES.map((c) => (
-          <button key={c.value} type="button" className={`city-card ${city === c.value ? "sel" : ""}`} onClick={() => pickCity(c.value)}>
-            <span className="city-card-name">{c.label}</span>
-            <span className="city-card-note">{c.note}</span>
-          </button>
-        ))}
-      </div>
+  const moodGroups = orderedGroups.filter(isMoodGroup);
+  const extraGroups = orderedGroups.filter((cat) => !isMoodGroup(cat));
+  const primaryGroups = moodGroups.length ? moodGroups : orderedGroups.slice(0, 1);
+  const secondaryGroups = moodGroups.length ? extraGroups : orderedGroups.slice(1);
 
-      <div className="field" style={{ position: "relative", marginBottom: 20 }}>
-        <Search
-          className="h-4 w-4"
-          style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: 0.5 }}
-        />
-        <input
-          type="text"
-          placeholder="Search tags, rooftop, date night, shisha…"
-          value={tagQuery}
-          onChange={(e) => setTagQuery(e.target.value)}
-          style={{ paddingLeft: 36 }}
-        />
-      </div>
-
-      {orderedGroups.map((cat) => {
-        const q = tagQuery.trim().toLowerCase();
-        let visibleTags = cold ? cat.tags.filter((t) => !t.seasonal_exclude) : cat.tags;
-        if (isAccessRules(cat)) visibleTags = visibleTags.filter((tag) => !isDuplicateAgeTag(tag));
-        if (q) visibleTags = visibleTags.filter((t) => t.display_name.toLowerCase().includes(q));
-        if (visibleTags.length === 0) return null;
-        const clusters = groupBySubgroup(visibleTags);
-        const categoryId = `category::${cat.slug}`;
-        const picks = selected[cat.slug] || [];
-        return (
-          <div key={cat.slug} className="tag-category-dropdown">
+  function renderCategory(cat) {
+      const q = tagQuery.trim().toLowerCase();
+      let visibleTags = cold ? cat.tags.filter((t) => !t.seasonal_exclude) : cat.tags;
+      if (isAccessRules(cat)) visibleTags = visibleTags.filter((tag) => !isDuplicateAgeTag(tag));
+      if (q) visibleTags = visibleTags.filter((t) => t.display_name.toLowerCase().includes(q));
+      if (visibleTags.length === 0) return null;
+      const clusters = groupBySubgroup(visibleTags);
+      const categoryId = `category::${cat.slug}`;
+      const picks = selected[cat.slug] || [];
+      const mood = isMoodGroup(cat);
+      return (
+        <div key={cat.slug} className={`tag-category-dropdown${mood ? " is-mood" : ""}`}>
+          {mood ? (
+            <>
+              <h2 className="group-label">{cat.name}</h2>
+              {clusters.map((cluster) => (
+                <div className="chips" key={`${cat.slug}::${cluster.subgroup || "_"}`} style={{ marginBottom: 8 }}>
+                  {cluster.tags.map((t) => (
+                    <button key={t.slug} className={`chip ${picks.includes(t.slug) ? "sel" : ""}`} onClick={() => toggleTag(cat, t.slug)}>
+                      {t.display_name}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </>
+          ) : (
             <AccordionSection
               id={categoryId}
               label={`${cat.name}${cat.max_select > 1 ? ` · pick up to ${cat.max_select}` : ""}`}
@@ -395,13 +363,86 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
               );
               })}
             </AccordionSection>
+          )}
+        </div>
+      );
+  }
+
+  return (
+    <div className="find-flow">
+      <h2 className="group-label">City</h2>
+      <div className="city-picker">
+        {CITIES.map((c) => (
+          <button key={c.value} type="button" className={`city-card ${city === c.value ? "sel" : ""}`} onClick={() => pickCity(c.value)}>
+            <span className="city-card-name">{c.label}</span>
+            <span className="city-card-note">{c.note}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="details-card find-essentials">
+        <div className="details-row">
+          <span className="details-label">Budget</span>
+          <div className="chips">
+            {BUDGETS.map((b) => (
+              <button key={b.value} className={`chip ${budget === b.value ? "sel" : ""}`}
+                onClick={() => { setBudget(b.value); setResults(null); }}>
+                {b.label}
+              </button>
+            ))}
           </div>
-        );
-      })}
+        </div>
+        <div className="details-row">
+          <div>
+            <strong>Near me</strong>
+            <p className="sub" style={{ margin: "4px 0 0", fontSize: 13 }}>
+              {locationMessage}
+            </p>
+          </div>
+          <button
+            type="button"
+            className={`btn small ${locationState === "active" ? "primary" : "ghost"}`}
+            aria-pressed={locationState === "active"}
+            disabled={locationState === "loading"}
+            onClick={toggleNearby}
+          >
+            {locationState === "loading" ? "Locating…" : locationState === "active" ? "On" : "Use location"}
+          </button>
+        </div>
+      </div>
+
+      {primaryGroups.map(renderCategory)}
+
+      <button
+        type="button"
+        className="btn ghost block more-filters"
+        aria-expanded={showMore || !!tagQuery}
+        onClick={() => setShowMore((open) => !open)}
+      >
+        {showMore || tagQuery ? "Hide extra filters" : "More filters"}
+      </button>
+
+      {(showMore || tagQuery) && (
+      <div className="find-more">
+      <div className="field" style={{ position: "relative", marginBottom: 20 }}>
+        <Search
+          className="h-4 w-4"
+          style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: 0.5 }}
+        />
+        <input
+          type="text"
+          placeholder="Search tags, rooftop, date night, shisha…"
+          value={tagQuery}
+          onChange={(e) => setTagQuery(e.target.value)}
+          style={{ paddingLeft: 36 }}
+        />
+      </div>
+
+      {secondaryGroups.map(renderCategory)}
 
       {cold && (
         <p className="sub" style={{ marginTop: -8, marginBottom: 24, fontSize: 13 }}>
-          🍂 It&apos;s outdoor off-season, hiding non-beach outdoor picks until May. Beach spots stay open year-round.
+          Outdoor off-season: non-beach outdoor picks stay hidden until May.
         </p>
       )}
 
@@ -418,22 +459,13 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
             ))}
           </div>
         </div>
-        <div className="details-row">
-          <span className="details-label">Budget</span>
-          <div className="chips">
-            {BUDGETS.map((b) => (
-              <button key={b.value} className={`chip ${budget === b.value ? "sel" : ""}`}
-                onClick={() => { setBudget(b.value); setResults(null); }}>
-                {b.label}
-              </button>
-            ))}
-          </div>
-        </div>
         <label className="toggle-row" style={{ marginBottom: 0 }}>
           <input type="checkbox" checked={aesthetic} onChange={(e) => { setAesthetic(e.target.checked); setResults(null); }} />
-          Aesthetic spots only 📸
+          Aesthetic spots only
         </label>
       </div>
+      </div>
+      )}
 
       <div className="cta-row">
         <button className="btn primary block" disabled={!ready || loading} onClick={getShortlist}>

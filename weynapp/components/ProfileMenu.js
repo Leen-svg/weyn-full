@@ -32,7 +32,7 @@ export default function ProfileMenu({ userId, displayName, avatarUrl, points, is
         render={
           <button
             type="button"
-            className="profile-menu-trigger flex items-center gap-2 rounded-full border-0 bg-white py-1 pr-2.5 pl-1 shadow-[0_4px_14px_rgba(31,48,68,.09)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_7px_20px_rgba(31,48,68,.12)]"
+            className="profile-menu-trigger flex items-center gap-2 rounded-full border-0 bg-white py-1 pr-2.5 pl-1 shadow-[0_4px_14px_rgba(76,17,161,.09)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_7px_20px_rgba(76,17,161,.12)]"
           />
         }
       >

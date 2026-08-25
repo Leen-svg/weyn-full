@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import MapChooser from "./MapChooser";
+import { safeUrl } from "@/lib/sanitize";
 import styles from "./WishlistMap.module.css";
 
 const ABU_DHABI = [54.3773, 24.4539];
@@ -96,7 +97,7 @@ export default function WishlistMap({ venues }) {
         source: "saved-places",
         filter: ["has", "point_count"],
         paint: {
-          "circle-color": "#6f55e8",
+          "circle-color": "#7C3AED",
           "circle-radius": ["step", ["get", "point_count"], 21, 8, 27, 20, 33],
           "circle-stroke-color": "rgba(255,255,255,.92)",
           "circle-stroke-width": 3,
@@ -115,17 +116,60 @@ export default function WishlistMap({ venues }) {
         },
         paint: { "text-color": "#ffffff" },
       });
+      /* Unselected pins are white with a violet ring, so they read as
+         markers rather than as blobs of brand colour on a monochrome
+         basemap. The selected pin below inverts that. */
       map.addLayer({
         id: "saved-place-points",
         type: "circle",
         source: "saved-places",
         filter: ["!", ["has", "point_count"]],
         paint: {
-          "circle-color": "#f3a7c0",
-          "circle-radius": 10,
-          "circle-stroke-color": "#ffffff",
+          "circle-color": "#ffffff",
+          "circle-radius": 9,
+          "circle-stroke-color": "#7C3AED",
           "circle-stroke-width": 3,
           "circle-emissive-strength": 1,
+        },
+      });
+
+      /* The selected pin: filled violet, bigger, white ring. Drawn as
+         its own layer on top rather than via feature-state because the
+         source is clustered, so a point can leave and re-enter the
+         unclustered set as the user zooms and its state would be lost.
+         The filter is re-pointed by the selectedId effect below. */
+      map.addLayer({
+        id: "saved-place-selected",
+        type: "circle",
+        source: "saved-places",
+        filter: ["==", ["get", "id"], "__none__"],
+        paint: {
+          "circle-color": "#7C3AED",
+          "circle-radius": 15,
+          "circle-stroke-color": "#ffffff",
+          "circle-stroke-width": 4,
+          "circle-emissive-strength": 1,
+        },
+      });
+
+      /* Name pill under the selected pin, as in the mockup. */
+      map.addLayer({
+        id: "saved-place-selected-label",
+        type: "symbol",
+        source: "saved-places",
+        filter: ["==", ["get", "id"], "__none__"],
+        layout: {
+          "text-field": ["get", "name"],
+          "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+          "text-size": 12,
+          "text-offset": [0, 1.9],
+          "text-anchor": "top",
+          "text-allow-overlap": true,
+        },
+        paint: {
+          "text-color": "#191320",
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 2.2,
         },
       });
 
@@ -149,7 +193,9 @@ export default function WishlistMap({ venues }) {
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelectedId(id);
       });
-      for (const layer of ["saved-clusters", "saved-place-points"]) {
+      // Tapping the already-selected pin closes the card again.
+      map.on("click", "saved-place-selected", () => setSelectedId(null));
+      for (const layer of ["saved-clusters", "saved-place-points", "saved-place-selected"]) {
         map.on("mouseenter", layer, () => { map.getCanvas().style.cursor = "pointer"; });
         map.on("mouseleave", layer, () => { map.getCanvas().style.cursor = ""; });
       }
@@ -165,6 +211,19 @@ export default function WishlistMap({ venues }) {
       mapRef.current = null;
     };
   }, [points]);
+
+  /* Re-point the selected-pin layers whenever the selection changes.
+     Guarded on the style being loaded: setFilter throws if the style
+     is still in flight, which happens when a pin is clicked during
+     the first paint. */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    const filter = ["==", ["get", "id"], selectedId || "__none__"];
+    for (const layer of ["saved-place-selected", "saved-place-selected-label"]) {
+      if (map.getLayer(layer)) map.setFilter(layer, filter);
+    }
+  }, [selectedId]);
 
   if (!points.length) {
     return (
@@ -183,13 +242,49 @@ export default function WishlistMap({ venues }) {
       <div ref={containerRef} className={styles.map} />
       <div className={styles.count}>{points.length} mapped</div>
       {selectedVenue && (
-        <div className={styles.selection}>
+        <div className={styles.selection} key={selectedVenue.id}>
           <button type="button" className={styles.selectionClose} onClick={() => setSelectedId(null)} aria-label="Close selected place">×</button>
-          <div>
-            <strong>{selectedVenue.name}</strong>
-            <span>{selectedVenue.neighborhood || selectedVenue.city || "UAE"}</span>
+
+          {selectedVenue.cover_url && (
+            <img
+              className={styles.selectionThumb}
+              src={safeUrl(selectedVenue.cover_url)}
+              alt=""
+              width="160"
+              height="160"
+              loading="lazy"
+              decoding="async"
+            />
+          )}
+
+          <div className={styles.selectionBody}>
+            <div className={styles.selectionHead}>
+              <strong>{selectedVenue.name}</strong>
+              {typeof selectedVenue.rating === "number" && (
+                <span className={styles.selectionRating}>
+                  <span aria-hidden="true">★</span>
+                  {selectedVenue.rating.toFixed(1)}
+                </span>
+              )}
+            </div>
+            <span className={styles.selectionPlace}>
+              {selectedVenue.neighborhood || selectedVenue.city || "UAE"}
+            </span>
+            {selectedVenue.description && (
+              <p className={styles.selectionDesc}>{selectedVenue.description}</p>
+            )}
+            <div className={styles.selectionChips}>
+              {(selectedVenue.tags || []).slice(0, 2).map((tag) => (
+                <span className="tag-pill" key={tag}>{tag}</span>
+              ))}
+              {typeof selectedVenue.avg_spend_aed === "number" && (
+                <span className={styles.selectionSpend}>
+                  {selectedVenue.avg_spend_aed === 0 ? "Free entry" : `~${selectedVenue.avg_spend_aed} AED pp`}
+                </span>
+              )}
+            </div>
+            <MapChooser venue={selectedVenue} className="btn small primary" />
           </div>
-          <MapChooser venue={selectedVenue} className="btn small primary" />
         </div>
       )}
     </section>

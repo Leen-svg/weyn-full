@@ -18,8 +18,9 @@ export default async function FindPage() {
 
   return (
     <>
+      <p className="eyebrow">Find</p>
       <h1>We&apos;re feeling…</h1>
-      <p className="sub">Tap what fits. We&apos;ll pull three spots, then you can send it to the group.</p>
+      <p className="sub">City, mood, budget. Three spots. Then the group votes.</p>
 
       <div style={{ marginTop: 34 }}>
         <VibeSelector groups={groups} zones={zones} isLoggedIn={!!user} />

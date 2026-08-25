@@ -94,11 +94,12 @@ export default function AuthForm({ mode }) {
 
   return (
     <>
+      <p className="eyebrow">{mode === "signup" ? "Create account" : "Log in"}</p>
       <h1>{mode === "signup" ? "Join weyn" : "Welcome back"}</h1>
       <p className="sub">
         {mode === "signup"
-          ? "Invitation-only experimental beta for adults 18+. Features and data may change during testing."
-          : "Log in to pick up where you left off."}
+          ? "Invite-only beta. 18+. Features can change while we test."
+          : "Pick up your spots, groups, and votes."}
       </p>
 
       <button className="btn ghost block" disabled={busy || (mode === "signup" && (!termsAccepted || !privacyAccepted || !betaAcknowledged))} onClick={google} type="button">

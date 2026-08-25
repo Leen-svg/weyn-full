@@ -30,7 +30,12 @@ function MessageBubble({ msg, mine }) {
         <AvatarImage src={safeUrl(author?.avatar_url)} alt="" />
         <AvatarFallback className="text-[10px] font-bold">{initials}</AvatarFallback>
       </Avatar>
-      <div className="message-bubble max-w-[78%] rounded-2xl px-3 py-2 text-sm">
+      {/* No rounded-2xl here on purpose: bubbles have asymmetric
+          corners (the tail corner differs for sent vs received) and
+          that lives in CSS. A Tailwind radius utility sits in the
+          `utilities` layer, above our `weyn` layer, so it would win
+          and square the tail back off. */}
+      <div className="message-bubble max-w-[78%] px-3 py-2 text-sm">
         {!mine && <div className="mb-0.5 text-[11px] font-bold opacity-70">{author?.display_name || "Someone"}</div>}
         <div>{messageText}</div>
         {listPath && <Link className="message-list-link" href={listPath}>Open shared list →</Link>}

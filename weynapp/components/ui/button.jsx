@@ -11,9 +11,9 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground shadow-[0_6px_18px_rgba(120,99,219,.22)] hover:-translate-y-0.5 hover:bg-[var(--purple-deep)] hover:shadow-[0_9px_24px_rgba(120,99,219,.28)]",
         outline:
-          "border-border/25 bg-background shadow-[0_3px_12px_rgba(31,48,68,.06)] hover:-translate-y-0.5 hover:border-primary/35 hover:bg-[var(--purple-wash)] hover:text-foreground hover:shadow-[0_7px_18px_rgba(31,48,68,.09)] aria-expanded:bg-[var(--purple-wash)] aria-expanded:text-foreground",
+          "border-border/25 bg-background shadow-[0_3px_12px_rgba(76,17,161,.06)] hover:-translate-y-0.5 hover:border-primary/35 hover:bg-[var(--purple-wash)] hover:text-foreground hover:shadow-[0_7px_18px_rgba(76,17,161,.09)] aria-expanded:bg-[var(--purple-wash)] aria-expanded:text-foreground",
         secondary:
-          "border-primary/20 bg-[var(--purple-wash)] text-foreground shadow-[0_3px_12px_rgba(31,48,68,.06)] hover:-translate-y-0.5 hover:border-primary/35 hover:bg-[var(--purple-wash)] hover:shadow-[0_7px_18px_rgba(31,48,68,.09)] aria-expanded:bg-[var(--purple-wash)]",
+          "border-primary/20 bg-[var(--purple-wash)] text-foreground shadow-[0_3px_12px_rgba(76,17,161,.06)] hover:-translate-y-0.5 hover:border-primary/35 hover:bg-[var(--purple-wash)] hover:shadow-[0_7px_18px_rgba(76,17,161,.09)] aria-expanded:bg-[var(--purple-wash)]",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         destructive:

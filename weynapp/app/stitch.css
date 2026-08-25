@@ -1,0 +1,330 @@
+/* Weyn × Stitch — product restyle. Loaded last. */
+
+.app-shell.stitch {
+  background:
+    radial-gradient(36rem 22rem at 100% -6%, rgba(237, 224, 255, .55), transparent 60%),
+    #f7f9fb;
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.app-shell.stitch h1,
+.app-shell.stitch h2,
+.app-shell.stitch h3,
+.app-shell.stitch .display,
+.app-shell.stitch .venue-name,
+.app-shell.stitch .logo {
+  font-family: var(--font-display);
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+
+.app-shell.stitch h1 {
+  font-size: clamp(34px, 7vw, 48px);
+  line-height: 0.98;
+  margin-bottom: 10px;
+}
+
+.app-shell.stitch h2 {
+  font-size: clamp(22px, 4vw, 28px);
+  letter-spacing: -0.03em;
+}
+
+.app-shell.stitch .sub,
+.app-shell.stitch p {
+  color: var(--ink-soft);
+}
+
+/* Chrome */
+.app-shell.stitch .nav {
+  top: 14px;
+  background: rgba(255, 255, 255, .88);
+  border: 1px solid rgba(25, 28, 30, .06);
+  box-shadow: 0 10px 28px rgba(25, 28, 30, .06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.app-shell.stitch .logo .q { color: var(--purple); transform: none; }
+
+.app-shell.stitch .nav-section {
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-weight: 650;
+  font-size: 13px;
+}
+
+.app-shell.stitch .nav-section.active,
+.app-shell.stitch .tabbar .tab.active {
+  background: #111;
+  color: #fff;
+}
+
+.app-shell.stitch .tabbar {
+  background: rgba(255, 255, 255, .94);
+  border: 1px solid rgba(25, 28, 30, .06);
+  box-shadow: 0 16px 40px rgba(25, 28, 30, .12);
+}
+
+.app-shell.stitch .tabbar .tab {
+  color: #6b6375;
+  font-family: var(--font-body);
+  font-weight: 650;
+}
+
+.app-shell.stitch .tabbar .tab.active {
+  transform: none;
+}
+
+.app-shell.stitch footer,
+.app-shell.stitch .app-footer {
+  background: #111;
+  color: rgba(255, 255, 255, .72);
+  border-top: 0;
+}
+
+.app-shell.stitch footer .links a {
+  color: rgba(255, 255, 255, .82);
+}
+
+/* Buttons + chips */
+.app-shell.stitch .btn {
+  border: 0;
+  border-radius: 999px;
+  min-height: 48px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.app-shell.stitch .btn.primary,
+.app-shell.stitch .btn.dark {
+  background: #111;
+  color: #fff;
+}
+
+.app-shell.stitch .btn.ghost,
+.app-shell.stitch .btn:not(.primary):not(.dark) {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 6px 18px rgba(25, 28, 30, .06);
+}
+
+.app-shell.stitch .chip {
+  border: 0;
+  background: #efe7ff;
+  color: #4a4455;
+  min-height: 40px;
+  box-shadow: none;
+}
+
+.app-shell.stitch .chip.sel {
+  background: #111;
+  color: #fff;
+}
+
+.app-shell.stitch .chip:hover {
+  background: #e4d6ff;
+  color: var(--ink);
+}
+
+.app-shell.stitch .chip.sel:hover {
+  background: #191c1e;
+  color: #fff;
+}
+
+/* Surfaces */
+.app-shell.stitch .card,
+.app-shell.stitch .venue-card,
+.app-shell.stitch .tag-group-card,
+.app-shell.stitch .details-card,
+.app-shell.stitch .accordion-section,
+.app-shell.stitch .city-card,
+.app-shell.stitch .share-box,
+.app-shell.stitch .group-poll-card,
+.app-shell.stitch .group-chat,
+.app-shell.stitch .saved-list-card,
+.app-shell.stitch [data-slot="card"] {
+  background: #fff;
+  border: 1px solid rgba(25, 28, 30, .06);
+  box-shadow: 0 10px 28px rgba(25, 28, 30, .05);
+  border-radius: 24px;
+}
+
+.app-shell.stitch .app-home__hero {
+  background: #fff;
+  border: 1px solid rgba(25, 28, 30, .06);
+  border-radius: 32px;
+  box-shadow: 0 10px 28px rgba(25, 28, 30, .05);
+}
+
+.app-shell.stitch .app-home__hero h1 { margin-bottom: 8px; }
+.app-shell.stitch .app-home__hero .sub { margin-bottom: 0; }
+
+.app-shell.stitch .app-home__section-header h2 { margin-bottom: 4px; }
+.app-shell.stitch .app-home__section-header p,
+.app-shell.stitch .app-home__section-header span {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+/* Venue cards — photo first */
+.app-shell.stitch .venue-card { overflow: hidden; padding: 0; }
+.app-shell.stitch .venue-cover {
+  border: 0;
+  border-radius: 24px 24px 0 0;
+  aspect-ratio: 16 / 10;
+}
+.app-shell.stitch .venue-card-body { padding: 16px 16px 18px; }
+.app-shell.stitch .venue-name { font-size: 20px; }
+.app-shell.stitch .venue-meta { font-size: 13px; color: var(--ink-soft); }
+.app-shell.stitch .venue-city-badge,
+.app-shell.stitch .tag-pill {
+  background: rgba(17, 17, 17, .72);
+  color: #fff;
+  border: 0;
+  font-size: 11px;
+  font-weight: 700;
+}
+.app-shell.stitch .tag-pill {
+  background: #efe7ff;
+  color: #5b21b6;
+}
+
+.app-shell.stitch .venue-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+/* Find */
+.app-shell.stitch .city-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.app-shell.stitch .city-card {
+  text-align: left;
+  padding: 16px;
+  cursor: pointer;
+}
+.app-shell.stitch .city-card.sel {
+  background: #111;
+  color: #fff;
+}
+.app-shell.stitch .city-card.sel .city-card-note { color: rgba(255,255,255,.7); }
+.app-shell.stitch .city-card-name {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+}
+.app-shell.stitch .group-label {
+  letter-spacing: .08em;
+  font-size: 11px;
+  color: #6b6375;
+}
+
+.app-shell.stitch .accordion-header {
+  font-family: var(--font-display);
+}
+
+.app-shell.stitch input,
+.app-shell.stitch select,
+.app-shell.stitch textarea {
+  border: 1px solid rgba(25, 28, 30, .1);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.app-shell.stitch input:focus,
+.app-shell.stitch select:focus,
+.app-shell.stitch textarea:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, .12);
+}
+
+/* Invite */
+.app-shell.stitch .invitation-gate {
+  background:
+    radial-gradient(42rem 28rem at 50% -10%, rgba(237, 224, 255, .95), transparent 55%),
+    #f7f9fb;
+}
+
+.app-shell.stitch .invitation-card {
+  background: #fff;
+  border: 1px solid rgba(25, 28, 30, .06);
+  box-shadow: 0 18px 50px rgba(99, 14, 212, .08);
+  border-radius: 32px;
+}
+
+.app-shell.stitch .invitation-icon {
+  background: #efe7ff;
+  color: #630ed4;
+  border-radius: 18px;
+}
+
+/* Auth */
+.app-shell.stitch .or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.app-shell.stitch .or-divider::before,
+.app-shell.stitch .or-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(25, 28, 30, .08);
+}
+
+/* Cookie bar */
+.app-shell.stitch #ckbar {
+  background: #fff;
+  border: 1px solid rgba(25, 28, 30, .08);
+  box-shadow: 0 16px 40px rgba(25, 28, 30, .12);
+}
+
+.app-shell.stitch .find-flow { display: grid; gap: 18px; }
+.app-shell.stitch .find-essentials .details-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.app-shell.stitch .more-filters { margin: 4px 0 8px; }
+.app-shell.stitch .find-more { display: grid; gap: 14px; }
+.app-shell.stitch .result-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #efe7ff;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.app-shell.stitch .result-fill {
+  height: 100%;
+  background: #7c3aed;
+}
+.app-shell.stitch .result-fill.lead { background: #111; }
+.app-shell.stitch .groups-overview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.app-shell.stitch .groups-overview > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 16px;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid rgba(25,28,30,.06);
+}
+.app-shell.stitch .vote-flow { display: grid; gap: 16px; }
+
+.app-shell.stitch table { background: #fff; }

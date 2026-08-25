@@ -3,3 +3,7 @@ node_modules
 .env.local
 .env
 .DS_Store
+
+# Pastel Pop snapshots taken before the Liquid Violet re-tint.
+# Local rollback aids, not part of the app.
+*.pastelpop.bak

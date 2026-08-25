@@ -16,8 +16,8 @@ export default async function FriendsPage() {
     <>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <h1 style={{ marginBottom: 0 }}>Friends</h1>
-        <Link className="btn small" href="/groups">
-          👋 Groups →
+        <Link className="btn small ghost" href="/groups">
+          Groups
         </Link>
       </div>
       <p className="sub">Add people, vote together, see where they&apos;ve been, only if they let you.</p>

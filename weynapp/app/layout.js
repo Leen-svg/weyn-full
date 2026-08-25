@@ -1,7 +1,7 @@
 import "./tailwind.css";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Bricolage_Grotesque, Kufam, Space_Grotesk } from "next/font/google";
+import { Hanken_Grotesk, Kufam, Syne } from "next/font/google";
 import AuthNav from "@/components/AuthNav";
 import TabBar from "@/components/TabBar";
 import PrimaryNav from "@/components/PrimaryNav";
@@ -10,14 +10,14 @@ import { Analytics } from "@vercel/analytics/next";
 import InvitationGate from "@/components/InvitationGate";
 import { hasBetaAccess } from "@/lib/beta-access";
 
-const bricolage = Bricolage_Grotesque({
+const syne = Syne({
   subsets: ["latin"],
-  variable: "--font-bricolage",
+  variable: "--font-syne",
   display: "swap",
 });
-const space = Space_Grotesk({
+const hanken = Hanken_Grotesk({
   subsets: ["latin"],
-  variable: "--font-space",
+  variable: "--font-hanken",
   display: "swap",
 });
 const kufam = Kufam({
@@ -85,7 +85,7 @@ export default async function RootLayout({ children }) {
   const betaAccess = await hasBetaAccess();
   return (
     <html lang="en">
-      <body className={`app-shell ${bricolage.variable} ${space.variable} ${kufam.variable}`}>
+      <body className={`app-shell stitch ${syne.variable} ${hanken.variable} ${kufam.variable}`}>
         {!betaAccess && <InvitationGate />}
         <a className="skip-link" href="#app-content">Skip to content</a>
         <header className="nav">
@@ -104,7 +104,7 @@ export default async function RootLayout({ children }) {
           <TabBar />
         </Suspense>
         <CookieBar />
-        <footer>
+        <footer className="app-footer">
           <div className="container">
             <span>
               weyn<span className="q ar">؟</span> · beta · made in the UAE

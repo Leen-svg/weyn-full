@@ -17,8 +17,9 @@ export default async function GroupsPage() {
 
   return (
     <>
+      <p className="eyebrow">Together</p>
       <h1>Your groups</h1>
-      <p className="sub">Group up with friends, vote on where to go, chat about it.</p>
+      <p className="sub">Vote on a spot. Chat. Actually go.</p>
       <GroupsClient />
     </>
   );

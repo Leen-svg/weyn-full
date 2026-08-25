@@ -31,8 +31,8 @@ export default function InvitationGate() {
       <div className="invitation-card">
         <div className="invitation-icon"><KeyRound aria-hidden="true" /></div>
         <span className="eyebrow">Private beta</span>
-        <h1 id="invite-title">You&apos;re invited?</h1>
-        <p>Weyn is currently an experimental beta for invited testers in Abu Dhabi and Dubai. Enter your invitation code to continue.</p>
+        <h1 id="invite-title">You have a code.</h1>
+        <p>Weyn is invite-only in Abu Dhabi and Dubai. Enter it once and you are in.</p>
         <form onSubmit={submit}>
           <label htmlFor="invitation-code">Invitation code</label>
           <input type="text" id="invitation-code" value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} autoCapitalize="characters" autoComplete="one-time-code" placeholder="WEYN-XXXX" required autoFocus />
