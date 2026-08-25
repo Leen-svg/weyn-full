@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import AuthForm from "@/components/AuthForm";
+import InvitationGate from "@/components/InvitationGate";
+import { hasBetaAccess } from "@/lib/beta-access";
 import { privatePageMetadata } from "@/lib/seo";
 
 export const metadata = privatePageMetadata({
@@ -7,12 +9,12 @@ export const metadata = privatePageMetadata({
   description: "Create a Weyn beta account to save Abu Dhabi and Dubai places, join group votes, write ratings, and earn points.",
 });
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const allowed = await hasBetaAccess();
+  if (!allowed) return <InvitationGate />;
   return (
     <Suspense>
       <AuthForm mode="signup" />
     </Suspense>
   );
 }
-
-

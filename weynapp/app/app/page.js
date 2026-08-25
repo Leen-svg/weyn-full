@@ -5,6 +5,7 @@ import { withCovers } from "@/lib/venueMedia";
 import VenueCard from "@/components/VenueCard";
 import VenueActions from "@/components/VenueActions";
 import HomeFeed from "@/components/HomeFeed";
+import WelcomeHero from "@/components/WelcomeHero";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Weyn, home" };
@@ -85,6 +86,7 @@ export default async function HomePage() {
     getInitialPublicPosts(supabase),
   ]);
 
+  if (!user) return <WelcomeHero />;
   return (
     <div className="app-home">
       <header className="app-home__hero">

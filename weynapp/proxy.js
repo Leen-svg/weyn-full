@@ -68,7 +68,11 @@ export async function proxy(request) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (pathname.startsWith("/api/") && !PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+  if (
+    ["POST", "PUT", "PATCH", "DELETE"].includes(method) &&
+    pathname.startsWith("/api/") &&
+    !PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+  ) {
     const betaToken = request.cookies.get(BETA_ACCESS_COOKIE)?.value;
     if (!user && !(await verifyBetaAccessToken(betaToken))) {
       return NextResponse.json({ error: "Invitation code required." }, { status: 403 });

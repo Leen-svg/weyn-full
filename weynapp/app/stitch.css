@@ -1,11 +1,10 @@
 /* Weyn × Stitch — product restyle. Loaded last. */
 
 .app-shell.stitch {
-  background:
-    radial-gradient(36rem 22rem at 100% -6%, rgba(237, 224, 255, .55), transparent 60%),
-    #f7f9fb;
+  background: #111111;
   color: var(--ink);
-  font-family: var(--font-body);
+  font-family: var(--font-hanken), "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  min-height: 100dvh;
 }
 
 .app-shell.stitch h1,
@@ -13,8 +12,10 @@
 .app-shell.stitch h3,
 .app-shell.stitch .display,
 .app-shell.stitch .venue-name,
-.app-shell.stitch .logo {
-  font-family: var(--font-display);
+.app-shell.stitch .logo,
+.app-shell.stitch .btn,
+.app-shell.stitch .eyebrow {
+  font-family: var(--font-syne), "Syne", ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.04em;
   color: var(--ink);
 }
@@ -36,56 +37,132 @@
 }
 
 /* Chrome */
-.app-shell.stitch .nav {
-  top: 14px;
-  background: rgba(255, 255, 255, .88);
-  border: 1px solid rgba(25, 28, 30, .06);
-  box-shadow: 0 10px 28px rgba(25, 28, 30, .06);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+.phone-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: #f7f9fb;
+  color: var(--ink);
+}
+
+@media (min-width: 768px) {
+  .app-shell.stitch {
+    display: grid;
+    place-items: start center;
+    padding: 32px 16px;
+  }
+  .phone-shell {
+    width: min(430px, 100%);
+    height: 860px;
+    min-height: 0;
+    border-radius: 36px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgb(0 0 0 / 0.35);
+  }
+}
+
+.phone-shell .app-main,
+.app-shell.stitch main.app-main,
+.app-shell.stitch main.container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  max-width: none;
+  padding: 0 20px 12px;
+}
+
+.app-chrome {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 8px 4px;
+  background: #f7f9fb;
+}
+
+.app-chrome-back {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #191c1e;
+  cursor: pointer;
+}
+
+.app-chrome-back svg {
+  width: 28px;
+  height: 28px;
+}
+
+.app-chrome .logo {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.app-chrome-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-right: 4px;
+}
+
+.app-shell.stitch .nav,
+.app-shell.stitch .app-footer,
+.app-shell.stitch footer {
+  display: none;
 }
 
 .app-shell.stitch .logo .q { display: none; }
 
-.app-shell.stitch .nav-section {
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-family: var(--font-body);
-  font-weight: 650;
-  font-size: 13px;
-}
-
-.app-shell.stitch .nav-section.active,
-.app-shell.stitch .tabbar .tab.active {
-  background: #111;
-  color: #fff;
-}
-
 .app-shell.stitch .tabbar {
-  background: rgba(255, 255, 255, .94);
-  border: 1px solid rgba(25, 28, 30, .06);
-  box-shadow: 0 16px 40px rgba(25, 28, 30, .12);
+  display: flex;
+  gap: 2px;
+  margin: 8px 12px;
+  margin-bottom: max(8px, env(safe-area-inset-bottom));
+  padding: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: #f2f2f7;
+  box-shadow: none;
 }
 
 .app-shell.stitch .tabbar .tab {
+  flex: 1;
+  height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: 999px;
   color: #6b6375;
-  font-family: var(--font-body);
+  font-family: var(--font-hanken), "Hanken Grotesk", sans-serif;
   font-weight: 650;
+  font-size: 10px;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.app-shell.stitch .tabbar .tab-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .app-shell.stitch .tabbar .tab.active {
+  background: #111;
+  color: #fff;
   transform: none;
 }
 
 .app-shell.stitch .tab-pill {
-  background: #111;
-  box-shadow: none;
+  display: none;
 }
-
-.app-shell.stitch footer,
-.app-shell.stitch .app-footer {
-  background: #111;
-  color: rgba(255, 255, 255, .72);
   border-top: 0;
 }
 
@@ -98,7 +175,7 @@
   border: 0;
   border-radius: 999px;
   min-height: 48px;
-  font-family: var(--font-display);
+  font-family: var(--font-syne), "Syne", ui-sans-serif, sans-serif;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -252,16 +329,84 @@
 
 /* Invite */
 .app-shell.stitch .invitation-gate {
-  background:
-    radial-gradient(42rem 28rem at 50% -10%, rgba(237, 224, 255, .95), transparent 55%),
-    #f7f9fb;
+  position: relative;
+  inset: auto;
+  z-index: 1;
+  display: block;
+  min-height: calc(100dvh - 180px);
+  padding: 8px 0 40px;
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .app-shell.stitch .invitation-card {
-  background: #fff;
-  border: 1px solid rgba(25, 28, 30, .06);
-  box-shadow: 0 18px 50px rgba(99, 14, 212, .08);
-  border-radius: 32px;
+  width: min(100%, 520px);
+  margin: 0;
+  padding: 8px 0 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.app-shell.stitch .welcome-hero {
+  min-height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 48px 20px 40px;
+  background:
+    linear-gradient(180deg, rgb(247 249 251 / 0) 28%, #f7f9fb 72%),
+    url(https://images.unsplash.com/photo-1512453979798-5ea7f61bfc3d?auto=format&fit=crop&w=1400&q=80) center 18% / cover no-repeat;
+}
+
+.phone-shell--bare .app-main {
+  padding: 0;
+}
+
+.phone-shell--bare .welcome-hero {
+  min-height: 100%;
+}
+
+.app-shell.stitch .welcome-hero h1 {
+  font-size: clamp(44px, 10vw, 64px);
+  line-height: 0.92;
+  margin-bottom: 12px;
+}
+
+.app-shell.stitch .welcome-hero .sub {
+  max-width: 22rem;
+  margin-bottom: 22px;
+}
+
+.app-shell.stitch .welcome-hero .btn + .btn {
+  margin-top: 10px;
+}
+
+.app-shell.stitch .welcome-hero form {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 16px;
+}
+
+.app-shell.stitch .welcome-hero label {
+  font-size: 13px;
+  font-weight: 650;
+  font-family: var(--font-hanken), "Hanken Grotesk", ui-sans-serif, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.app-shell.stitch .welcome-hero input {
+  min-height: 48px;
+  text-align: left;
+  letter-spacing: 0.06em;
+  font-family: var(--font-hanken), "Hanken Grotesk", ui-sans-serif, sans-serif;
+}
+
+.app-shell.stitch .welcome-hero a {
+  font-weight: 650;
 }
 
 .app-shell.stitch .invitation-icon {

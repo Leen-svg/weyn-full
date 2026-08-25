@@ -52,8 +52,8 @@
   --radius-sm: 10px;
   --radius-xl: var(--radius-lg);
 
-  --font-sans: var(--font-body);
-  --font-display: var(--font-display);
+  --font-sans: var(--font-hanken), "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-syne), "Syne", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {

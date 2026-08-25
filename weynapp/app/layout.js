@@ -1,14 +1,11 @@
 import "./tailwind.css";
-import Link from "next/link";
-import { Suspense } from "react";
 import { Hanken_Grotesk, Kufam, Syne } from "next/font/google";
-import AuthNav from "@/components/AuthNav";
-import TabBar from "@/components/TabBar";
-import PrimaryNav from "@/components/PrimaryNav";
+import AppChrome from "@/components/AppChrome";
+import AppShell from "@/components/AppShell";
 import CookieBar from "@/components/CookieBar";
+import TabBar from "@/components/TabBar";
 import { Analytics } from "@vercel/analytics/next";
-import InvitationGate from "@/components/InvitationGate";
-import { hasBetaAccess } from "@/lib/beta-access";
+import { createClient } from "@/lib/supabase/server";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -82,49 +79,21 @@ export const viewport = {
 };
 
 export default async function RootLayout({ children }) {
-  const betaAccess = await hasBetaAccess();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
-    <html lang="en">
-      <body className={`app-shell stitch ${syne.variable} ${hanken.variable} ${kufam.variable}`}>
-        {!betaAccess && <InvitationGate />}
-        <a className="skip-link" href="#app-content">Skip to content</a>
-        <header className="nav">
-          <Link href="/app" className="logo" aria-label="Weyn home">
-            weyn
-          </Link>
-          <nav className="nav-links" aria-label="Main navigation">
-            <PrimaryNav />
-            <Suspense fallback={null}>
-              <AuthNav />
-            </Suspense>
-          </nav>
-        </header>
-        <main id="app-content" className="app-main">{children}</main>
-        <Suspense fallback={null}>
-          <TabBar />
-        </Suspense>
+    <html lang="en" className={`${syne.variable} ${hanken.variable} ${kufam.variable}`}>
+      <body className="app-shell stitch">
+        <a className="skip-link" href="#app-content">
+          Skip to content
+        </a>
+        <AppShell header={<AppChrome />} tabs={<TabBar />} guest={!user}>
+          {children}
+        </AppShell>
         <CookieBar />
-        <footer className="app-footer">
-          <div className="container">
-            <span>
-              weyn · beta · made in the UAE
-            </span>
-            <div className="links">
-              <a href="/terms">Terms</a>
-              <a href="/privacy">Privacy</a>
-              <a href="/">Home</a>
-              <Link href="/submit">Add a spot</Link>
-              <Link href="/creators">Creators</Link>
-              <Link href="/rate">Rate tags</Link>
-              <Link href="/takedown">Video takedown</Link>
-            </div>
-            <div className="links">
-              <a href="https://www.instagram.com/goweynapp" target="_blank" rel="noopener noreferrer">Instagram</a>
-              <a href="https://www.tiktok.com/@goweynapp" target="_blank" rel="noopener noreferrer">TikTok</a>
-              <a href="mailto:hello@goweyn.com">hello@goweyn.com</a>
-            </div>
-          </div>
-        </footer>
         <Analytics />
       </body>
     </html>
