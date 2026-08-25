@@ -45,7 +45,7 @@
   -webkit-backdrop-filter: blur(16px);
 }
 
-.app-shell.stitch .logo .q { color: var(--purple); transform: none; }
+.app-shell.stitch .logo .q { display: none; }
 
 .app-shell.stitch .nav-section {
   border-radius: 999px;
@@ -75,6 +75,11 @@
 
 .app-shell.stitch .tabbar .tab.active {
   transform: none;
+}
+
+.app-shell.stitch .tab-pill {
+  background: #111;
+  box-shadow: none;
 }
 
 .app-shell.stitch footer,

@@ -90,7 +90,7 @@ export default async function RootLayout({ children }) {
         <a className="skip-link" href="#app-content">Skip to content</a>
         <header className="nav">
           <Link href="/app" className="logo" aria-label="Weyn home">
-            weyn<span className="q ar">؟</span>
+            weyn
           </Link>
           <nav className="nav-links" aria-label="Main navigation">
             <PrimaryNav />
@@ -107,7 +107,7 @@ export default async function RootLayout({ children }) {
         <footer className="app-footer">
           <div className="container">
             <span>
-              weyn<span className="q ar">؟</span> · beta · made in the UAE
+              weyn · beta · made in the UAE
             </span>
             <div className="links">
               <a href="/terms">Terms</a>

@@ -185,6 +185,14 @@ export default function PlannerClient() {
       <section className="card">
         <h2>Build a Perfect Day</h2>
         <p className="sub">Choose up to four places. Weyn optimizes the stop order, estimates travel time, and lets each person open their preferred map app.</p>
+        <button
+          className="btn primary block"
+          type="button"
+          disabled={picked.length < 2}
+          onClick={async () => setOrdered(await optimizedStops(places.filter((place) => picked.includes(`${place.kind}:${place.id}`))))}
+        >
+          Perfect Day
+        </button>
         <div className="field">
           <span>Start time</span>
           <TimeSelect value={startTime} onChange={setStartTime} />

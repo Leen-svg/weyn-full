@@ -51,13 +51,6 @@ export async function proxy(request) {
   }
   if (STATIC_PAGES.has(pathname)) return NextResponse.next();
 
-  if (pathname.startsWith("/api/") && !PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
-    const betaToken = request.cookies.get(BETA_ACCESS_COOKIE)?.value;
-    if (!(await verifyBetaAccessToken(betaToken))) {
-      return NextResponse.json({ error: "Invitation code required." }, { status: 403 });
-    }
-  }
-
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -73,7 +66,14 @@ export async function proxy(request) {
     },
   });
 
-  await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (pathname.startsWith("/api/") && !PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    const betaToken = request.cookies.get(BETA_ACCESS_COOKIE)?.value;
+    if (!user && !(await verifyBetaAccessToken(betaToken))) {
+      return NextResponse.json({ error: "Invitation code required." }, { status: 403 });
+    }
+  }
 
   return response;
 }
