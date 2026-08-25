@@ -16,7 +16,7 @@ function gradientFor(id) {
   return PLACEHOLDER_GRADIENTS[hash];
 }
 
-export default function VenueCard({ venue, children, picked, priority = false }) {
+export default function VenueCard({ venue, children, picked, priority = false, overlay = false }) {
   const spend = venue.avg_spend_aed === 0 ? "Free entry" : `~${venue.avg_spend_aed} AED pp`;
   const ageLabel = venue.age_restriction === "21-plus" ? "21+" : venue.age_restriction === "18-plus" ? "18+" : null;
   const videoUrl = safeUrl(venue.hero_video_url);
@@ -48,7 +48,7 @@ export default function VenueCard({ venue, children, picked, priority = false })
   }
 
   return (
-    <div className={`venue-card${picked ? " picked" : ""}`}>
+    <div className={`venue-card${picked ? " picked" : ""}${overlay ? " venue-card--overlay" : ""}`}>
       <div className="venue-cover" style={media.length ? undefined : { background: gradientFor(venue.id) }}>
         {media.length ? (
           <>
@@ -91,31 +91,43 @@ export default function VenueCard({ venue, children, picked, priority = false })
             )}
           </>
         ) : <span className="venue-cover-glyph">📍</span>}
-        {venue.city === "Dubai" && <span className="venue-city-badge">Dubai</span>}
-      </div>
-      <div className="venue-card-body">
-        <div className="venue-name">{venue.name}</div>
-        <div className="venue-meta">
-          {[venue.neighborhood, spend, ageLabel].filter(Boolean).join(" · ")}
-        </div>
-        {venue.description && <p className="venue-desc">{venue.description}</p>}
-        {Array.isArray(venue.tags) && venue.tags.length > 0 && (
-          <div className="tag-row">
-            {venue.tags.map((t) => <span key={t} className="tag-pill">{t}</span>)}
-          </div>
+        {overlay && venue.rating != null && (
+          <span className="venue-rating-badge">★ {venue.rating}</span>
         )}
-        <div className="venue-links">
-          {videoUrl && (
-            <a className="btn small ghost" href={videoUrl} target="_blank" rel="noreferrer">
-              ▶ Watch
-            </a>
-          )}
-          <MapChooser venue={venue} compact />
-        </div>
-        {children}
+        {overlay ? (
+          <div className="venue-cover-overlay">
+            <div className="venue-name">{venue.name}</div>
+            <div className="venue-meta">{[venue.neighborhood, spend].filter(Boolean).join(" · ")}</div>
+          </div>
+        ) : (
+          venue.city === "Dubai" && <span className="venue-city-badge">Dubai</span>
+        )}
       </div>
+      {overlay ? (
+        children
+      ) : (
+        <div className="venue-card-body">
+          <div className="venue-name">{venue.name}</div>
+          <div className="venue-meta">
+            {[venue.neighborhood, spend, ageLabel].filter(Boolean).join(" · ")}
+          </div>
+          {venue.description && <p className="venue-desc">{venue.description}</p>}
+          {Array.isArray(venue.tags) && venue.tags.length > 0 && (
+            <div className="tag-row">
+              {venue.tags.map((t) => <span key={t} className="tag-pill">{t}</span>)}
+            </div>
+          )}
+          <div className="venue-links">
+            {videoUrl && (
+              <a className="btn small ghost" href={videoUrl} target="_blank" rel="noreferrer">
+                ▶ Watch
+              </a>
+            )}
+            <MapChooser venue={venue} compact />
+          </div>
+          {children}
+        </div>
+      )}
     </div>
   );
 }
-
-

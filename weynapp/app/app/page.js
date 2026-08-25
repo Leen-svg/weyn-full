@@ -121,23 +121,28 @@ export default async function HomePage() {
         </section>
       )}
 
-      {curatedLists.map((list) => (
-        <section className="app-home__section app-home__picks" aria-label={list.title} key={list.id}>
+      {curatedLists.length > 0 && (
+        <section className="app-home__section app-home__curated" aria-label="Curated">
           <div className="app-home__section-header">
-            <div>
-              <h2>{list.title}</h2>
-              {list.description && <p>{list.description}</p>}
-            </div>
+            <h2>Curated</h2>
+            <Link className="see-all" href={`/collections/${curatedLists[0].id}`}>See All</Link>
           </div>
-          <div className="venue-rail" aria-label={`Scroll through ${list.title}`}>
-            {list.venues.map((v) => (
-              <VenueCard key={v.id} venue={v}>
-                <VenueActions venue={v} />
-              </VenueCard>
-            ))}
+          <div className="curated-grid">
+            {curatedLists.map((list) => {
+              const cover = list.venues[0]?.cover_url || list.venues[0]?.media?.[0]?.url;
+              return (
+                <Link className="curated-card" key={list.id} href={`/collections/${list.id}`}>
+                  <div
+                    className="curated-card__image"
+                    style={cover ? { backgroundImage: `url(${cover})` } : undefined}
+                  />
+                  <span className="curated-card__label">{list.title}</span>
+                </Link>
+              );
+            })}
           </div>
         </section>
-      ))}
+      )}
 
       <section className="app-home__feed" aria-label="Community feed">
         <div className="app-home__section-header app-home__feed-heading">
