@@ -124,7 +124,6 @@ export default async function HomePage() {
       <section className="app-home__intro" aria-labelledby="home-title">
         <header className="app-home__hero">
           <div>
-            <p className="eyebrow">Abu Dhabi · Dubai</p>
             <h1 id="home-title">Where to?</h1>
             <p className="sub">Tell Weyn the mood and the budget. Or just browse what everyone else is going to.</p>
           </div>

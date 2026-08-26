@@ -501,7 +501,7 @@
   font-size: var(--t-body);
   font-weight: 500;
 }
-.app-home__section-action::after { content: " ›"; }
+.app-home__section-action::after { margin-left: 5px; content: "\203A"; font-size: 1.1em; line-height: 1; }
 .app-home__section-action:hover { background: none; color: var(--ui-ink); }
 /* .group-label sits on <h2> elements, so the h2 size rule was rendering it
    at 2rem in uppercase — a section label shouting louder than the page
