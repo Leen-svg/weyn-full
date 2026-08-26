@@ -48,7 +48,7 @@ export async function POST(req, { params }) {
   if (!limited.allowed) return NextResponse.json({ error: "You're sending messages too quickly." }, { status: 429 });
 
   const { body } = await req.json();
-  const checked = validateCommunityText(body, { required: true, maxLength: 1000 });
+  const checked = validateCommunityText(body, { required: true, maxLength: 1000, allowLinks: true });
   if (checked.error) return NextResponse.json({ error: checked.error }, { status: 400 });
 
   const { data: message, error } = await supabase

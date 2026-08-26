@@ -1,7 +1,7 @@
 /* Weyn × Stitch — product restyle. Loaded last. */
 
 .app-shell.stitch {
-  background: #111111;
+  background: #f7f9fb;
   color: var(--ink);
   font-family: var(--font-hanken), "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
   min-height: 100dvh;
@@ -45,19 +45,21 @@
   color: var(--ink);
 }
 
+/* On a laptop this is a web app, not a phone mockup: fill the window and
+   cap the reading column instead of framing a 430px handset in a black void. */
 @media (min-width: 768px) {
   .app-shell.stitch {
-    display: grid;
-    place-items: start center;
-    padding: 32px 16px;
+    display: block;
+    padding: 0;
   }
   .phone-shell {
-    width: min(430px, 100%);
-    height: 860px;
-    min-height: 0;
-    border-radius: 36px;
-    overflow: hidden;
-    box-shadow: 0 30px 80px rgb(0 0 0 / 0.35);
+    width: min(880px, 100%);
+    margin: 0 auto;
+    min-height: 100dvh;
+    height: auto;
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: none;
   }
 }
 
@@ -348,7 +350,7 @@
 }
 
 .app-shell.stitch .welcome-hero {
-  min-height: 100%;
+  min-height: min(100dvh, 620px);
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -366,16 +368,26 @@
 
 .phone-shell--bare .app-main {
   padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
+/* min-height:100% needs a definite parent height. Now that the shell is
+   auto-height on desktop it no longer has one, so flex to fill instead —
+   otherwise the hero collapses to 0px and only the loader shows. */
 .phone-shell--bare .welcome-hero {
-  min-height: 100%;
+  flex: 1;
+  min-height: min(100dvh, 620px);
 }
 
+/* 10vw was measured against the window, not the 430px column it sits in, so
+   "Welcome" was clipped mid-word. Smaller ramp plus a hard wrap guard. */
 .app-shell.stitch .welcome-hero h1 {
-  font-size: clamp(44px, 10vw, 64px);
-  line-height: 0.92;
+  font-size: clamp(36px, 7vw, 56px);
+  line-height: 0.95;
   margin-bottom: 12px;
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 
 .app-shell.stitch .welcome-hero .sub {
@@ -689,4 +701,52 @@
 
 @media (prefers-reduced-motion: reduce) {
   .app-shell.stitch .spin { animation: none; }
+}
+
+/* ---- Route loading state ---- */
+.app-shell.stitch .app-loading {
+  padding: 28px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.app-shell.stitch .app-loading__mark {
+  font-family: var(--font-syne), "Syne", ui-sans-serif, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  opacity: .32;
+  animation: weyn-pulse 1.4s ease-in-out infinite;
+}
+
+.app-shell.stitch .app-loading__skeleton {
+  display: grid;
+  gap: 14px;
+}
+
+.app-shell.stitch .sk {
+  border-radius: 16px;
+  background: linear-gradient(90deg, #eef0f4 25%, #f7f8fa 50%, #eef0f4 75%);
+  background-size: 200% 100%;
+  animation: weyn-shimmer 1.3s linear infinite;
+}
+
+.app-shell.stitch .sk--title { height: 34px; width: 62%; border-radius: 12px; }
+.app-shell.stitch .sk--line  { height: 14px; width: 84%; border-radius: 999px; }
+.app-shell.stitch .sk--card  { height: 190px; border-radius: 24px; }
+
+@keyframes weyn-shimmer {
+  to { background-position: -200% 0; }
+}
+
+@keyframes weyn-pulse {
+  0%, 100% { opacity: .3; }
+  50% { opacity: .62; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.stitch .sk,
+  .app-shell.stitch .app-loading__mark { animation: none; }
 }

@@ -69,8 +69,12 @@ export default function AuthForm({ mode }) {
           ? await supabase.from("profile_public").select("display_name").eq("id", user.id).maybeSingle()
           : { data: null };
         const hasUsername = /^[a-z0-9_]{3,24}$/.test(profile?.display_name || "");
-        router.push(hasUsername ? next : `/onboarding?next=${encodeURIComponent(next)}`);
-        router.refresh();
+        // A client-side push races the server components that read the auth
+        // cookie, so the app re-rendered as a guest and dropped the user back
+        // on the welcome screen. A full navigation guarantees the server sees
+        // the new session.
+        window.location.assign(hasUsername ? next : `/onboarding?next=${encodeURIComponent(next)}`);
+        return;
       }
     }
     setBusy(false);
