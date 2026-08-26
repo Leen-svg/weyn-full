@@ -1538,3 +1538,297 @@
 @media (prefers-reduced-motion: reduce) {
   .discover-feed { scroll-snap-type: none; }
 }
+
+/* ============================================================
+   NOTIFICATIONS (/notifications) and COLLECTION DETAIL
+   (/collections/[id]).
+
+   Both screens' styles lived only in redesign.css and
+   liquid-violet.css, neither of which was ever @imported — so the
+   markup has been rendering with browser defaults: a bulleted
+   <ul> for the notification list, and the collection hero's
+   background <img> laid out inline at full size. Rebuilt here on
+   the current tokens so they match the rest of the product.
+   ============================================================ */
+
+/* ---------- Notifications ---------- */
+.notif-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+.notif-count { color: var(--ui-muted); font-size: var(--t-meta); font-weight: 600; }
+
+.notif-list { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+
+.notif-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5) var(--sp-4) var(--sp-6);
+  border: 0;
+  border-radius: var(--r-lg);
+  background: #fff;
+  box-shadow: var(--lift-1);
+  transition: box-shadow var(--dur) var(--ease);
+}
+.notif-item:hover { box-shadow: var(--lift-2); }
+/* Unread is carried by the dot and the weight of the text, not by a tint —
+   a coloured row per unread item turns the list into stripes. */
+.notif-item.unread .notif-text { font-weight: 650; color: var(--ui-ink); }
+
+.notif-dot {
+  position: absolute;
+  top: 30px;
+  left: 12px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ui-purple);
+  box-shadow: 0 0 0 4px rgba(109, 40, 217, .14);
+}
+
+.notif-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ui-lilac);
+  color: #5b21b6;
+}
+.notif-icon svg { width: 19px; height: 19px; }
+/* The dot column is empty on read items; keep both rows on one grid. */
+.notif-item:not(.unread) .notif-icon { grid-column: 2; }
+
+.notif-body { display: grid; min-width: 0; justify-items: start; gap: var(--sp-1); }
+.app-shell.stitch .notif-text { margin: 0; color: var(--ui-ink); font-size: var(--t-body); line-height: 1.45; }
+.notif-time { color: var(--ui-muted); font-size: var(--t-micro); font-weight: 600; }
+.notif-body .btn { margin-top: var(--sp-2); }
+
+.notif-empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-8) var(--sp-5);
+  border-radius: var(--r-xl);
+  background: #fff;
+  box-shadow: var(--lift-1);
+  text-align: center;
+}
+.notif-empty svg { width: 30px; height: 30px; color: var(--ui-purple); }
+.notif-empty p { max-width: 34ch; margin: 0; }
+
+/* ---------- Collection detail ---------- */
+.collection-page { display: grid; gap: var(--sp-6); }
+
+.collection-hero {
+  position: relative;
+  display: grid;
+  min-height: 260px;
+  align-content: end;
+  overflow: hidden;
+  padding: var(--sp-6);
+  border-radius: var(--r-xl);
+  background: linear-gradient(150deg, #3b2a5e, #19293b);
+  color: #fff;
+}
+/* This is a decorative backdrop, not content. Without a rule it laid out
+   inline at its intrinsic size and pushed the whole page down. */
+.collection-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.collection-hero::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 12, 20, .35) 0%, rgba(8, 12, 20, .86) 100%);
+  content: "";
+}
+.collection-hero__body { position: relative; z-index: 2; display: grid; justify-items: start; gap: var(--sp-2); }
+.collection-hero__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: rgba(255, 255, 255, .82);
+  font-size: var(--t-meta);
+  font-weight: 600;
+}
+.collection-hero__back:hover { color: #fff; }
+.collection-hero__back svg { width: 16px; height: 16px; }
+.app-shell.stitch .collection-hero .eyebrow { margin-bottom: 0; color: rgba(255, 255, 255, .8); }
+.app-shell.stitch .collection-hero h1 { color: #fff; font-size: var(--t-h1); }
+.app-shell.stitch .collection-hero .sub { max-width: 46ch; margin-bottom: 0; color: rgba(255, 255, 255, .86); }
+.collection-hero__count {
+  margin-top: var(--sp-2);
+  padding: 4px var(--sp-3);
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: var(--r-pill);
+  color: #fff;
+  font-size: var(--t-micro);
+  font-weight: 600;
+}
+
+/* The submit form ran the full content width, so a 40-character text field
+   was 960px wide. Forms get a reading measure like everything else. */
+.propose-form { display: grid; max-width: 640px; gap: var(--sp-4); }
+
+/* ---------- Screens whose only styles lived in the orphaned files ----------
+   Same cause as the notification and collection-detail blocks above: these
+   rules were written into redesign.css, which tailwind.css never imported,
+   so the markup has been shipping on browser defaults. Rebuilt on tokens. */
+
+/* Page wrappers: a header block, then content, with the section rhythm. */
+.screen-social,
+.screen-messages,
+.screen-propose,
+.screen-public-profile,
+.screen-collection-detail { width: 100%; }
+
+.screen-social__header,
+.screen-messages__header,
+.screen-propose__header { margin-bottom: var(--sp-6); }
+.screen-social__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.screen-collection-detail__hero {
+  margin-bottom: var(--sp-6);
+  padding: var(--sp-6);
+  border-radius: var(--r-xl);
+  background: #fff;
+  box-shadow: var(--lift-1);
+}
+.app-shell.stitch .screen-collection-detail__hero h1 { max-width: 16ch; }
+.screen-collection-detail .saved-shared-list { gap: var(--sp-5); }
+
+.auth-heading { display: grid; gap: var(--sp-2); margin-bottom: var(--sp-5); }
+
+/* Video embeds fill the media box they sit in. Unstyled, the iframe fell
+   back to its 300x150 intrinsic size inside a 16:10 cover. */
+.venue-video-embed {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  place-items: center;
+  gap: var(--sp-2);
+  overflow: hidden;
+  background: #0e0c12;
+}
+.venue-video-embed iframe { width: 100%; height: 100%; border: 0; background: #0e0c12; }
+.venue-video-embed > a {
+  position: absolute;
+  right: var(--sp-3);
+  bottom: var(--sp-3);
+  z-index: 2;
+  padding: 6px var(--sp-3);
+  border-radius: var(--r-pill);
+  background: rgba(17, 16, 22, .82);
+  color: #fff;
+  font-size: var(--t-micro);
+  font-weight: 700;
+  text-decoration: none;
+  backdrop-filter: blur(10px);
+}
+.venue-video-embed > a:hover { background: var(--ui-purple); }
+.venue-video-embed--deferred { align-content: center; }
+.media-thumb .venue-video-embed { min-height: 100%; }
+
+/* The star row is five bare <button>s, so without this it rendered as five
+   default OS buttons. */
+.review-star-picker { display: flex; gap: var(--sp-1); }
+.app-shell.stitch .review-star-picker button {
+  min-height: 44px;
+  padding: 0 var(--sp-1);
+  border: 0;
+  background: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease);
+}
+.app-shell.stitch .review-star-picker button:active { transform: scale(.88); }
+
+.venue-actions { display: grid; gap: var(--sp-3); }
+
+/* Admin: venue media/URL editor and the media-quality tools. */
+.venue-url-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4); margin-top: var(--sp-4); }
+.venue-url-grid > div {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--ui-fill);
+}
+.venue-url-grid label { margin: 0 !important; }
+.venue-url-grid .btn { justify-self: start; }
+
+.quality-admin { display: grid; gap: var(--sp-4); }
+.quality-admin-intro { max-width: 68ch; color: var(--ui-muted); }
+.quality-admin-controls { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sp-3); }
+.quality-admin-rule { display: grid; gap: var(--sp-2); padding: var(--sp-4); border-radius: var(--r-md); background: var(--ui-fill); }
+.quality-admin-preset { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.quality-admin-summary { display: flex; flex-wrap: wrap; gap: var(--sp-5); padding: var(--sp-4) 0; }
+.quality-admin-summary strong { font-size: 1.5rem; font-weight: 700; }
+.quality-admin-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.quality-admin-clean { padding: var(--sp-5); border-radius: var(--r-md); background: var(--ui-fill); color: var(--ui-muted); text-align: center; }
+.quality-media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: var(--sp-4); }
+.quality-media-item { display: grid; gap: var(--sp-2); padding: var(--sp-3); border-radius: var(--r-md); background: #fff; box-shadow: var(--lift-1); }
+.quality-media-preview { aspect-ratio: 16 / 10; overflow: hidden; border-radius: var(--r-sm); background: var(--ui-fill); }
+.quality-media-preview img, .quality-media-preview video { width: 100%; height: 100%; object-fit: cover; }
+.quality-media-copy { display: grid; gap: var(--sp-1); font-size: var(--t-micro); }
+
+@media (max-width: 700px) {
+  .venue-url-grid { grid-template-columns: 1fr; }
+}
+
+/* Error screen's eyebrow, and the (currently unreferenced) collection tile,
+   both of which were styled only in the orphaned files. */
+.app-shell.stitch .kick {
+  display: block;
+  margin-bottom: var(--sp-3);
+  color: var(--ui-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.collection-card {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--ui-fill);
+  box-shadow: var(--lift-1);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.collection-card:hover { transform: translateY(-2px); box-shadow: var(--lift-2); }
+.collection-card img { width: 100%; height: 100%; object-fit: cover; }
+.collection-card__fallback { display: block; width: 100%; height: 100%; background: linear-gradient(150deg, var(--ui-lilac), #cdc2e4); }
+.collection-card__scrim {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  gap: 2px;
+  padding: var(--sp-5) var(--sp-4) var(--sp-4);
+  background: linear-gradient(180deg, transparent, rgba(8, 12, 20, .88));
+  color: #fff;
+}
+.collection-card__title { font-size: 1.05rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
+.collection-card__count { color: rgba(255, 255, 255, .82); font-size: var(--t-micro); font-weight: 600; }

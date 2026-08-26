@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-export default function ShareToGroupButton({ text, share = null, className = "btn small ghost", label = "Send to group" }) {
+export default function ShareToGroupButton({ text, share = null, className = "btn small ghost", label = "👥 Send to group" }) {
   const [open, setOpen] = useState(false);
   const [groups, setGroups] = useState(null);
   const [sentTo, setSentTo] = useState(null);
