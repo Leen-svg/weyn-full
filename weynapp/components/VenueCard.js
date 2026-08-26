@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 import MapChooser from "./MapChooser";
 import VenueMedia from "./VenueMedia";
@@ -87,7 +88,7 @@ export default function VenueCard({ venue, children, picked, priority = false, v
                 <div className="venue-media-slide" key={`${item.url}-${index}`}>
                   {item.type === "video" && playingVideo !== index ? (
                     <button className="venue-video-poster" type="button" onClick={() => playVideo(index)} aria-label={`Play ${venue.name} video ${index + 1}`}>
-                      <span aria-hidden="true">▶️</span>
+                      <span aria-hidden="true"><Play /></span>
                       <strong>Play video</strong>
                     </button>
                   ) : Math.abs(index - activeMedia) <= 1 ? (
@@ -98,8 +99,12 @@ export default function VenueCard({ venue, children, picked, priority = false, v
             </div>
             {media.length > 1 && (
               <>
-                <button className="venue-media-arrow prev" type="button" aria-label="Previous photo" onClick={() => goToMedia(activeMedia - 1)} disabled={activeMedia === 0}>⬅️</button>
-                <button className="venue-media-arrow next" type="button" aria-label="Next photo" onClick={() => goToMedia(activeMedia + 1)} disabled={activeMedia === media.length - 1}>➡️</button>
+                <button className="venue-media-arrow prev" type="button" aria-label="Previous photo" onClick={() => goToMedia(activeMedia - 1)} disabled={activeMedia === 0}>
+                  <ChevronLeft aria-hidden="true" />
+                </button>
+                <button className="venue-media-arrow next" type="button" aria-label="Next photo" onClick={() => goToMedia(activeMedia + 1)} disabled={activeMedia === media.length - 1}>
+                  <ChevronRight aria-hidden="true" />
+                </button>
                 <div className="venue-media-dots" aria-label={`${activeMedia + 1} of ${media.length}`}>
                   {media.map((_, index) => (
                     <button
@@ -148,7 +153,8 @@ export default function VenueCard({ venue, children, picked, priority = false, v
         <div className="venue-links">
           {firstVideoIndex >= 0 && (
             <button className="btn small ghost" type="button" onClick={() => playVideo(firstVideoIndex)}>
-              ▶ Play video
+              <Play aria-hidden="true" size={14} />
+              Play video
             </button>
           )}
           {hasMoreMedia && <button className="btn small ghost" type="button" disabled={loadingMedia} onClick={loadAllMedia}>{loadingMedia ? "Loading gallery…" : `View all ${venue.media_count} media`}</button>}

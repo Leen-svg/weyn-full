@@ -426,19 +426,32 @@
 }
 .venue-video-poster span { font-size: 2rem; }
 .venue-video-poster strong { color: #fff; }
+/* Was a 42px disc carrying an emoji glyph, which rendered oversized and
+   off-system. A drawn chevron at a restrained size reads as a control. */
 .app-shell.stitch .venue-media-arrow {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 32px;
+  height: 32px;
   place-items: center;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, .72);
+  border: 1px solid rgba(17, 17, 17, .06);
   border-radius: 50%;
-  background: rgba(255, 255, 255, .9);
+  background: rgba(255, 255, 255, .92);
   color: #111;
-  font-size: .9rem;
-  box-shadow: 0 5px 16px rgba(0, 0, 0, .18);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .14);
+  backdrop-filter: blur(8px);
+  transition: background .15s ease, transform .15s ease;
+}
+
+.app-shell.stitch .venue-media-arrow svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.25;
+}
+
+.app-shell.stitch .venue-media-arrow:hover {
+  background: #fff;
+  transform: translateY(-50%) scale(1.06);
 }
 .app-shell.stitch .venue-media-arrow:disabled { visibility: hidden; }
 
@@ -739,9 +752,21 @@
   }
   .app-shell.stitch .tabbar .tab { width: 152px; min-height: 56px; flex: none; flex-direction: row; justify-content: flex-start; gap: 11px; padding: 0 15px; border-radius: 16px; }
   .app-shell.stitch .tabbar .tab-label { font-size: .86rem; }
-  .screen-find { display: grid; grid-template-columns: minmax(280px, .72fr) minmax(560px, 1.28fr); align-items: start; gap: clamp(48px, 6vw, 88px); }
-  .screen-find__header { position: sticky; top: 112px; margin: 0; }
   .screen-find__selector { width: 100%; }
+}
+
+/* The two-column Find layout needs 280 + 560 + a 48px gap = 888px of content
+   width. At 1100px the 196px nav rail and the page padding leave about 828px,
+   so it overflowed the window. Hold the split until there is genuinely room,
+   and let both columns shrink so they can never push past the edge again. */
+@media (min-width: 1280px) {
+  .screen-find {
+    display: grid;
+    grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr);
+    align-items: start;
+    gap: clamp(40px, 4vw, 72px);
+  }
+  .screen-find__header { position: sticky; top: 112px; margin: 0; }
 }
 
 @media (min-width: 1320px) {
