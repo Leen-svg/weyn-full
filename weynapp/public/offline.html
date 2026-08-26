@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>No connection. Weyn.</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#F9F9F9">
+<!--
+  Shown by the native shell when the device is offline (capacitor.config.json
+  -> server.errorPath). It has to render with no network at all, so every
+  style is inline and the fonts fall back to the system stack rather than
+  loading from Google Fonts.
+-->
+<style>
+  :root{
+    --paper:#F9F9F9; --white:#fff; --ink:#1F3044; --ink-soft:#54677D;
+    --yellow:#FFE45E; --purple:#8E7CE8; --pink:#FF6392; --blue-deep:#3D8FD1;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--paper); color:var(--ink);
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:28px calc(20px + env(safe-area-inset-left)) calc(28px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:420px;width:100%;text-align:left}
+  .logo{
+    display:inline-flex;align-items:baseline;gap:2px;
+    font-weight:800;font-size:26px;color:var(--blue-deep);margin-bottom:26px;
+  }
+  .logo .q{color:var(--pink);display:inline-block;transform:rotate(12deg)}
+  .card{
+    background:var(--white); border:2.5px solid var(--ink); border-radius:28px;
+    box-shadow:6px 6px 0 var(--ink); padding:30px 26px;
+  }
+  h1{font-size:30px;line-height:1.05;letter-spacing:-1.2px;font-weight:800;margin-bottom:12px}
+  p{font-size:16px;line-height:1.6;font-weight:500;color:var(--ink-soft)}
+  button{
+    margin-top:24px; width:100%;
+    font-family:inherit; font-weight:700; font-size:16px;
+    background:var(--purple); color:var(--white);
+    border:2.5px solid var(--ink); border-radius:999px;
+    padding:13px 24px; cursor:pointer;
+    box-shadow:4px 4px 0 var(--ink);
+  }
+  button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+  .hint{margin-top:18px;font-size:13.5px;font-weight:600;color:var(--ink-soft);text-align:center}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="logo">weyn<span class="q">؟</span></div>
+    <div class="card">
+      <h1>You&rsquo;re offline</h1>
+      <p>Weyn needs a connection to find spots and load your groups. Check your
+         signal or Wi&#8209;Fi, then try again.</p>
+      <button type="button" onclick="location.reload()">Try again</button>
+    </div>
+    <p class="hint" id="hint"></p>
+  </div>
+  <script>
+    // Reload the moment the device comes back, so the user does not have to
+    // notice and tap.
+    window.addEventListener('online', function () { location.reload(); });
+    document.getElementById('hint').textContent =
+      navigator.onLine ? 'Connected. Tap Try again.' : 'Waiting for a connection…';
+    window.addEventListener('offline', function () {
+      document.getElementById('hint').textContent = 'Waiting for a connection…';
+    });
+  </script>
+</body>
+</html>

@@ -3,6 +3,7 @@ import { Hanken_Grotesk, Kufam, Syne } from "next/font/google";
 import AppChrome from "@/components/AppChrome";
 import AppShell from "@/components/AppShell";
 import CookieBar from "@/components/CookieBar";
+import NativeShell from "@/components/NativeShell";
 import TabBar from "@/components/TabBar";
 import { Analytics } from "@vercel/analytics/next";
 import { currentSession } from "@/lib/session";
@@ -90,6 +91,7 @@ export default async function RootLayout({ children }) {
         <AppShell header={<AppChrome />} tabs={<TabBar />} guest={!user}>
           {children}
         </AppShell>
+        <NativeShell />
         <CookieBar />
         <Analytics />
       </body>

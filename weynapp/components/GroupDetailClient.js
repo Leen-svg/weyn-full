@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import MapChooser from "@/components/MapChooser";
+import { shareLink } from "@/lib/native";
 
 const BUDGETS = [
   { label: "Under 100", value: 100 },
@@ -188,7 +189,7 @@ function PollResults({ poll, groupId, memberCount = 0, onVoted, archived = false
   function shareLink() {
     const url = `${window.location.origin}/vote/${poll.share_token}`;
     navigator.clipboard?.writeText(url);
-    if (navigator.share) navigator.share({ title: "Vote on where we're going", url }).catch(() => {});
+    shareLink({ title: "Vote on where we're going", url });
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }

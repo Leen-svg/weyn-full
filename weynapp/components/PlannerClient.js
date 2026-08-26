@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import MapChooser from "./MapChooser";
 import { buildTimeline, coordinates, orderStops } from "@/lib/planner-utils.mjs";
+import { shareLink } from "@/lib/native";
 
 // Use a native select so keyboard, screen-reader, and mobile picker behaviour
 // remains predictable while the visible field still follows Weyn's styling.
@@ -231,7 +232,7 @@ export default function PlannerClient() {
         {!!data.boards.length && <div className="planner-board-list">{data.boards.map((board) => (
           <div className="planner-board-row" key={board.id}>
             <strong>{board.title} <small className={`saved-visibility ${board.archived_at ? "private" : board.visibility || (board.is_public ? "public" : "private")}`}>{board.archived_at ? "archived" : board.visibility || (board.is_public ? "public" : "private")}</small></strong>
-            <div><a className="btn small ghost" href={`/plan/boards/${board.id}`}>Open</a>{!board.archived_at && board.visibility !== "private" && <button className="btn small ghost" onClick={() => navigator.share ? navigator.share({ title: board.title, url: `${location.origin}/b/${board.share_slug}` }) : navigator.clipboard.writeText(`${location.origin}/b/${board.share_slug}`)}>Share</button>}</div>
+            <div><a className="btn small ghost" href={`/plan/boards/${board.id}`}>Open</a>{!board.archived_at && board.visibility !== "private" && <button className="btn small ghost" onClick={() => shareLink({ title: board.title, url: `${location.origin}/b/${board.share_slug}` })}>Share</button>}</div>
           </div>
         ))}</div>}
       </section>

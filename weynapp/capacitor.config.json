@@ -5,7 +5,8 @@
   "server": {
     "url": "https://goweyn.com",
     "androidScheme": "https",
-    "iosScheme": "https"
+    "iosScheme": "https",
+    "errorPath": "offline.html"
   },
   "backgroundColor": "#F1EEFA",
   "ios": {

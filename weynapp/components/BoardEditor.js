@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import MapChooser from "./MapChooser";
 import styles from "./AccountPages.module.css";
+import { shareLink } from "@/lib/native";
 
 export default function BoardEditor({ boardId }) {
   const router = useRouter();
@@ -82,11 +83,8 @@ export default function BoardEditor({ boardId }) {
     }
     const path = `/b/${data.board.share_slug}`;
     const shareUrl = `${window.location.origin}${path}`;
-    if (navigator.share) await navigator.share({ title: data.board.title, url: shareUrl });
-    else {
-      await navigator.clipboard.writeText(shareUrl);
-      setNotice("Board link copied.");
-    }
+    const outcome = await shareLink({ title: data.board.title, url: shareUrl });
+    if (outcome === "copied") setNotice("Board link copied.");
   }
 
   async function inviteFriend() {

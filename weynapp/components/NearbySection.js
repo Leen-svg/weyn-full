@@ -1,12 +1,41 @@
 "use client";
 import { useState } from "react";
 import VenueCard from "./VenueCard";
+import { isNative, getPosition } from "@/lib/native";
 
 export default function NearbySection() {
   const [state, setState] = useState("idle"); // idle | loading | denied | empty | done
   const [venues, setVenues] = useState([]);
 
+  async function loadFor(lat, lng) {
+    try {
+      const res = await fetch("/api/nearby", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lat, lng, radiusKm: 15 }),
+      });
+      const data = await res.json();
+      setVenues(data.venues || []);
+      setState(data.venues?.length ? "done" : "empty");
+    } catch {
+      setState("empty");
+    }
+  }
+
   async function findNearby() {
+    // The native shell needs the Capacitor permission prompt; the browser path
+    // below is unchanged.
+    if (isNative()) {
+      setState("loading");
+      try {
+        const { lat, lng } = await getPosition();
+        await loadFor(lat, lng);
+      } catch {
+        setState("denied");
+      }
+      return;
+    }
+
     if (!navigator.geolocation) {
       setState("denied");
       return;

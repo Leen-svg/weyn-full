@@ -6,6 +6,7 @@ import VenueCard from "./VenueCard";
 import VenueActions from "./VenueActions";
 import { interpretAskWeyn } from "@/lib/ask-weyn.mjs";
 import { orderTagGroups } from "@/lib/tag-groups";
+import { isNative, getPosition, shareLink as nativeShareLink } from "@/lib/native";
 
 const BUDGETS = [
   { label: "Under 50 AED", value: 50 },
@@ -138,12 +139,37 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
     setResults(null);
   }
 
-  function toggleNearby() {
+  async function toggleNearby() {
     if (locationState === "active") {
       setNearby(null);
       setLocationState("idle");
       setLocationMessage("Suggestions anywhere in the selected city.");
       setResults(null);
+      return;
+    }
+
+    // In the iOS/Android shell the permission prompt is only wired up through
+    // the Capacitor plugin, so a raw navigator.geolocation call never resolves
+    // on a fresh install. The browser path below is untouched.
+    if (isNative()) {
+      setLocationState("loading");
+      setLocationMessage("Finding your location…");
+      try {
+        const { lat, lng } = await getPosition({ timeout: 12000 });
+        setNearby({ lat, lng, radiusKm: NEARBY_RADIUS_KM });
+        setCity(nearestSupportedCity(lat, lng));
+        setResults(null);
+        setLocationState("active");
+        setLocationMessage(`Near me is on, Weyn will only suggest mapped spots within ${NEARBY_RADIUS_KM} km.`);
+      } catch (error) {
+        setNearby(null);
+        setLocationState("error");
+        setLocationMessage(
+          String(error?.message || "").includes("permission")
+            ? "Location access is blocked. Allow it in Settings, then try again."
+            : "We couldn't find your location. Try again or choose a city."
+        );
+      }
       return;
     }
 
@@ -310,11 +336,10 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
 
   async function shareLink() {
     if (!share) return;
-    if (navigator.share) {
-      await navigator.share({ title: "Weyn, vote on where we're going", url: share }).catch(() => {});
-    } else {
-      await navigator.clipboard?.writeText(share);
-    }
+    // navigator.share does not exist in the iOS WKWebView Capacitor uses, so
+    // this routes to the system share sheet on native and is the same
+    // navigator.share / clipboard pair as before in a browser.
+    await nativeShareLink({ title: "Weyn, vote on where we're going", url: share });
   }
 
   return (

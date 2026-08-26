@@ -1,9 +1,23 @@
-workflows:
-  android-debug:
-    name: Weyn Android validation
-    instance_type: mac_mini_m2
+# Codemagic reads this file from the repository root.
+#
+# Two validation workflows run on demand and prove the shells still build.
+# Two release workflows ship, triggered by a tag:
+#   git tag ios-1.0.0     && git push origin ios-1.0.0      -> TestFlight
+#   git tag android-1.0.0 && git push origin android-1.0.0  -> Play internal track
+#
+# Capacitor 8 uses Swift Package Manager, not CocoaPods, so the iOS build
+# targets ios/App/App.xcodeproj. There is no .xcworkspace to point at.
+
+definitions:
+  base: &base
     max_build_duration: 60
     working_directory: weynapp
+
+workflows:
+  android-debug:
+    <<: *base
+    name: Weyn Android validation
+    instance_type: linux_x2
     environment:
       node: 22.14.0
       java: 21
@@ -22,10 +36,9 @@ workflows:
       - $CM_BUILD_DIR/weynapp/android/app/build/reports/**
 
   ios-simulator:
+    <<: *base
     name: Weyn iOS validation
     instance_type: mac_mini_m2
-    max_build_duration: 60
-    working_directory: weynapp
     environment:
       node: 22.14.0
       xcode: latest
@@ -47,3 +60,78 @@ workflows:
     artifacts:
       - $CM_BUILD_DIR/weynapp/build/ios/Build/Products/Debug-iphonesimulator/*.app
       - /tmp/xcodebuild_logs/*.log
+
+  ios-release:
+    <<: *base
+    name: Weyn iOS (TestFlight)
+    instance_type: mac_mini_m2
+    environment:
+      groups:
+        - appstore_credentials
+      vars:
+        BUNDLE_ID: "com.goweyn.app"
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+      node: 22.14.0
+      xcode: latest
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "ios-*"
+    scripts:
+      - name: Install dependencies
+        script: npm ci
+      - name: Sync Capacitor iOS
+        script: npx cap sync ios
+      - name: Set up code signing (App Store Connect API key)
+        script: xcode-project use-profiles
+      - name: Increment build number
+        script: |
+          cd $CM_BUILD_DIR/weynapp/ios/App
+          agvtool new-version -all $(($(app-store-connect get-latest-app-store-build-number "$BUNDLE_ID") + 1))
+      - name: Build ipa for distribution
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - $CM_BUILD_DIR/weynapp/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  android-release:
+    <<: *base
+    name: Weyn Android (Play internal)
+    instance_type: linux_x2
+    environment:
+      groups:
+        - google_play_credentials
+      vars:
+        PACKAGE_NAME: "com.goweyn.app"
+      node: 22.14.0
+      java: 21
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "android-*"
+    scripts:
+      - name: Install dependencies
+        script: npm ci
+      - name: Sync Capacitor Android
+        script: npx cap sync android
+      - name: Build release AAB
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease
+    artifacts:
+      - $CM_BUILD_DIR/weynapp/android/app/build/outputs/**/*.aab
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
