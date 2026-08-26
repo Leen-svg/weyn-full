@@ -85,3 +85,30 @@ export function preferredMapHref(venue, userAgent = "") {
     : links.find((provider) => provider.id === "google").href;
 }
 
+
+/* One tap, one destination.
+   The provider sheet listed seven services and made the user choose, which is
+   a decision they have already made once by installing a maps app.
+
+   - Android: a geo: URI hands the OS its own app chooser, so whatever maps
+     apps are installed are offered natively.
+   - iOS: there is no system chooser, and Apple Maps is the one app guaranteed
+     to be present.
+   - Everything else (laptops): Google Maps in the browser.
+
+   Coordinates are always preferred; a name-only search is what made Waze open
+   to nothing when the shortlist stopped returning latitude and longitude. */
+export function oneTapMapHref(venue, userAgent = "") {
+  const { latitude, longitude, label, hasCoordinates } = venueDestination(venue);
+  const ua = String(userAgent || "");
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+  if (!hasCoordinates) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(label)}`;
+  }
+  const pair = `${latitude},${longitude}`;
+  if (isAndroid) return `geo:${pair}?q=${encodeURIComponent(`${pair}(${label})`)}`;
+  if (isIOS) return `maps://?q=${encodeURIComponent(label)}&ll=${pair}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pair)}`;
+}

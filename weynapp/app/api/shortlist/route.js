@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { withCovers } from "@/lib/venueMedia";
+import { withCovers, withCoordinates } from "@/lib/venueMedia";
 import { cleanStringList, payloadTooLarge, validCoordinates } from "@/lib/request-security.mjs";
 import { rateLimit } from "@/lib/request-security";
 import { mergeVenueResults, shortlistResultNote } from "@/lib/shortlist-utils.mjs";
@@ -99,7 +99,7 @@ export async function POST(req) {
   const venues = mergeVenueResults(exact, fallback, 3);
   const relaxedCount = Math.max(0, venues.length - exact.length);
   return NextResponse.json({
-    venues: await withCovers(venues),
+    venues: await withCoordinates(await withCovers(venues)),
     relaxed: relaxedCount > 0,
     budgetLifted,
     note: shortlistResultNote({ total: venues.length, relaxedCount, nearby: nearbyRequested, budgetLifted, maxSpend: safeSpend }),

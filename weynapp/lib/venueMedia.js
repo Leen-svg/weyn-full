@@ -47,3 +47,24 @@ export async function withCovers(venues, { maxMediaPerVenue = 6 } = {}) {
     tags: (tagMap[v.id] || []).map((tag) => tag.display_name),
   }));
 }
+
+/* The get_shortlist / get_shortlist_nearby RPCs do not return latitude,
+   longitude or city, so venues coming out of the Find flow reached the map
+   links with no coordinates. Every provider URL then degraded to a text
+   search ("Waze?q=Zeera by Buddha, Yas Island, UAE"), which finds nothing —
+   pressing a map provider appeared to do nothing at all. Hydrating here
+   avoids a migration on the shortlist functions. */
+export async function withCoordinates(venues) {
+  if (!venues?.length) return venues || [];
+  const missing = venues.filter((v) => v.latitude == null || v.longitude == null);
+  if (!missing.length) return venues;
+  const { data } = await db()
+    .from("venues")
+    .select("id, latitude, longitude, city")
+    .in("id", missing.map((v) => v.id));
+  const byId = new Map((data || []).map((row) => [row.id, row]));
+  return venues.map((venue) => {
+    const row = byId.get(venue.id);
+    return row ? { ...venue, latitude: row.latitude, longitude: row.longitude, city: venue.city ?? row.city } : venue;
+  });
+}
