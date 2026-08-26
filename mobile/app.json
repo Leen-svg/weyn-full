@@ -1,0 +1,68 @@
+{
+  "expo": {
+    "name": "Weyn",
+    "slug": "weyn",
+    "scheme": "weyn",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "backgroundColor": "#F9F9F9",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.goweyn.app",
+      "associatedDomains": [
+        "applinks:goweyn.com"
+      ],
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Weyn uses your location to find spots near you.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.goweyn.app",
+      "predictiveBackGestureEnabled": false,
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "goweyn.com",
+              "pathPrefix": "/p"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      "expo-web-browser",
+      "expo-image",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Weyn uses your location to find spots near you."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
