@@ -163,8 +163,6 @@
 .app-shell.stitch .tab-pill {
   display: none;
 }
-  border-top: 0;
-}
 
 .app-shell.stitch footer .links a {
   color: rgba(255, 255, 255, .82);
@@ -356,9 +354,14 @@
   flex-direction: column;
   justify-content: flex-end;
   padding: 48px 20px 40px;
+  /* The photo is hotlinked from Unsplash's CDN, so it is unavailable
+     offline and on a cold Capacitor webview. The violet gradient underneath
+     is the floor: if the image never arrives the screen still reads as a
+     designed surface rather than a blank panel. */
   background:
     linear-gradient(180deg, rgb(247 249 251 / 0) 28%, #f7f9fb 72%),
-    url(https://images.unsplash.com/photo-1512453979798-5ea7f61bfc3d?auto=format&fit=crop&w=1400&q=80) center 18% / cover no-repeat;
+    url(https://images.unsplash.com/photo-1512453979798-5ea7f61bfc3d?auto=format&fit=crop&w=1400&q=80) center 18% / cover no-repeat,
+    linear-gradient(158deg, #efe7ff 0%, #c4b0f7 44%, #7c3aed 100%);
 }
 
 .phone-shell--bare .app-main {
@@ -478,3 +481,212 @@
 .app-shell.stitch .vote-flow { display: grid; gap: 16px; }
 
 .app-shell.stitch table { background: #fff; }
+
+/* ============================================================
+   Auth: brand bar, notices, and the post-signup confirm screen
+   ============================================================ */
+
+/* Auth routes render "bare" (no app chrome), which previously left the
+   signup/login screens with no wordmark at all. This is the minimum
+   brand anchor, not a second navigation. */
+.app-shell.stitch .auth-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px 2px;
+}
+
+.app-shell.stitch .auth-topbar .logo {
+  font-family: var(--font-syne), "Syne", ui-sans-serif, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+
+.app-shell.stitch .auth-topbar .auth-topbar__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-soft);
+  border-radius: 999px;
+  padding: 8px 12px;
+  margin-right: -12px;
+}
+
+.app-shell.stitch .auth-topbar .logo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* The reveal toggle sat at 36px, below the 44px touch floor. Width is left
+   to globals.css, which sizes it for the "Show"/"Hide" label. */
+.app-shell.stitch .password-toggle {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-shell.stitch .auth-topbar__back svg {
+  width: 16px;
+  height: 16px;
+}
+
+.app-shell.stitch .auth-topbar__back:hover {
+  color: var(--ink);
+  background: rgba(25, 28, 30, .05);
+}
+
+/* Notices were still carrying the old 2.5px-ink neobrutalist treatment
+   inside an otherwise soft-surface app. */
+.app-shell.stitch .notice {
+  border: 1px solid rgba(124, 58, 237, .18);
+  border-radius: 16px;
+  background: #f6f2ff;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  padding: 13px 15px;
+}
+
+.app-shell.stitch .notice.err {
+  border-color: rgba(190, 24, 60, .22);
+  background: #fff1f4;
+  color: #9f1239;
+}
+
+.app-shell.stitch .legal-consent {
+  border: 1px solid rgba(25, 28, 30, .08);
+  border-radius: 18px;
+  background: #fff;
+  padding: 16px;
+}
+
+.app-shell.stitch .legal-consent legend {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+/* ---- Confirm your email ---- */
+.app-shell.stitch .confirm-email {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0 32px;
+}
+
+.app-shell.stitch .confirm-email__icon {
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 22px;
+  border-radius: 20px;
+  background: #efe7ff;
+  color: #630ed4;
+}
+
+.app-shell.stitch .confirm-email__icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.app-shell.stitch .confirm-email h1 {
+  margin-bottom: 10px;
+}
+
+.app-shell.stitch .confirm-email h1:focus-visible {
+  outline: none;
+}
+
+.app-shell.stitch .confirm-email .sub {
+  font-size: 15px;
+  line-height: 1.55;
+  max-width: 34ch;
+  margin-bottom: 24px;
+}
+
+.app-shell.stitch .confirm-email__address {
+  display: inline-block;
+  color: var(--ink);
+  font-weight: 750;
+  word-break: break-all;
+}
+
+.app-shell.stitch .confirm-email .btn + .btn {
+  margin-top: 10px;
+}
+
+.app-shell.stitch .confirm-email__resend {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.app-shell.stitch .confirm-email__resend svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* The cooldown label is information the user is waiting on, so it keeps a
+   readable contrast instead of the global button's opacity dimming. */
+.app-shell.stitch .confirm-email__resend:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  background: #f2f2f7;
+  color: #55505f;
+  box-shadow: none;
+  transform: none;
+}
+
+.app-shell.stitch .confirm-email__hint {
+  margin-top: 22px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.app-shell.stitch .confirm-email__footer {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.app-shell.stitch .linklike {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: #630ed4;
+  cursor: pointer;
+  text-underline-offset: 3px;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: rgba(99, 14, 212, .35);
+}
+
+.app-shell.stitch .linklike:hover {
+  text-decoration-color: currentColor;
+}
+
+@keyframes weyn-spin {
+  to { transform: rotate(360deg); }
+}
+
+.app-shell.stitch .spin {
+  animation: weyn-spin .9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.stitch .spin { animation: none; }
+}

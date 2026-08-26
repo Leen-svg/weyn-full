@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ConfirmEmail from "./ConfirmEmail";
 import PasswordInput from "./PasswordInput";
 
 const AUTH_ERRORS = {
@@ -23,7 +24,9 @@ export default function AuthForm({ mode }) {
   const [betaAcknowledged, setBetaAcknowledged] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(() => AUTH_ERRORS[params.get("error")] || null);
-  const [notice, setNotice] = useState(null);
+  // Set once signup succeeds but Supabase returns no session, i.e. the account
+  // exists and is waiting on the emailed confirmation link.
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(null);
 
   async function submit(e) {
     e.preventDefault();
@@ -34,7 +37,6 @@ export default function AuthForm({ mode }) {
     }
     setBusy(true);
     setErr(null);
-    setNotice(null);
     const supabase = createClient();
 
     if (mode === "signup") {
@@ -56,7 +58,7 @@ export default function AuthForm({ mode }) {
         router.refresh();
       }
       else {
-        setNotice("Check your email to confirm your account. Then you'll choose your unique username.");
+        setAwaitingConfirmation(email);
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -92,6 +94,20 @@ export default function AuthForm({ mode }) {
     }
   }
 
+  if (awaitingConfirmation) {
+    return (
+      <ConfirmEmail
+        email={awaitingConfirmation}
+        next={next}
+        onUseDifferentEmail={() => {
+          setAwaitingConfirmation(null);
+          setPassword("");
+          setErr(null);
+        }}
+      />
+    );
+  }
+
   return (
     <>
       <p className="eyebrow">{mode === "signup" ? "Create account" : "Log in"}</p>
@@ -124,23 +140,6 @@ export default function AuthForm({ mode }) {
           <input id="auth-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
         </div>
 
-        {mode === "signup" && (
-          <fieldset className="legal-consent">
-            <legend>Required before signup</legend>
-            <label>
-              <input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} required />
-              <span>I have read and agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.</span>
-            </label>
-            <label>
-              <input type="checkbox" checked={privacyAccepted} onChange={(event) => setPrivacyAccepted(event.target.checked)} required />
-              <span>I have read and accept the <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</span>
-            </label>
-            <label>
-              <input type="checkbox" checked={betaAcknowledged} onChange={(event) => setBetaAcknowledged(event.target.checked)} required />
-              <span>I am 18 or older and understand Weyn is an experimental beta with features that may change, reset, or contain errors.</span>
-            </label>
-          </fieldset>
-        )}
         <div className="field">
           <label htmlFor="auth-password">
             Password
@@ -160,8 +159,25 @@ export default function AuthForm({ mode }) {
           />
         </div>
 
-        {err && <div className="notice err">{err}</div>}
-        {notice && <div className="notice">{notice}</div>}
+        {mode === "signup" && (
+          <fieldset className="legal-consent">
+            <legend>Required before signup</legend>
+            <label>
+              <input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} required />
+              <span>I have read and agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.</span>
+            </label>
+            <label>
+              <input type="checkbox" checked={privacyAccepted} onChange={(event) => setPrivacyAccepted(event.target.checked)} required />
+              <span>I have read and accept the <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</span>
+            </label>
+            <label>
+              <input type="checkbox" checked={betaAcknowledged} onChange={(event) => setBetaAcknowledged(event.target.checked)} required />
+              <span>I am 18 or older and understand Weyn is an experimental beta with features that may change, reset, or contain errors.</span>
+            </label>
+          </fieldset>
+        )}
+
+        {err && <div className="notice err" role="alert">{err}</div>}
 
         <button className="btn primary block" disabled={busy || (mode === "signup" && (!termsAccepted || !privacyAccepted || !betaAcknowledged))} type="submit">
           {busy ? "…" : mode === "signup" ? "Create account" : "Log in"}

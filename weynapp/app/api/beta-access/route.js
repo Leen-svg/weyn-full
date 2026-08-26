@@ -24,7 +24,10 @@ export async function POST(req) {
 
   const configured = String(process.env.BETA_INVITATION_CODE || "YALLA WEYN").trim().toUpperCase();
   const candidates = Array.from(new Set([normalized, compact(normalized)]));
-  const allowed = Array.from(new Set([configured, compact(configured), "YALLA WEYN", "YALLAWEYN"]));
+  // Only the configured code opens the gate. The literal default used to be
+  // pinned in here as well, which meant setting BETA_INVITATION_CODE never
+  // actually retired the public one.
+  const allowed = Array.from(new Set([configured, compact(configured)]));
   let valid = candidates.some((c) => allowed.includes(c));
   let inviteId = null;
   if (!valid) {

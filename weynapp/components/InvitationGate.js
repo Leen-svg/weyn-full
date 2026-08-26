@@ -47,7 +47,7 @@ export default function InvitationGate() {
             autoCorrect="off"
             autoComplete="one-time-code"
             spellCheck={false}
-            placeholder="YALLA WEYN"
+            placeholder="Enter your code"
             required
             autoFocus
           />
