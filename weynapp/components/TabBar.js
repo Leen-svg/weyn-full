@@ -2,11 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bookmark, Compass, MapPinned, MessagesSquare, Route } from "lucide-react";
+import { Bookmark, House, MessagesSquare, Route, Sparkles, Telescope } from "lucide-react";
 
+// Home is the digest — search, shortcuts, picks, the community feed.
+// Discover is the browse surface: one place at a time, full bleed.
+// They are different jobs, so they are different destinations.
 const TABS = [
-  { href: "/app", label: "Discover", Icon: Compass },
-  { href: "/find", label: "Find", Icon: MapPinned },
+  { href: "/app", label: "Home", Icon: House },
+  { href: "/discover", label: "Discover", Icon: Telescope },
+  { href: "/find", label: "Find", Icon: Sparkles },
   { href: "/groups", label: "Groups", Icon: MessagesSquare },
   { href: "/wishlist", label: "Saved", Icon: Bookmark },
   { href: "/plan", label: "Plan", Icon: Route },
@@ -23,7 +27,7 @@ export default function TabBar() {
           pathname.startsWith(`${href}/`) ||
           (href === "/wishlist" && (pathname.startsWith("/lists") || pathname.startsWith("/wishlist"))) ||
           (href === "/groups" && (pathname.startsWith("/vote") || pathname.startsWith("/group"))) ||
-          (href === "/app" && (pathname.startsWith("/gems") || pathname.startsWith("/collections")));
+          (href === "/discover" && (pathname.startsWith("/gems") || pathname.startsWith("/collections")));
         return (
           <Link
             key={href}

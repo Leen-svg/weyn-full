@@ -1,5 +1,5 @@
 import "./tailwind.css";
-import { Hanken_Grotesk, Kufam, Syne } from "next/font/google";
+import { Bricolage_Grotesque, Kufam } from "next/font/google";
 import AppChrome from "@/components/AppChrome";
 import AppShell from "@/components/AppShell";
 import CookieBar from "@/components/CookieBar";
@@ -7,15 +7,14 @@ import TabBar from "@/components/TabBar";
 import { Analytics } from "@vercel/analytics/next";
 import { currentSession } from "@/lib/session";
 
-const syne = Syne({
+// One family for the whole product. Bricolage Grotesque is variable on both
+// weight and optical size, so the same font carries 11px meta rows and 72px
+// display headings without needing a second face to pair against.
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-syne",
+  variable: "--font-bricolage",
   display: "swap",
-});
-const hanken = Hanken_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-hanken",
-  display: "swap",
+  axes: ["opsz"],
 });
 const kufam = Kufam({
   subsets: ["arabic", "latin"],
@@ -82,7 +81,7 @@ export default async function RootLayout({ children }) {
   const { user } = await currentSession();
 
   return (
-    <html lang="en" className={`${syne.variable} ${hanken.variable} ${kufam.variable}`}>
+    <html lang="en" className={`${bricolage.variable} ${kufam.variable}`}>
       <body className="app-shell stitch">
         <a className="skip-link" href="#app-content">
           Skip to content

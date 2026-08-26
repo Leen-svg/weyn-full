@@ -49,8 +49,8 @@
   --shadow-pop-sm:4px 4px 0 var(--ink);
 
   /* --- Type --- */
-  --font-display:"Bricolage Grotesque",sans-serif;  /* headings, buttons */
-  --font-body:"Space Grotesk",sans-serif;           /* body copy */
+  --font-display:var(--font-bricolage),"Bricolage Grotesque",sans-serif;  /* headings, buttons */
+  --font-body:var(--font-bricolage),"Bricolage Grotesque",sans-serif;           /* body copy */
   --font-ar:"Kufam",sans-serif;                     /* ALL Arabic, weight 800 */
 }
 
@@ -111,8 +111,8 @@ p b,li b{color:var(--ink);font-weight:700}
    The fallback stacks below mean ANY stray Arabic character
    anywhere resolves to Kufam automatically, because neither
    Latin face contains Arabic glyphs. Keep them. */
-body,p,li,.lead{font-family:"Space Grotesk","Kufam",sans-serif}
-h1,h2,h3,.display,.btn{font-family:"Bricolage Grotesque","Kufam",sans-serif}
+body,p,li,.lead{font-family:var(--font-bricolage),var(--font-bricolage),"Bricolage Grotesque","Kufam",sans-serif}
+h1,h2,h3,.display,.btn{font-family:var(--font-bricolage),"Bricolage Grotesque","Kufam",sans-serif}
 .ar{font-family:var(--font-ar);font-weight:800}
 p .ar,li .ar{font-weight:700}
 

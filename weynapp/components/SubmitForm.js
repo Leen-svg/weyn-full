@@ -55,31 +55,31 @@ export default function SubmitForm({ groups, zones }) {
   return (
     <form onSubmit={submit} className="propose-form">
       <div className="field">
-        <label>Place name *</label>
-        <input type="text" required maxLength={120} value={form.name} onChange={set("name")} placeholder="e.g. Nightjar Coffee Roasters" />
+        <label htmlFor="sf-name">Place name *</label>
+        <input id="sf-name" type="text" required maxLength={120} value={form.name} onChange={set("name")} placeholder="e.g. Nightjar Coffee Roasters" />
       </div>
 
       <div className="field">
-        <label>Zone *</label>
-        <select required value={form.zone_slug} onChange={set("zone_slug")}>
+        <label htmlFor="sf-zone">Zone *</label>
+        <select id="sf-zone" required value={form.zone_slug} onChange={set("zone_slug")}>
           <option value="">Pick a zone…</option>
           {zones.map((z) => <option key={z.slug} value={z.slug}>{z.name}</option>)}
         </select>
       </div>
 
       <div className="field">
-        <label>Neighborhood <span className="hint">(e.g. Alserkal Avenue)</span></label>
-        <input type="text" maxLength={80} value={form.neighborhood} onChange={set("neighborhood")} />
+        <label htmlFor="sf-hood">Neighborhood <span className="hint">(e.g. Alserkal Avenue)</span></label>
+        <input id="sf-hood" type="text" maxLength={80} value={form.neighborhood} onChange={set("neighborhood")} />
       </div>
 
       <div className="field">
-        <label>Google Maps link <span className="hint">(helps us find it fast)</span></label>
-        <input type="url" value={form.google_maps_url} onChange={set("google_maps_url")} placeholder="https://maps.google.com/…" />
+        <label htmlFor="sf-maps">Google Maps link <span className="hint">(helps us find it fast)</span></label>
+        <input id="sf-maps" type="url" value={form.google_maps_url} onChange={set("google_maps_url")} placeholder="https://maps.google.com/…" />
       </div>
 
       <div className="field">
-        <label>Roughly how much per person? <span className="hint">in AED</span></label>
-        <input type="number" min="0" max="5000" value={form.avg_spend_aed} onChange={set("avg_spend_aed")} placeholder="60" />
+        <label htmlFor="sf-spend">Roughly how much per person? <span className="hint">in AED</span></label>
+        <input id="sf-spend" type="number" min="0" max="5000" value={form.avg_spend_aed} onChange={set("avg_spend_aed")} placeholder="60" />
       </div>
 
       {groups.map((cat) => (
@@ -98,18 +98,18 @@ export default function SubmitForm({ groups, zones }) {
       ))}
 
       <div className="field" style={{ marginTop: 22 }}>
-        <label>Why do you love it? <span className="hint">one or two lines</span></label>
-        <textarea maxLength={400} value={form.why_love} onChange={set("why_love")} placeholder="Tiny courtyard, best karak in the city, never crowded before 6pm…" />
+        <label htmlFor="sf-why">Why do you love it? <span className="hint">one or two lines</span></label>
+        <textarea id="sf-why" maxLength={400} value={form.why_love} onChange={set("why_love")} placeholder="Tiny courtyard, best karak in the city, never crowded before 6pm…" />
       </div>
 
       <div className="field">
-        <label>Your name <span className="hint">(optional)</span></label>
-        <input type="text" maxLength={40} value={form.submitter_name} onChange={set("submitter_name")} />
+        <label htmlFor="sf-yourname">Your name <span className="hint">(optional)</span></label>
+        <input id="sf-yourname" type="text" maxLength={40} value={form.submitter_name} onChange={set("submitter_name")} />
       </div>
 
       <div className="field">
-        <label>Your Instagram / TikTok handle <span className="hint">(optional, we credit you)</span></label>
-        <input type="text" maxLength={40} value={form.submitter_handle} onChange={set("submitter_handle")} placeholder="@yourhandle" />
+        <label htmlFor="sf-handle">Your Instagram / TikTok handle <span className="hint">(optional, we credit you)</span></label>
+        <input id="sf-handle" type="text" maxLength={40} value={form.submitter_handle} onChange={set("submitter_handle")} placeholder="@yourhandle" />
       </div>
 
       {state.err && <div className="notice err">{state.err}</div>}
