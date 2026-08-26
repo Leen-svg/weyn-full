@@ -176,7 +176,12 @@ export default async function HomePage() {
       <section className="app-home__section app-home__curated" aria-labelledby="curated-title">
         <div className="app-home__section-header">
           <h2 id="curated-title">Curated</h2>
-          <span>{curatedLists.length ? `${curatedLists.length} collection${curatedLists.length === 1 ? "" : "s"}` : "Updated by Weyn"}</span>
+          {/* Discover shows these inline, which stops scaling past a handful.
+              The browser at /collections holds all of them, with search. */}
+          <Link className="btn small ghost app-home__section-action" href="/collections">
+            Browse all
+            {curatedLists.length ? <span aria-hidden="true"> · {curatedLists.length}</span> : null}
+          </Link>
         </div>
         {curatedLists.length ? (
           <div className="curated-collection-grid">
