@@ -16,10 +16,12 @@ installed locally to ship — Codemagic builds both in the cloud.
    Android on the Play Store (optional — Android APKs can be sideloaded without this).
 3. **Codemagic account** — sign up at codemagic.io, connect the `weyn-full` GitHub repo.
 4. **App Store Connect API key** — App Store Connect -> Users and Access -> Integrations ->
-   Generate API key. In Codemagic: App settings -> Environment variables -> add a group
-   named `appstore_credentials` (matches `codemagic.yaml`) with the key's Issuer ID,
-   Key ID, and the `.p8` private key content — Codemagic uses this to sign and upload
-   automatically, no manual certificates needed.
+   Generate API key, and download the `.p8`. Then in Codemagic: **Team settings ->
+   Integrations -> App Store Connect -> Connect**, upload the `.p8` with its Issuer ID
+   and Key ID, and **name it exactly `Weyn App Store Connect`** — `codemagic.yaml`
+   refers to that name under `ios-release -> integrations`, and the build fails
+   validation if they differ. Codemagic then creates the signing certificate and
+   provisioning profile itself, so there is nothing to manage by hand.
 5. **Google Play service account JSON** (only if publishing to Play Store) — Play Console
    -> Setup -> API access -> create a service account, download its JSON key, add it to
    Codemagic as `GCLOUD_SERVICE_ACCOUNT_CREDENTIALS` in a group named
@@ -32,9 +34,12 @@ installed locally to ship — Codemagic builds both in the cloud.
 - `capacitor.config.json` — app id `com.goweyn.app`, points at `https://goweyn.com`.
 - `android/`, `ios/` — native shell projects, safe to commit (build artifacts are
   gitignored).
-- `codemagic.yaml` — two workflows:
-  - `ios-capacitor`: builds and submits to TestFlight on any tag matching `ios-*`.
-  - `android-capacitor`: builds an `.aab` and pushes to the Play Store's internal
+- `codemagic.yaml` — at the repo root (Codemagic only reads the root one), four workflows:
+  - `android-debug`: builds a debug `.apk` you can sideload. Run it by hand from the
+    Codemagic UI — no Apple account needed, and it is the cheapest way to test the shell.
+  - `ios-simulator`: unsigned simulator build, for checking the iOS project compiles.
+  - `ios-release`: builds and submits to TestFlight on any tag matching `ios-*`.
+  - `android-release`: builds an `.aab` and pushes to the Play Store's internal
     track on any tag matching `android-*`.
 
 ## Triggering a build (once Codemagic is connected)
@@ -52,7 +57,7 @@ cd android && ./gradlew assembleDebug   # needs Android Studio/SDK installed loc
 ```
 
 There's no local equivalent for iOS without a Mac — the first real iOS build will happen
-on Codemagic once the `appstore_credentials` group above is configured.
+on Codemagic once the App Store Connect integration above is connected.
 
 ## Native touches worth doing before submitting
 

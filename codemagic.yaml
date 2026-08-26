@@ -65,9 +65,18 @@ workflows:
     <<: *base
     name: Weyn iOS (TestFlight)
     instance_type: mac_mini_m2
+    # The App Store Connect API key, added once in Codemagic under
+    # Team settings -> Integrations -> App Store Connect. The name below must
+    # match what you called it there, character for character.
+    integrations:
+      app_store_connect: Weyn App Store Connect
     environment:
-      groups:
-        - appstore_credentials
+      # ios_signing lets Codemagic fetch (and create) the distribution
+      # certificate and provisioning profile from that same key, so there are
+      # no .p12 or .mobileprovision files to manage by hand.
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.goweyn.app
       vars:
         BUNDLE_ID: "com.goweyn.app"
         XCODE_PROJECT: "ios/App/App.xcodeproj"
