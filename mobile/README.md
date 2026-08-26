@@ -1,4 +1,4 @@
-« Weyn — mobile app
+# Weyn — mobile app
 
 An Expo (React Native) client for Weyn. **This is a UI rewrite, not a rewrite.**
 
