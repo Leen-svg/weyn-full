@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-export default function ShareToGroupButton({ text }) {
+export default function ShareToGroupButton({ text, share = null }) {
   const [open, setOpen] = useState(false);
   const [groups, setGroups] = useState(null);
   const [sentTo, setSentTo] = useState(null);
@@ -34,7 +34,7 @@ export default function ShareToGroupButton({ text }) {
     const res = await fetch(`/api/groups/${groupId}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: text }),
+      body: JSON.stringify({ body: text, share }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));

@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-export async function GET() {
-  const supabase = await createClient();
+export async function GET(req) {
+  const supabase = await createClient(req);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Log in to see your wishlist" }, { status: 401 });
 
@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 export async function POST(req) {
-  const supabase = await createClient();
+  const supabase = await createClient(req);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Log in to save spots" }, { status: 401 });
 
@@ -28,7 +28,7 @@ export async function POST(req) {
 }
 
 export async function DELETE(req) {
-  const supabase = await createClient();
+  const supabase = await createClient(req);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Log in to manage your wishlist" }, { status: 401 });
 

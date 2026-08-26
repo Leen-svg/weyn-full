@@ -35,3 +35,4 @@ export async function GET(req) {
   return NextResponse.redirect(`${origin}/login?error=auth`);
 }
 
+

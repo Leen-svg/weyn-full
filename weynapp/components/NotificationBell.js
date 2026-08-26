@@ -10,9 +10,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
-// Wording and links are shared with the notification centre so the two
-// can never disagree about what a notification says.
-import { describe } from "@/lib/notificationCopy";
+
+function describe(n) {
+  const p = n.payload || {};
+  switch (n.type) {
+    case "poll_finished":
+      return { text: `Everyone voted in ${p.groupName || "your group"}, time to go out! 🎉`, href: `/groups/${p.groupId}` };
+    case "poll_vote":
+      return { text: `${p.voterName || "Someone"} voted in ${p.groupName || "your group"}`, href: `/groups/${p.groupId}` };
+    case "group_message":
+      return { text: `${p.senderName || "Someone"}: ${p.preview || "sent a message"}`, href: `/groups/${p.groupId}` };
+    default:
+      return { text: "New activity", href: "/groups" };
+  }
+}
 
 export default function NotificationBell({ userId }) {
   const [items, setItems] = useState([]);
@@ -83,12 +94,8 @@ export default function NotificationBell({ userId }) {
             </DropdownMenuItem>
           );
         })}
-        {/* The popover caps at the 30 the API returns and is unreachable
-            once the nav collapses on a phone. Always offer the screen. */}
-        <DropdownMenuItem render={<Link href="/notifications" />} className="justify-center font-semibold">
-          See all notifications
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
+

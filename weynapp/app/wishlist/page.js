@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import WishlistClient from "@/components/WishlistClient";
 import { privatePageMetadata } from "@/lib/seo";
 import { withCovers } from "@/lib/venueMedia";
+import styles from "@/components/AccountPages.module.css";
+import UserTagsManager from "@/components/UserTagsManager";
 
 export const metadata = privatePageMetadata({
   title: "Your Saved Places",
@@ -24,12 +26,14 @@ export default async function WishlistPage() {
   const venues = await withCovers((data || []).map((row) => row.venues).filter(Boolean));
 
   return (
-    <>
-      <p className="eyebrow">Yours</p>
-      <h1>Saved</h1>
-      <p className="sub">Lists you can tag, keep private, or send to the group.</p>
+    <div className={`${styles.pageWide} screen-saved`}>
+      <header className={styles.header}>
+        <span className="eyebrow">Yours to organise and share</span>
+        <h1>Saved</h1>
+        <p className="sub">Build custom lists, add your own tags, and share only with the people you choose.</p>
+      </header>
       <WishlistClient initialVenues={venues} />
-    </>
+      <UserTagsManager venues={venues} />
+    </div>
   );
 }
-

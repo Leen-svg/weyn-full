@@ -67,3 +67,4 @@ export async function POST(req) {
   return NextResponse.json({ ok: true, pointsEarned: userId ? POINTS.suggested_a_place : 0 });
 }
 
+

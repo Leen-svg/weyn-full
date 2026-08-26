@@ -1,60 +1,86 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { createClient } from "@/lib/supabase/server";
+import { currentSession } from "@/lib/session";
 import { withCovers } from "@/lib/venueMedia";
 import VenueCard from "@/components/VenueCard";
 import VenueActions from "@/components/VenueActions";
 import HomeFeed from "@/components/HomeFeed";
+import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 import WelcomeHero from "@/components/WelcomeHero";
+import DiscoverCommunityCollections from "@/components/DiscoverCommunityCollections";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Weyn, home" };
 
-async function getHomeVenues() {
+const VENUE_FIELDS = "id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, is_aesthetic, age_restriction, description";
+
+function editorialSection(list) {
+  if (list.home_section === "our_picks" || list.home_section === "curated") return list.home_section;
+  const label = `${list.slug || ""} ${list.title || ""}`.toLowerCase();
+  return label.includes("our-picks") || label.includes("our picks") ? "our_picks" : "curated";
+}
+
+async function getDiscoverContent() {
   const s = db();
-  const [{ data: trending }, { data: fresh }] = await Promise.all([
+  const [trendingResult, freshResult, editorialWithSection] = await Promise.all([
     s
       .from("venues")
-      .select("id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description")
+      .select(VENUE_FIELDS)
       .eq("is_active", true)
       .eq("is_trending", true)
       .order("trending_rank", { ascending: true })
-      .limit(7),
+      .limit(6),
     s
       .from("venues")
-      .select("id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description")
+      .select(VENUE_FIELDS)
       .eq("is_active", true)
       .order("created_at", { ascending: false })
-      .limit(6),
+      .limit(9),
+    s
+      .from("editorial_lists")
+      .select(`id, title, subtitle, slug, city, header_image_url, sort_order, home_section, editorial_list_items(position, venues(${VENUE_FIELDS}))`)
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false }),
   ]);
-  const [trendingWithCovers, freshWithCovers] = await Promise.all([withCovers(trending || []), withCovers(fresh || [])]);
-  return { trending: trendingWithCovers, fresh: freshWithCovers };
-}
 
-async function getCuratedLists() {
-  const s = db();
-  const { data: lists } = await s
-    .from("curated_lists")
-    .select("id, title, description")
-    .eq("is_active", true)
-    .order("position", { ascending: true })
-    .order("created_at", { ascending: false });
-  if (!lists?.length) return [];
-
-  const { data: links } = await s
-    .from("curated_list_venues")
-    .select("list_id, position, venues (id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description)")
-    .in("list_id", lists.map((list) => list.id))
-    .order("position", { ascending: true });
-
-  const venuesByList = {};
-  for (const link of links || []) {
-    if (link.venues) (venuesByList[link.list_id] ||= []).push(link.venues);
+  // Deploy safely against databases where the optional section column has not
+  // been migrated yet. Titles/slugs still provide a deterministic fallback.
+  let editorialResult = editorialWithSection;
+  if (editorialWithSection.error) {
+    editorialResult = await s
+      .from("editorial_lists")
+      .select(`id, title, subtitle, slug, city, header_image_url, sort_order, editorial_list_items(position, venues(${VENUE_FIELDS}))`)
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
   }
-  const withVenues = await Promise.all(
-    lists.map(async (list) => ({ ...list, venues: await withCovers(venuesByList[list.id] || []) }))
+
+  const rawLists = editorialResult.data || [];
+  const rawTrending = trendingResult.data || [];
+  const rawFresh = freshResult.data || [];
+  const rawEditorialVenues = rawLists.flatMap((list) =>
+    [...(list.editorial_list_items || [])]
+      .sort((a, b) => a.position - b.position)
+      .map((item) => item.venues)
+      .filter(Boolean)
   );
-  return withVenues.filter((list) => list.venues.length > 0);
+  const unique = new Map();
+  for (const venue of [...rawTrending, ...rawFresh, ...rawEditorialVenues]) unique.set(venue.id, venue);
+  const hydrated = await withCovers([...unique.values()], { maxMediaPerVenue: 3 });
+  const venueById = new Map(hydrated.map((venue) => [venue.id, venue]));
+  const resolve = (venues) => venues.map((venue) => venueById.get(venue.id) || venue);
+  const editorialLists = rawLists.map((list) => ({
+    ...list,
+    home_section: editorialSection(list),
+    description: list.subtitle || "",
+    venues: [...(list.editorial_list_items || [])]
+      .sort((a, b) => a.position - b.position)
+      .map((item) => item.venues && venueById.get(item.venues.id))
+      .filter(Boolean),
+  })).filter((list) => list.venues.length > 0);
+
+  return { trending: resolve(rawTrending), fresh: resolve(rawFresh), editorialLists };
 }
 
 async function getInitialPublicPosts(supabase) {
@@ -80,64 +106,108 @@ async function getInitialPublicPosts(supabase) {
 }
 
 export default async function HomePage() {
-  const [{ trending, fresh }, supabase, curatedLists] = await Promise.all([getHomeVenues(), createClient(), getCuratedLists()]);
-  const [{ data: { user } }, initialPosts] = await Promise.all([
-    supabase.auth.getUser(),
+  const { supabase, user } = await currentSession();
+  if (!user) return <WelcomeHero />;
+  const [{ trending, fresh, editorialLists }, initialPosts] = await Promise.all([
+    getDiscoverContent(),
     getInitialPublicPosts(supabase),
   ]);
-
-  if (!user) return <WelcomeHero />;
+  const adminPicks = editorialLists
+    .filter((list) => list.home_section === "our_picks")
+    .flatMap((list) => list.venues)
+    .filter((venue, index, venues) => venues.findIndex((candidate) => candidate.id === venue.id) === index)
+    .slice(0, 8);
+  const picks = adminPicks.length ? adminPicks : trending;
+  const curatedLists = editorialLists.filter((list) => list.home_section === "curated");
   return (
     <div className="app-home">
-      <header className="app-home__hero">
-        <div>
-          <p className="eyebrow">Abu Dhabi · Dubai</p>
-          <h1>Discover</h1>
-          <p className="sub">Picks worth leaving the group chat for.</p>
-        </div>
-        <div className="cta-row">
-          <Link className="btn primary" href="/find">
+      <section className="app-home__intro" aria-labelledby="discover-title">
+        <header className="app-home__hero">
+          <div>
+            <p className="eyebrow">Abu Dhabi · Dubai</p>
+            <h1 id="discover-title">Discover</h1>
+            <p className="sub">Picks worth leaving the group chat for.</p>
+          </div>
+          <Link className="btn primary app-home__find-cta" href="/find">
             Find a spot →
           </Link>
+        </header>
+
+        <div className="app-home__tools">
+          <form className="discover-search" action="/find" method="get" role="search">
+            <label className="sr-only" htmlFor="discover-search">Tell Weyn what kind of place you want</label>
+            <span aria-hidden="true">⌕</span>
+            <input id="discover-search" name="q" type="search" maxLength="120" autoComplete="off" placeholder="quiet rooftop date in Dubai…" />
+            <button type="submit">Search</button>
+          </form>
+
+          <nav className="app-home__quick" aria-label="Quick ways to find a place">
+            <Link className="app-home__quick-card app-home__quick-card--lilac" href="/plan">
+              <strong>Magic Import</strong>
+              <span>Paste a TikTok or chat</span>
+            </Link>
+            <Link className="app-home__quick-card" href="/find">
+              <strong>Ask Weyn</strong>
+              <span>A sentence. Three spots.</span>
+            </Link>
+          </nav>
         </div>
-      </header>
+      </section>
 
-      {trending.length > 0 && (
-        <section className="app-home__section app-home__picks" aria-label="Our picks">
-          <div className="app-home__section-header">
-            <div>
-              <h2>Our picks</h2>
-              <p>Worth leaving the group chat for.</p>
-            </div>
-            <span>Swipe →</span>
+      <section className="app-home__section app-home__picks" aria-label="Our picks">
+        <div className="app-home__section-header">
+          <div>
+            <h2>Our picks</h2>
+            <p>Worth leaving the group chat for.</p>
           </div>
+          <span>Swipe →</span>
+        </div>
+        {picks.length ? (
           <div className="venue-rail" aria-label="Scroll through our picks">
-            {trending.map((v) => (
-              <VenueCard key={v.id} venue={v}>
+            {picks.map((v) => (
+              <VenueCard key={v.id} venue={v} variant="discover">
                 <VenueActions venue={v} />
               </VenueCard>
             ))}
           </div>
-        </section>
-      )}
+        ) : <div className="discover-empty">Our next picks are being added now.</div>}
+      </section>
 
-      {curatedLists.map((list) => (
-        <section className="app-home__section app-home__picks" aria-label={list.title} key={list.id}>
-          <div className="app-home__section-header">
-            <div>
-              <h2>{list.title}</h2>
-              {list.description && <p>{list.description}</p>}
-            </div>
+      <section className="app-home__section app-home__curated" aria-labelledby="curated-title">
+        <div className="app-home__section-header">
+          <h2 id="curated-title">Curated</h2>
+          <span>{curatedLists.length ? `${curatedLists.length} collection${curatedLists.length === 1 ? "" : "s"}` : "Updated by Weyn"}</span>
+        </div>
+        {curatedLists.length ? (
+          <div className="curated-collection-grid">
+            {curatedLists.map((list) => {
+              const cover = normalizeHttpUrl(list.header_image_url) || normalizeHttpUrl(list.venues[0]?.cover_url);
+              return (
+                <details className="curated-collection" key={list.id}>
+                  <summary style={cover ? { backgroundImage: `linear-gradient(180deg, transparent 35%, rgba(12, 17, 25, .78)), url("${cover}")` } : undefined}>
+                    <span>
+                      <strong>{list.title}</strong>
+                      {list.description && <small>{list.description}</small>}
+                    </span>
+                    <b aria-hidden="true">+</b>
+                  </summary>
+                  <div className="curated-collection__places">
+                    <div className="venue-rail" aria-label={`Places in ${list.title}`}>
+                      {list.venues.map((v) => (
+                        <VenueCard key={v.id} venue={v} variant="discover">
+                          <VenueActions venue={v} />
+                        </VenueCard>
+                      ))}
+                    </div>
+                  </div>
+                </details>
+              );
+            })}
           </div>
-          <div className="venue-rail" aria-label={`Scroll through ${list.title}`}>
-            {list.venues.map((v) => (
-              <VenueCard key={v.id} venue={v}>
-                <VenueActions venue={v} />
-              </VenueCard>
-            ))}
-          </div>
-        </section>
-      ))}
+        ) : <div className="discover-empty">New collections are being prepared. Check back shortly.</div>}
+      </section>
+
+      <DiscoverCommunityCollections isLoggedIn={!!user} />
 
       <section className="app-home__feed" aria-label="Community feed">
         <div className="app-home__section-header app-home__feed-heading">
@@ -157,7 +227,7 @@ export default async function HomePage() {
           </div>
           <div className="venue-grid">
             {fresh.map((v) => (
-              <VenueCard key={v.id} venue={v}>
+              <VenueCard key={v.id} venue={v} variant="discover">
                 <VenueActions venue={v} />
               </VenueCard>
             ))}
@@ -167,4 +237,3 @@ export default async function HomePage() {
     </div>
   );
 }
-

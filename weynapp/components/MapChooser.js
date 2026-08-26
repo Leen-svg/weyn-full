@@ -2,107 +2,17 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Check, ExternalLink, MapPin, X } from "lucide-react";
+import { preferredMapHref, providerLinks, venueDestination } from "@/lib/map-links.mjs";
 import styles from "./MapChooser.module.css";
-
-function finiteCoordinate(value, min, max) {
-  if (value === null || value === undefined || (typeof value === "string" && !value.trim())) return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : null;
-}
-
-function venueDestination(venue) {
-  const latitude = finiteCoordinate(venue.latitude, -90, 90);
-  const longitude = finiteCoordinate(venue.longitude, -180, 180);
-  const label = [venue.name, venue.neighborhood, venue.city || "UAE"]
-    .filter(Boolean)
-    .join(", ");
-
-  return { latitude, longitude, label };
-}
-
-function providerLinks(venue) {
-  const { latitude, longitude, label } = venueDestination(venue);
-  const query = encodeURIComponent(label);
-  const hasCoordinates = latitude !== null && longitude !== null;
-  const coordinates = hasCoordinates ? `${latitude},${longitude}` : null;
-  const encodedCoordinates = coordinates ? encodeURIComponent(coordinates) : null;
-
-  return [
-    {
-      name: "Apple Maps",
-      detail: "iPhone, iPad and Mac",
-      href: hasCoordinates
-        ? `https://maps.apple.com/?daddr=${encodedCoordinates}&q=${query}`
-        : `https://maps.apple.com/?daddr=${query}`,
-    },
-    {
-      name: "Google Maps",
-      detail: "App or browser",
-      href: `https://www.google.com/maps/dir/?api=1&destination=${hasCoordinates ? encodedCoordinates : query}`,
-    },
-    {
-      name: "Waze",
-      detail: "Live driving directions",
-      href: hasCoordinates
-        ? `https://waze.com/ul?ll=${encodedCoordinates}&navigate=yes&utm_source=weyn`
-        : `https://waze.com/ul?q=${query}&navigate=yes&utm_source=weyn`,
-    },
-    {
-      name: "HERE WeGo",
-      detail: "App or browser",
-      href: hasCoordinates
-        ? `https://wego.here.com/directions/mix//${latitude},${longitude}?to=place.${latitude},${longitude}`
-        : `https://wego.here.com/search/${query}`,
-    },
-    {
-      name: "Bing Maps",
-      detail: "Browser directions",
-      href: hasCoordinates
-        ? `https://www.bing.com/maps?rtp=~pos.${latitude}_${longitude}_${query}`
-        : `https://www.bing.com/maps?q=${query}`,
-    },
-    {
-      name: "OpenStreetMap",
-      detail: "Open map in browser",
-      href: hasCoordinates
-        ? `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=;${encodedCoordinates}`
-        : `https://www.openstreetmap.org/search?query=${query}`,
-    },
-  ];
-}
-
-function defaultMapLink(venue, links) {
-  const { latitude, longitude, label } = venueDestination(venue);
-  if (typeof navigator === "undefined") return links[5].href;
-
-  const agent = navigator.userAgent || "";
-  if (/Android/i.test(agent)) {
-    const query = encodeURIComponent(
-      latitude !== null && longitude !== null
-        ? `${latitude},${longitude}(${label})`
-        : label,
-    );
-    return latitude !== null && longitude !== null
-      ? `geo:${latitude},${longitude}?q=${query}`
-      : `geo:0,0?q=${query}`;
-  }
-  if (/iPhone|iPad|iPod|Macintosh/i.test(agent)) return links[0].href;
-  return links[5].href;
-}
 
 export default function MapChooser({ venue, className = "btn small ghost", compact = false }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [defaultHref, setDefaultHref] = useState(null);
   const titleId = useId();
   const triggerRef = useRef(null);
   const sheetRef = useRef(null);
   const closeButtonRef = useRef(null);
   const links = useMemo(() => providerLinks(venue), [venue]);
-
-  useEffect(() => {
-    setDefaultHref(defaultMapLink(venue, links));
-  }, [venue, links]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -171,14 +81,24 @@ export default function MapChooser({ venue, className = "btn small ghost", compa
               </button>
             </header>
 
-            <a className={styles.defaultAction} href={defaultHref || links[5].href} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>
+            <a
+              className={styles.defaultAction}
+              href={preferredMapHref(venue)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => {
+                event.currentTarget.href = preferredMapHref(venue, navigator.userAgent);
+                window.setTimeout(() => setOpen(false), 0);
+              }}
+            >
               <span><MapPin aria-hidden="true" size={19} /> Open default maps</span>
               <ExternalLink aria-hidden="true" size={17} />
             </a>
 
             <div className={styles.providers}>
               {links.map((provider) => (
-                <a key={provider.name} href={provider.href} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>
+                <a key={provider.name} href={provider.href} target="_blank" rel="noopener noreferrer" onClick={() => window.setTimeout(() => setOpen(false), 0)}>
+                  <span className={`${styles.providerMark} ${styles[`providerMark_${provider.id}`]}`} aria-hidden="true">{provider.mark}</span>
                   <span>
                     <strong>{provider.name}</strong>
                     <small>{provider.detail}</small>
@@ -198,4 +118,3 @@ export default function MapChooser({ venue, className = "btn small ghost", compa
     </>
   );
 }
-

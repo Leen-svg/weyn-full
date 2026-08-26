@@ -66,18 +66,6 @@ export default function PollClient({ code }) {
 
   const max = Math.max(1, ...data.options.map((o) => o.votes));
 
-  /* A winner is only declared once voting has closed AND one option is
-     alone at the top. While the poll is open the same option is only
-     ever "leading", and a tie is never a win, it is a tie. Calling a
-     result early or calling a draw a victory is how a group ends up
-     somewhere half of them did not agree to. */
-  const topVotes = Math.max(0, ...data.options.map((o) => o.votes));
-  const tiedAtTop = data.options.filter((o) => o.votes === topVotes).length > 1;
-  const winnerId =
-    data.poll.expired && topVotes > 0 && !tiedAtTop
-      ? data.options.find((o) => o.votes === topVotes)?.optionId
-      : null;
-
   return (
     <div className="vote-flow">
       <h1>Pick one.</h1>
@@ -99,24 +87,14 @@ export default function PollClient({ code }) {
       <div className="venue-list-single">
       {data.options.map((o) => (
         <VenueCard key={o.optionId} venue={o.venue} picked={voted === o.optionId}>
-          <div className={`poll-result${winnerId === o.optionId ? " winner" : ""}`}>
-            {winnerId === o.optionId && (
-              <span className="poll-winner-badge">
-                <span aria-hidden="true">🏆</span> Winner
-              </span>
-            )}
-            <div className="poll-result-head">
+          <div style={{ marginTop: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 800, gap: 8 }}>
               <span>
                 {o.votes} vote{o.votes === 1 ? "" : "s"}
                 {o.voters.length ? `, ${o.voters.join(", ")}` : ""}
               </span>
-              <span className="poll-result-share">
-                {/* Share of all votes cast, not share of the leader, so
-                    the numbers across options add up to 100%. */}
-                {data.totalVotes > 0 ? Math.round((o.votes / data.totalVotes) * 100) : 0}%
-              </span>
+              {voted === o.optionId && <span style={{ color: "var(--purple)" }}>✓ your pick</span>}
             </div>
-            {voted === o.optionId && <span className="poll-your-pick">✓ your pick</span>}
             <div className="result-bar">
               <div
                 className={`result-fill${o.votes === max && o.votes > 0 ? " lead" : ""}`}
@@ -145,4 +123,5 @@ export default function PollClient({ code }) {
     </div>
   );
 }
+
 

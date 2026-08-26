@@ -29,3 +29,4 @@ from safe_tags cross join target_category
 on conflict (slug) do update set display_name = excluded.display_name, is_active = true, seasonal_exclude = false;
 
 commit;
+

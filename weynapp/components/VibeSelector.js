@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, Sparkles } from "lucide-react";
 import VenueCard from "./VenueCard";
 import VenueActions from "./VenueActions";
+import { interpretAskWeyn } from "@/lib/ask-weyn.mjs";
 
 const BUDGETS = [
   { label: "Under 50 AED", value: 50 },
@@ -20,8 +21,8 @@ const AGES = [
 ];
 
 const CITIES = [
-  { value: "Abu Dhabi", label: "Abu Dhabi", note: "Live now, updated weekly." },
-  { value: "Dubai", label: "Dubai", note: "Live now, updated weekly." },
+  { value: "Abu Dhabi", label: "Abu Dhabi", note: "Capital favourites, from Saadiyat to Yas." },
+  { value: "Dubai", label: "Dubai", note: "City classics and new openings, from Jumeirah to Downtown." },
 ];
 
 const GUEST_TRIAL_LIMIT = 4;
@@ -46,14 +47,6 @@ function isColdSeason() {
   const m = new Date().getMonth() + 1; // 1-12
   const d = new Date().getDate();
   return m >= 11 || m <= 4 || (m === 10 && d >= 15);
-}
-
-function isAccessRules(category) {
-  return category?.slug === "access-rules" || category?.name?.trim().toLowerCase() === "access & rules";
-}
-
-function isDuplicateAgeTag(tag) {
-  return tag?.slug === "21-plus" || tag?.display_name?.trim() === "21+";
 }
 
 function groupBySubgroup(tags) {
@@ -88,7 +81,6 @@ function AccordionSection({ id, label, count, forceOpen, open, onToggle, childre
 
 export default function VibeSelector({ groups, isLoggedIn = false }) {
   const router = useRouter();
-  const orderedGroups = [...groups].sort((a, b) => Number(isAccessRules(a)) - Number(isAccessRules(b)));
   const [city, setCity] = useState("Abu Dhabi");
   const [selected, setSelected] = useState({});
   const [budget, setBudget] = useState(99999);
@@ -96,19 +88,26 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
   const [aesthetic, setAesthetic] = useState(false);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
+  const [resultNote, setResultNote] = useState(null);
   const [share, setShare] = useState(null);
+  const [sharePollId, setSharePollId] = useState(null);
+  const [pollVisibility, setPollVisibility] = useState("");
   const [shareGroups, setShareGroups] = useState(null);
   const [sharedGroupId, setSharedGroupId] = useState(null);
   const [shareBusy, setShareBusy] = useState(false);
   const [err, setErr] = useState(null);
-  const [openSections, setOpenSections] = useState(() => new Set(orderedGroups[0] ? [`category::${orderedGroups[0].slug}`] : []));
+  const [openSections, setOpenSections] = useState(() => new Set(groups[0] ? [`category::${groups[0].slug}`] : []));
   const [cold] = useState(isColdSeason);
   const [tagQuery, setTagQuery] = useState("");
   const [nearby, setNearby] = useState(null);
   const [locationState, setLocationState] = useState("idle");
   const [locationMessage, setLocationMessage] = useState("Suggestions anywhere in the selected city.");
-  const [showMore, setShowMore] = useState(false);
   const sharePanelRef = useRef(null);
+
+  useEffect(() => {
+    const initialQuery = new URLSearchParams(window.location.search).get("q");
+    if (initialQuery?.trim()) setTagQuery(initialQuery.trim().slice(0, 240));
+  }, []);
 
   useEffect(() => {
     if (!share) return;
@@ -205,18 +204,27 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
     return false;
   }
 
-  async function getShortlist() {
+  async function getShortlist(filters = {}) {
     if (guestAttemptsExhausted()) {
       router.push("/signup?next=/find");
       return;
     }
-    setLoading(true); setErr(null); setShare(null);
+    const shortlistTags = Array.isArray(filters.tags) ? filters.tags : allTags;
+    if (!shortlistTags.length) {
+      setErr("Tell Weyn what you feel like, or pick at least one vibe below.");
+      return;
+    }
+    setLoading(true); setErr(null); setShare(null); setResultNote(null);
     try {
       const res = await fetch("/api/shortlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tags: allTags, maxSpend: budget, aestheticOnly: aesthetic, maxAge, city,
+          tags: shortlistTags,
+          maxSpend: filters.maxSpend ?? budget,
+          aestheticOnly: filters.aestheticOnly ?? aesthetic,
+          maxAge: filters.maxAge ?? maxAge,
+          city: filters.city ?? city,
           zones: null,
           nearby,
         }),
@@ -224,8 +232,29 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       setResults(data.venues);
+      setResultNote(data.note || null);
     } catch (e) { setErr(e.message); }
     setLoading(false);
+  }
+
+  async function askWeyn(event) {
+    event.preventDefault();
+    const parsed = interpretAskWeyn(tagQuery, groups, {
+      city,
+      maxSpend: budget,
+      maxAge,
+      aestheticOnly: aesthetic,
+    });
+    if (!parsed.tags.length) {
+      setErr("Try a little more detail, for example “quiet rooftop date in Dubai under 150 AED”.");
+      return;
+    }
+    setSelected(parsed.selected);
+    setCity(parsed.city);
+    setBudget(parsed.maxSpend);
+    setMaxAge(parsed.maxAge);
+    setAesthetic(parsed.aestheticOnly);
+    await getShortlist(parsed);
   }
 
   async function makePoll() {
@@ -236,13 +265,14 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tags: allTags, maxSpend: budget, aestheticOnly: aesthetic, maxAge,
-          zones: null, venueIds: results.map((v) => v.id),
+          zones: null, venueIds: results.map((v) => v.id), visibility: pollVisibility,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not create poll");
       const url = `${window.location.origin}/p/${data.code}`;
       setShare(url);
+      setSharePollId(data.id || null);
       setSharedGroupId(null);
       if (isLoggedIn) {
         const groupsRes = await fetch("/api/groups");
@@ -263,7 +293,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
       const res = await fetch(`/api/groups/${groupId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: `🗳️ Vote on where we should go: ${share}` }),
+        body: JSON.stringify({ body: "🗳️ Vote on where we should go", share: sharePollId ? { type: "poll", id: sharePollId } : null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not share with this group");
@@ -284,54 +314,94 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
     }
   }
 
-  function isMoodGroup(cat) {
-    const key = `${cat.slug || ""} ${cat.name || ""}`.toLowerCase();
-    return /mood|vibe|occasion|feeling/.test(key);
-  }
+  return (
+    <div className="vibe-selector-flow">
+      <form className="ask-weyn-card" onSubmit={askWeyn}>
+        <label htmlFor="ask-weyn-input">
+          <Sparkles aria-hidden="true" />
+          <span>Ask Weyn</span>
+        </label>
+        <div className="ask-weyn-input-wrap">
+          <Search aria-hidden="true" />
+          <input
+            id="ask-weyn-input"
+            type="text"
+            placeholder="quiet rooftop date in Abu Dhabi under 150…"
+            value={tagQuery}
+            onChange={(event) => setTagQuery(event.target.value)}
+            autoComplete="off"
+          />
+        </div>
+        <button className="btn primary block" type="submit" disabled={loading || !tagQuery.trim()}>
+          {loading ? "Finding your three…" : "Find 3 spots →"}
+        </button>
+        <p className="sub" style={{ margin: 0, fontSize: 13 }}>City, mood, occasion and budget can all go in one sentence.</p>
+      </form>
 
-  const moodGroups = orderedGroups.filter(isMoodGroup);
-  const extraGroups = orderedGroups.filter((cat) => !isMoodGroup(cat));
-  const primaryGroups = moodGroups.length ? moodGroups : orderedGroups.slice(0, 1);
-  const secondaryGroups = moodGroups.length ? extraGroups : orderedGroups.slice(1);
+      <h2 className="sr-only">Location</h2>
+      <div className="details-card find-location-card">
+        <div className="details-row">
+          <div>
+            <strong>Keep suggestions close</strong>
+            <p className="sub" style={{ margin: "4px 0 0", fontSize: 13 }}>
+              Share your location only when you press the button.
+            </p>
+          </div>
+          <button
+            type="button"
+            className={`btn small ${locationState === "active" ? "primary" : "ghost"}`}
+            aria-pressed={locationState === "active"}
+            disabled={locationState === "loading"}
+            onClick={toggleNearby}
+          >
+            {locationState === "loading" ? "Locating…" : locationState === "active" ? "Near me on ✓" : "Near me"}
+          </button>
+        </div>
+        {locationState !== "idle" && (
+          <p
+            className="sub"
+            role={locationState === "error" ? "alert" : "status"}
+            style={{
+              margin: "12px 0 0",
+              fontSize: 13,
+              color: locationState === "error" ? "#c72f55" : undefined,
+            }}
+          >
+            {locationMessage}
+          </p>
+        )}
+      </div>
 
-  function renderCategory(cat) {
-      const q = tagQuery.trim().toLowerCase();
-      let visibleTags = cold ? cat.tags.filter((t) => !t.seasonal_exclude) : cat.tags;
-      if (isAccessRules(cat)) visibleTags = visibleTags.filter((tag) => !isDuplicateAgeTag(tag));
-      if (q) visibleTags = visibleTags.filter((t) => t.display_name.toLowerCase().includes(q));
-      if (visibleTags.length === 0) return null;
-      const clusters = groupBySubgroup(visibleTags);
-      const categoryId = `category::${cat.slug}`;
-      const picks = selected[cat.slug] || [];
-      const mood = isMoodGroup(cat);
-      return (
-        <div key={cat.slug} className={`tag-category-dropdown${mood ? " is-mood" : ""}`}>
-          {mood ? (
-            <>
-              <h2 className="group-label">{cat.name}</h2>
-              {clusters.map((cluster) => (
-                <div className="chips" key={`${cat.slug}::${cluster.subgroup || "_"}`} style={{ marginBottom: 8 }}>
-                  {cluster.tags.map((t) => (
-                    <button key={t.slug} className={`chip ${picks.includes(t.slug) ? "sel" : ""}`} onClick={() => toggleTag(cat, t.slug)}>
-                      {t.display_name}
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </>
-          ) : (
+      <h2 className="group-label">City</h2>
+      <div className="city-picker">
+        {CITIES.map((c) => (
+          <button key={c.value} type="button" className={`city-card ${city === c.value ? "sel" : ""}`} onClick={() => pickCity(c.value)}>
+            <span className="city-card-name">{c.label}</span>
+            <span className="city-card-note">{c.note}</span>
+          </button>
+        ))}
+      </div>
+
+      {groups.map((cat) => {
+        let visibleTags = cold ? cat.tags.filter((t) => !t.seasonal_exclude) : cat.tags;
+        if (visibleTags.length === 0) return null;
+        const clusters = groupBySubgroup(visibleTags);
+        const categoryId = `category::${cat.slug}`;
+        const picks = selected[cat.slug] || [];
+        return (
+          <div key={cat.slug} className="tag-category-dropdown">
             <AccordionSection
               id={categoryId}
               label={`${cat.name}${cat.max_select > 1 ? ` · pick up to ${cat.max_select}` : ""}`}
               count={picks.length ? `${picks.length} selected · ${visibleTags.length}` : visibleTags.length}
-              forceOpen={!!q}
+              forceOpen={picks.length > 0}
               open={openSections.has(categoryId)}
               onToggle={toggleSection}
             >
               {clusters.map((cluster) => {
               const id = `${cat.slug}::${cluster.subgroup || "_"}`;
               const hasSelection = cluster.tags.some((t) => picks.includes(t.slug));
-              if (!cluster.subgroup || q) {
+              if (!cluster.subgroup) {
                 return (
                   <div className="chips" key={id} style={{ marginBottom: 8 }}>
                     {cluster.tags.map((t) => (
@@ -363,86 +433,13 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
               );
               })}
             </AccordionSection>
-          )}
-        </div>
-      );
-  }
-
-  return (
-    <div className="find-flow">
-      <h2 className="group-label">City</h2>
-      <div className="city-picker">
-        {CITIES.map((c) => (
-          <button key={c.value} type="button" className={`city-card ${city === c.value ? "sel" : ""}`} onClick={() => pickCity(c.value)}>
-            <span className="city-card-name">{c.label}</span>
-            <span className="city-card-note">{c.note}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="details-card find-essentials">
-        <div className="details-row">
-          <span className="details-label">Budget</span>
-          <div className="chips">
-            {BUDGETS.map((b) => (
-              <button key={b.value} className={`chip ${budget === b.value ? "sel" : ""}`}
-                onClick={() => { setBudget(b.value); setResults(null); }}>
-                {b.label}
-              </button>
-            ))}
           </div>
-        </div>
-        <div className="details-row">
-          <div>
-            <strong>Near me</strong>
-            <p className="sub" style={{ margin: "4px 0 0", fontSize: 13 }}>
-              {locationMessage}
-            </p>
-          </div>
-          <button
-            type="button"
-            className={`btn small ${locationState === "active" ? "primary" : "ghost"}`}
-            aria-pressed={locationState === "active"}
-            disabled={locationState === "loading"}
-            onClick={toggleNearby}
-          >
-            {locationState === "loading" ? "Locating…" : locationState === "active" ? "On" : "Use location"}
-          </button>
-        </div>
-      </div>
-
-      {primaryGroups.map(renderCategory)}
-
-      <button
-        type="button"
-        className="btn ghost block more-filters"
-        aria-expanded={showMore || !!tagQuery}
-        onClick={() => setShowMore((open) => !open)}
-      >
-        {showMore || tagQuery ? "Hide extra filters" : "More filters"}
-      </button>
-
-      {(showMore || tagQuery) && (
-      <div className="find-more">
-      <div className="field" style={{ position: "relative", marginBottom: 20 }}>
-        <Search
-          className="h-4 w-4"
-          style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: 0.5 }}
-        />
-        <input
-          type="text"
-          placeholder="Search tags, rooftop, date night, shisha…"
-          value={tagQuery}
-          onChange={(e) => setTagQuery(e.target.value)}
-          style={{ paddingLeft: 36 }}
-        />
-      </div>
-
-      {secondaryGroups.map(renderCategory)}
+        );
+      })}
 
       {cold && (
         <p className="sub" style={{ marginTop: -8, marginBottom: 24, fontSize: 13 }}>
-          Outdoor off-season: non-beach outdoor picks stay hidden until May.
+          🍂 It&apos;s outdoor off-season, hiding non-beach outdoor picks until May. Beach spots stay open year-round.
         </p>
       )}
 
@@ -459,16 +456,25 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
             ))}
           </div>
         </div>
+        <div className="details-row">
+          <span className="details-label">Budget</span>
+          <div className="chips">
+            {BUDGETS.map((b) => (
+              <button key={b.value} className={`chip ${budget === b.value ? "sel" : ""}`}
+                onClick={() => { setBudget(b.value); setResults(null); }}>
+                {b.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <label className="toggle-row" style={{ marginBottom: 0 }}>
           <input type="checkbox" checked={aesthetic} onChange={(e) => { setAesthetic(e.target.checked); setResults(null); }} />
-          Aesthetic spots only
+          Aesthetic spots only 📸
         </label>
       </div>
-      </div>
-      )}
 
       <div className="cta-row">
-        <button className="btn primary block" disabled={!ready || loading} onClick={getShortlist}>
+        <button className="btn primary block" disabled={!ready || loading} onClick={() => getShortlist()}>
           {loading ? "Thinking…" : "Weyn? →"}
         </button>
       </div>
@@ -477,6 +483,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
 
       {results && (
         <div style={{ marginTop: 34 }}>
+          {resultNote && <div className="notice" role="status">{resultNote}</div>}
           {results.length === 0 ? (
             <div className="notice err">
               Nothing matches that exact combo in {city} yet, try loosening the budget or picking fewer tags.
@@ -492,7 +499,16 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
                 ))}
               </div>
               <div className="cta-row">
-                <button className="btn primary block" disabled={loading} onClick={makePoll}>
+                <fieldset className="field audience-picker">
+                  <legend>Who can open this vote?</legend>
+                  <div className="chips" role="radiogroup" aria-label="Vote audience">
+                    {[["private", "🔒 Private"], ["friends", "👋 Friends"], ["public", "🌍 Public"]].map(([value, label]) => (
+                      <button type="button" role="radio" aria-checked={pollVisibility === value} className={`chip ${pollVisibility === value ? "sel" : ""}`} disabled={!isLoggedIn && value !== "public"} onClick={() => setPollVisibility(value)} key={value}>{label}</button>
+                    ))}
+                  </div>
+                  <small>{isLoggedIn ? "Private votes open only to you until you explicitly send them to a group." : "Guest votes must be Public. Log in for Private or Friends."}</small>
+                </fieldset>
+                <button className="btn primary block" disabled={loading || !pollVisibility} onClick={makePoll}>
                   Create a group vote
                 </button>
                 <p className="group-vote-hint">Then send it straight to one of your Weyn groups or share the link anywhere.</p>
@@ -550,7 +566,3 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
     </div>
   );
 }
-
-
-
-

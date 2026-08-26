@@ -93,45 +93,6 @@ export default function AdminImport() {
     return summary;
   }
 
-  async function uploadRawBatch(rows) {
-    if (replaceAll) {
-      const ok = window.confirm(
-        `This deletes ALL live venues and replaces them with the ${rows.length} in this file. Each one is enriched with AI-suggested tags (and a Google Places lookup for any missing coordinates) before import, so this is slower than a curated batch. This can't be undone, download a backup first if you haven't. Continue?`
-      );
-      if (!ok) throw new Error("Cancelled, replace-all was not confirmed.");
-      setProgress({ stage: "wiping" });
-      const res = await fetch("/api/admin/replace-venues-start", { method: "POST" });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Couldn't clear existing venues");
-    }
-
-    const summary = emptySummary();
-    summary.total = rows.length;
-    const chunks = chunk(rows, 20);
-    let done = 0;
-    for (const c of chunks) {
-      setProgress({ done, total: rows.length });
-      const res = await fetch("/api/admin/enrich-import-chunk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: c }),
-      });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Chunk enrich+import failed");
-      summary.inserted += d.inserted;
-      summary.updated += d.updated;
-      summary.newTagsCreated += d.newTagsCreated;
-      summary.mediaAdded += d.mediaAdded;
-      summary.mediaSkippedJunk += d.mediaSkippedJunk;
-      summary.mediaSkippedDuplicate += d.mediaSkippedDuplicate;
-      summary.skipped += (d.errors?.length || 0) + (d.enrichErrors?.length || 0);
-      summary.errors.push(...(d.errors || []), ...(d.enrichErrors || []));
-      done += c.length;
-      setProgress({ done, total: rows.length });
-    }
-    return summary;
-  }
-
   async function uploadSimpleFile() {
     const form = new FormData();
     form.append("file", file);
@@ -159,12 +120,7 @@ export default function AdminImport() {
       }
 
       const isCurationBatch = Array.isArray(rows) && rows.length > 0 && rows[0]?.curation;
-      const isRawScrapeBatch = Array.isArray(rows) && rows.length > 0 && !isCurationBatch && rows[0]?.id && rows[0]?.name;
-      const summary = isCurationBatch
-        ? await uploadCurationBatch(rows)
-        : isRawScrapeBatch
-          ? await uploadRawBatch(rows)
-          : await uploadSimpleFile();
+      const summary = isCurationBatch ? await uploadCurationBatch(rows) : await uploadSimpleFile();
       setResult(summary);
     } catch (e) {
       setErr(e.message);
@@ -188,7 +144,7 @@ export default function AdminImport() {
       </p>
       <p className="sub" style={{ marginTop: 4, fontSize: 13 }}>
         <strong>Simple spreadsheet</strong>: matched by name + neighborhood, or an <code>id</code> column. Recognized columns: name,
-        neighborhood, city (Abu Dhabi/Dubai), avg_spend_aed, google_maps_url, hero_video_url, description, zone_slug, category,
+        neighborhood, city (Abu Dhabi/Dubai), avg_spend_aed, google_maps_url, hero_video_url, menu_url, description, zone_slug, category,
         cuisine, age_restriction, is_aesthetic, latitude, longitude.
       </p>
       <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--ink)" }}>

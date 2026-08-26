@@ -17,3 +17,4 @@ export async function POST() {
 
   return NextResponse.json({ deleted: before || 0 });
 }
+

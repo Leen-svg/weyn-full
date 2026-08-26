@@ -26,3 +26,4 @@ test("payload, list, and coordinate validation is bounded", () => {
   assert.equal(validCoordinates(124.45, 54.37), false);
 });
 
+

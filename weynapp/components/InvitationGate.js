@@ -29,13 +29,9 @@ export default function InvitationGate() {
   return (
     <section className="welcome-hero">
       <div className="welcome-hero__copy">
-        <p className="eyebrow">Private beta</p>
-        <h1>
-          Code
-          <br />
-          first.
-        </h1>
-        <p className="sub">Invite-only in Abu Dhabi and Dubai. Enter a code, then create your account.</p>
+        <p className="eyebrow">Invitation-only beta</p>
+        <h1>Enter your code</h1>
+        <p className="sub">Your invitation unlocks account creation for Weyn in Abu Dhabi and Dubai.</p>
         <form onSubmit={submit}>
           <label htmlFor="invitation-code">Invitation code</label>
           <input
@@ -47,7 +43,7 @@ export default function InvitationGate() {
             autoCorrect="off"
             autoComplete="one-time-code"
             spellCheck={false}
-            placeholder="Enter your code"
+            placeholder="YALLA WEYN"
             required
             autoFocus
           />
@@ -62,12 +58,12 @@ export default function InvitationGate() {
                 <Loader2 className="invite-spinner" /> Checking…
               </>
             ) : (
-              "Continue to sign up"
+              "Continue"
             )}
           </button>
         </form>
         <p>
-          <a href="/login">I already have an account</a>
+          <a href="/login">Already have an account? Log in</a>
         </p>
       </div>
     </section>

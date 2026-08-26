@@ -183,7 +183,7 @@ export default function FriendsClient() {
             <div className="mt-3 border-t pt-3">
               <div className="mb-1 text-xs font-semibold text-muted-foreground">Pending</div>
               {outgoing.map((f) => (
-                <PersonRow key={f.id} person={f.other} right={<span className="text-xs text-muted-foreground">Sent</span>} />
+                <PersonRow key={f.id} person={f.other} right={<Button size="sm" variant="ghost" disabled={busy} onClick={() => removeFriendship(f.id)}>Cancel request</Button>} />
               ))}
             </div>
           )}
@@ -207,7 +207,7 @@ export default function FriendsClient() {
                 <span className="text-muted-foreground">rated</span>
                 <span className="font-semibold">{a.venues?.name}</span>
               </div>
-              <div className="mt-1 text-xs text-muted-foreground">{a.aesthetic_taste ?? 50}% taste · {a.quiet_loud ?? 50}% loud · {a.wallet_splurge ?? 50}% splurge</div>
+              <div className="mt-1 text-xs text-muted-foreground">{"★".repeat(a.rating || 0)}{"☆".repeat(5 - (a.rating || 0))}{a.quiet_loud != null ? ` · ${a.quiet_loud}% lively` : ""}{a.wallet_splurge != null ? ` · ${a.wallet_splurge}% splurge` : ""}</div>
               {a.body && <p className="mt-1 text-sm text-muted-foreground">{a.body}</p>}
             </div>
           ))}

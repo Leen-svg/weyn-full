@@ -16,27 +16,27 @@
 
 :root{
   /* --- Core palette (Pastel Pop). These are the ONLY colours. --- */
-  --paper:#F7F9FB;
-  --white:#FFFFFF;
-  --ink:#191C1E;
-  --ink-deep:#111111;
-  --ink-soft:#4A4455;
+  --paper:#F9F9F9;        /* page background */
+  --white:#FFFFFF;        /* card background */
+  --ink:#1F3044;          /* text, ALL borders, ALL shadows */
+  --ink-deep:#152230;     /* dark section backgrounds, footer */
+  --ink-soft:#54677D;     /* body copy, secondary text */
 
-  --blue:#7C3AED;
-  --blue-deep:#630ED4;
-  --sky:#7C3AED;
-  --sky-wash:#EDE0FF;
+  --blue:#5AA9E6;         /* the brand blue. wordmark, marquee bars */
+  --blue-deep:#3D8FD1;    /* blue on light backgrounds, eyebrows */
+  --sky:#7FC8F8;          /* THE AI COLOUR. anything AI does is sky */
+  --sky-wash:#EAF4FD;
 
-  --yellow:#EFE7FF;
-  --yellow-wash:#F4F0FF;
+  --yellow:#FFE45E;       /* highlight, selected state, default button */
+  --yellow-wash:#FFF8D9;
 
-  --pink:#7C3AED;
-  --pink-deep:#5B21B6;
-  --pink-wash:#EDE0FF;
+  --pink:#FF6392;         /* accent + the ؟ mark. NEVER a big surface */
+  --pink-deep:#F2477C;
+  --pink-wash:#FFEDF3;
 
-  --purple:#7C3AED;
-  --purple-deep:#6D28D9;
-  --purple-wash:#EFE7FF;
+  --purple:#8E7CE8;       /* PRIMARY CTA. every important button */
+  --purple-deep:#7863DB;  /* its hover */
+  --purple-wash:#F1EEFC;
 
   /* --- Shape --- */
   --radius-lg:28px;       /* cards, big panels */
@@ -44,14 +44,14 @@
   --radius-pill:999px;    /* buttons, chips, tags, nav */
 
   /* --- The two rules that make it look like Weyn --- */
-  --border:1.5px solid rgba(25,28,30,.08);
-  --shadow-pop:0 18px 40px rgba(99,14,212,.08);
-  --shadow-pop-sm:0 8px 20px rgba(25,28,30,.06);
+  --border:2.5px solid var(--ink);
+  --shadow-pop:6px 6px 0 var(--ink);      /* hard, no blur, no alpha */
+  --shadow-pop-sm:4px 4px 0 var(--ink);
 
   /* --- Type --- */
-  --font-display:var(--font-syne),"Syne",sans-serif;
-  --font-body:var(--font-hanken),"Hanken Grotesk",sans-serif;
-  --font-ar:"Kufam",sans-serif;
+  --font-display:"Bricolage Grotesque",sans-serif;  /* headings, buttons */
+  --font-body:"Space Grotesk",sans-serif;           /* body copy */
+  --font-ar:"Kufam",sans-serif;                     /* ALL Arabic, weight 800 */
 }
 
 /* ---------- 2. BASE ---------- */
@@ -111,8 +111,8 @@ p b,li b{color:var(--ink);font-weight:700}
    The fallback stacks below mean ANY stray Arabic character
    anywhere resolves to Kufam automatically, because neither
    Latin face contains Arabic glyphs. Keep them. */
-body,p,li,.lead{font-family:var(--font-body),"Kufam",sans-serif}
-h1,h2,h3,.display,.btn{font-family:var(--font-display),"Kufam",sans-serif}
+body,p,li,.lead{font-family:"Space Grotesk","Kufam",sans-serif}
+h1,h2,h3,.display,.btn{font-family:"Bricolage Grotesque","Kufam",sans-serif}
 .ar{font-family:var(--font-ar);font-weight:800}
 p .ar,li .ar{font-weight:700}
 
@@ -126,18 +126,17 @@ p .ar,li .ar{font-weight:700}
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   font-family:var(--font-display);font-weight:700;font-size:16px;
-  background:#111;color:#fff;
-  border:0;border-radius:var(--radius-pill);
-  padding:14px 24px;cursor:pointer;
+  background:var(--yellow);color:var(--ink);
+  border:var(--border);border-radius:var(--radius-pill);
+  padding:12px 24px;cursor:pointer;
   box-shadow:var(--shadow-pop-sm);
   transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
 }
-.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-pop)}
-.btn:active{transform:scale(.98)}
-.btn.primary{background:#111;color:#fff}
-.btn.primary:hover{background:#191c1e}
-.btn.ghost{background:var(--white);color:var(--ink)}
-.btn.ghost:hover{background:var(--purple-wash);color:var(--purple-deep)}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:var(--shadow-pop)}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.btn.primary{background:var(--purple);color:var(--white)}
+.btn.primary:hover{background:var(--purple-deep)}
+.btn.ghost{background:var(--white)}
 .btn .arr{display:inline-block;transition:transform .2s}
 .btn:hover .arr{transform:translateX(4px)}
 @media(max-width:960px){.btn{padding:11px 18px;font-size:15px}}
@@ -162,12 +161,6 @@ p .ar,li .ar{font-weight:700}
 .card.pink{background:var(--pink-wash)}
 .card.dark{background:var(--ink-deep);color:var(--paper)}
 .card.dark p{color:rgba(249,249,249,.75)}
-
-/* A vertical stack of page sections (e.g. the Plan page): deliberate,
-   consistent spacing on an 8pt grid instead of leaning on default heading/
-   paragraph margins, which produces uneven, accidental-looking gaps. */
-.planner-stack{display:flex;flex-direction:column;gap:24px}
-@media(max-width:640px){.planner-stack{gap:20px}}
 
 /* ---------- 8. SMALL PARTS ---------- */
 
@@ -252,7 +245,7 @@ p .ar,li .ar{font-weight:700}
 .logo{
   display:inline-flex;align-items:baseline;gap:2px;
   font-family:var(--font-display);font-weight:800;font-size:24px;
-  color:var(--ink);
+  color:var(--blue-deep);
 }
 .logo .q{
   font-family:var(--font-ar);font-weight:800;color:var(--pink);
@@ -318,3 +311,4 @@ footer .links a:hover{color:var(--yellow)}
   /* full-width stacked CTAs */
   .hero-cta .btn{flex:1 1 100%}
 }
+

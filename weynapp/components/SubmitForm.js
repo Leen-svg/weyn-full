@@ -53,7 +53,7 @@ export default function SubmitForm({ groups, zones }) {
   }
 
   return (
-    <form onSubmit={submit}>
+    <form onSubmit={submit} className="propose-form">
       <div className="field">
         <label>Place name *</label>
         <input type="text" required maxLength={120} value={form.name} onChange={set("name")} placeholder="e.g. Nightjar Coffee Roasters" />

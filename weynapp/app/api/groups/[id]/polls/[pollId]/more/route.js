@@ -38,3 +38,4 @@ export async function POST(req, { params }) {
 
   return NextResponse.json({ ok: true, added: venues.length });
 }
+

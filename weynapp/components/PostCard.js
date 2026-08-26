@@ -37,7 +37,10 @@ export default function PostCard({ post, isLoggedIn }) {
           {isLoggedIn && (
             <div style={{ marginTop: 8 }}>
               <ReportButton contentType="post" contentId={post.id} />
-              <ShareToGroupButton text={sharedList ? `📚 ${author?.display_name || "Someone"} shared ${sharedList.title}: /lists/${sharedList.share_slug}` : `📣 ${author?.display_name || "Someone"} on ${post.venues?.name}: "${post.body}"`} />
+              <ShareToGroupButton
+                text={sharedList ? `📚 ${author?.display_name || "Someone"} shared ${sharedList.title}.` : `📣 ${author?.display_name || "Someone"} on ${post.venues?.name}: "${post.body}"`}
+                share={sharedList ? { type: "saved_list", id: post.saved_list_id } : post.venue_id ? { type: "venue", id: post.venue_id } : null}
+              />
             </div>
           )}
         </div>
@@ -45,6 +48,4 @@ export default function PostCard({ post, isLoggedIn }) {
     </div>
   );
 }
-
-
 

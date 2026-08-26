@@ -73,3 +73,4 @@ create or replace function public.add_board_owner() returns trigger language plp
 drop trigger if exists trip_board_owner_trigger on public.trip_boards;
 create trigger trip_board_owner_trigger after insert on public.trip_boards for each row execute function public.add_board_owner();
 commit;
+

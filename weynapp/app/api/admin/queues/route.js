@@ -7,14 +7,20 @@ export async function GET() {
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const s = db();
 
-  const [subs, votes, videos, takedowns, venues, reports] = await Promise.all([
+  const [subs, votes, videos, takedowns, venues, reports, media] = await Promise.all([
     s.from("venue_submissions").select("*").eq("status", "pending").order("created_at", { ascending: false }),
     s.from("tag_votes").select("*, venues (name)").eq("status", "new").order("created_at", { ascending: false }),
     s.from("video_submissions").select("*, venues (name)").in("status", ["pending", "takedown_requested"]).order("created_at", { ascending: false }),
     s.from("takedown_requests").select("*").eq("status", "pending").order("created_at", { ascending: false }),
     s.from("venues").select("id", { count: "exact", head: true }),
     s.from("content_reports").select("*").eq("status", "open").order("created_at", { ascending: false }),
+    s.from("community_media").select("id,user_id,context_type,context_id,venue_id,storage_path,mime_type,byte_size,visibility,created_at,venues(name)").eq("status", "pending").order("created_at", { ascending: true }).limit(100),
   ]);
+
+  const pendingMedia = await Promise.all((media.data || []).map(async (item) => {
+    const { data: signed } = await s.storage.from("community-media-quarantine").createSignedUrl(item.storage_path, 300);
+    return { ...item, preview_url: signed?.signedUrl || null };
+  }));
 
   // Disputed venues: group non-"fits" votes by venue
   const disputes = {};
@@ -57,6 +63,7 @@ export async function GET() {
     videos: videos.data || [],
     takedowns: takedowns.data || [],
     contentReports,
+    pendingMedia,
     venueCount: venues.count || 0,
   });
 }

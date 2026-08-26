@@ -53,9 +53,8 @@ export default function GuestVoteClient({ token }) {
 
   return (
     <div className="vote-flow">
-      <p className="eyebrow">Group vote</p>
       <h1>{data.groupName ? `${data.groupName} is deciding.` : "Pick one."}</h1>
-      <p className="sub">{data.expired ? "Voting closed. Here is the verdict." : "Tap a spot. No account needed."}</p>
+      <p className="sub">{data.expired ? "Voting has closed, here's the verdict." : "Tap your pick. You don't need the app to vote."}</p>
 
       {!data.expired && (
         <div className="field">
@@ -96,4 +95,5 @@ export default function GuestVoteClient({ token }) {
     </div>
   );
 }
+
 

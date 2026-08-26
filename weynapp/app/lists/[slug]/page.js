@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import VenueCard from "@/components/VenueCard";
 import { withCovers } from "@/lib/venueMedia";
+import styles from "@/components/AccountPages.module.css";
 
 export const metadata = { title: "Shared list", robots: { index: false, follow: false } };
 
@@ -11,8 +12,8 @@ export default async function SharedListPage({ params }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const s = db();
-  const { data: list } = await s.from("saved_lists").select("id, user_id, title, description, tags, visibility, saved_list_items(venue_id, venues(*))").eq("share_slug", slug).maybeSingle();
-  if (!list) notFound();
+  const { data: list } = await s.from("saved_lists").select("id, user_id, title, description, tags, visibility, archived_at, saved_list_items(venue_id, venues(*))").eq("share_slug", slug).maybeSingle();
+  if (!list || list.archived_at) notFound();
   let allowed = list.visibility === "public" || user?.id === list.user_id;
   if (!allowed && user) {
     const [{ data: direct }, { data: groupShares }, { data: friendships }] = await Promise.all([
@@ -28,12 +29,13 @@ export default async function SharedListPage({ params }) {
   }
   if (!allowed) redirect(`/login?next=/lists/${encodeURIComponent(slug)}`);
   const venues = await withCovers((list.saved_list_items || []).map((item) => item.venues).filter(Boolean));
-  return <>
-    <span className="eyebrow">Shared Weyn list</span>
-    <h1>{list.title}</h1>
-    {list.description && <p className="sub">{list.description}</p>}
-    {!!list.tags?.length && <div className="tag-row">{list.tags.map((tag) => <span className="tag-pill" key={tag}>#{tag}</span>)}</div>}
+  return <div className={`${styles.pageWide} screen-collection-detail`}>
+    <header className="screen-collection-detail__hero">
+      <span className="eyebrow">Curated collection</span>
+      <h1>{list.title}</h1>
+      {list.description && <p className="sub">{list.description}</p>}
+      {!!list.tags?.length && <div className="tag-row">{list.tags.map((tag) => <span className="tag-pill" key={tag}>#{tag}</span>)}</div>}
+    </header>
     <div className="venue-list-single saved-shared-list">{venues.map((venue) => <VenueCard key={venue.id} venue={venue} />)}</div>
-  </>;
+  </div>;
 }
-

@@ -9,3 +9,4 @@ export default function TagBadgeList({ tags }) {
     </div>
   );
 }
+

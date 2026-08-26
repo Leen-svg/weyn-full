@@ -29,3 +29,4 @@ export async function POST(req, { params }) {
   await awardPoints(user.id, POINTS.viewed_ratings, "viewed_ratings");
   return NextResponse.json({ ok: true, pointsEarned: POINTS.viewed_ratings });
 }
+

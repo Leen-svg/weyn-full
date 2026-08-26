@@ -4,9 +4,10 @@ import { NextResponse } from "next/server";
 import { contentAccountError, validateCommunityText } from "@/lib/content-safety";
 import { payloadTooLarge } from "@/lib/request-security.mjs";
 import { rateLimit } from "@/lib/request-security";
+import { normalizeVisibility } from "@/lib/visibility.mjs";
 
-async function context(id) {
-  const supabase = await createClient();
+async function context(id, req) {
+  const supabase = await createClient(req);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { response: NextResponse.json({ error: "Log in" }, { status: 401 }) };
   const service = db();
@@ -18,7 +19,7 @@ async function context(id) {
 }
 
 export async function GET(req, { params }) {
-  const { id } = await params; const ctx = await context(id); if (ctx.response) return ctx.response;
+  const { id } = await params; const ctx = await context(id, req); if (ctx.response) return ctx.response;
   const [{ data: places }, { data: members }] = await Promise.all([
     ctx.service.from("trip_board_places").select("id,position,venue_id,personal_place_id,venues(id,name,neighborhood,city,latitude,longitude,google_maps_url),personal_places(id,name,neighborhood,city,latitude,longitude),trip_board_votes(user_id,vote)").eq("board_id", id).order("position"),
     ctx.service.from("trip_board_members").select("user_id,role").eq("board_id", id),
@@ -31,7 +32,7 @@ export async function GET(req, { params }) {
 
 export async function PATCH(req, { params }) {
   if (payloadTooLarge(req, 16 * 1024)) return NextResponse.json({ error: "Request too large" }, { status: 413 });
-  const { id } = await params; const ctx = await context(id); if (ctx.response) return ctx.response;
+  const { id } = await params; const ctx = await context(id, req); if (ctx.response) return ctx.response;
   const accountError = await contentAccountError(ctx.user); if (accountError) return NextResponse.json({ error: accountError }, { status: 403 });
   const limited = await rateLimit(req, "board-edit", 120, 60 * 60, ctx.user.id); if (!limited.allowed) return NextResponse.json({ error: "Too many board changes. Try again later." }, { status: 429 });
   const body = await req.json();
@@ -50,7 +51,15 @@ export async function PATCH(req, { params }) {
   if (body.action === "removePlace") { const { error } = await ctx.service.from("trip_board_places").delete().eq("id", body.placeId).eq("board_id", id); return error ? NextResponse.json({ error: error.message }, { status: 400 }) : NextResponse.json({ ok: true }); }
   if (body.action === "reorder" && Array.isArray(body.placeIds)) { for (const [position, placeId] of body.placeIds.slice(0, 50).entries()) await ctx.service.from("trip_board_places").update({ position }).eq("id", placeId).eq("board_id", id); return NextResponse.json({ ok: true }); }
   if (ctx.board.owner_id !== ctx.user.id) return NextResponse.json({ error: "Only the board owner can do that" }, { status: 403 });
-  if (body.action === "publish") { const { error } = await ctx.service.from("trip_boards").update({ is_public: !!body.value }).eq("id", id); return error ? NextResponse.json({ error: error.message }, { status: 500 }) : NextResponse.json({ ok: true }); }
+  if (body.action === "visibility" || body.action === "publish") {
+    const visibility = body.action === "publish" ? (body.value ? "public" : "private") : normalizeVisibility(body.visibility);
+    const { error } = await ctx.service.from("trip_boards").update({ visibility, is_public: visibility === "public" }).eq("id", id);
+    return error ? NextResponse.json({ error: error.message }, { status: 500 }) : NextResponse.json({ ok: true, visibility });
+  }
+  if (body.action === "archive" || body.action === "restore") {
+    const { error } = await ctx.service.from("trip_boards").update({ archived_at: body.action === "archive" ? new Date().toISOString() : null }).eq("id", id);
+    return error ? NextResponse.json({ error: error.message }, { status: 500 }) : NextResponse.json({ ok: true });
+  }
   if (body.action === "rename") { const checked = validateCommunityText(body.title, { required: true, maxLength: 80 }); if (checked.error) return NextResponse.json({ error: checked.error }, { status: 400 }); const { error } = await ctx.service.from("trip_boards").update({ title: checked.text }).eq("id", id); return error ? NextResponse.json({ error: "Couldn't rename that board" }, { status: 500 }) : NextResponse.json({ ok: true }); }
   if (body.action === "invite") { const name = String(body.displayName || "").trim().slice(0, 80); const { data: person } = await ctx.service.from("profile_public").select("id").eq("display_name", name).neq("id", ctx.user.id).limit(1).maybeSingle(); if (!person) return NextResponse.json({ error: "No Weyn account found with that exact display name" }, { status: 404 }); const { error } = await ctx.service.from("trip_board_members").upsert({ board_id: id, user_id: person.id, role: "member" }); return error ? NextResponse.json({ error: error.message }, { status: 400 }) : NextResponse.json({ ok: true }); }
   if (body.action === "removeMember") { const { error } = await ctx.service.from("trip_board_members").delete().eq("board_id", id).eq("user_id", body.userId).eq("role", "member"); return error ? NextResponse.json({ error: error.message }, { status: 400 }) : NextResponse.json({ ok: true }); }
@@ -58,8 +67,7 @@ export async function PATCH(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
-  const { id } = await params; const ctx = await context(id); if (ctx.response) return ctx.response;
+  const { id } = await params; const ctx = await context(id, req); if (ctx.response) return ctx.response;
   if (ctx.board.owner_id !== ctx.user.id) return NextResponse.json({ error: "Only the owner can delete this board" }, { status: 403 });
   const { error } = await ctx.service.from("trip_boards").delete().eq("id", id); return error ? NextResponse.json({ error: error.message }, { status: 500 }) : NextResponse.json({ ok: true });
 }
-

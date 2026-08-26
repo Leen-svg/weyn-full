@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
 const VENUE_FIELDS = [
-  "name", "neighborhood", "city", "avg_spend_aed", "google_maps_url", "hero_video_url",
+  "name", "neighborhood", "city", "avg_spend_aed", "google_maps_url", "hero_video_url", "menu_url",
   "description", "zone_slug", "category", "cuisine", "age_restriction", "is_aesthetic",
   "latitude", "longitude",
 ];
@@ -45,6 +45,7 @@ function cleanRow(row) {
   if (clean.is_aesthetic != null) clean.is_aesthetic = clean.is_aesthetic === true || clean.is_aesthetic === "true" || clean.is_aesthetic === 1;
   if (clean.google_maps_url) clean.google_maps_url = safeUrl(clean.google_maps_url);
   if (clean.hero_video_url) clean.hero_video_url = safeUrl(clean.hero_video_url);
+  if (clean.menu_url) clean.menu_url = safeUrl(clean.menu_url);
   return clean;
 }
 

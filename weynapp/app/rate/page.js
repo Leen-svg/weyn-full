@@ -14,14 +14,14 @@ export default async function RatePage() {
   const { groups } = await getTaxonomy();
   const { data: venues } = await s
     .from("venues")
-    .select("id, name, neighborhood, city, latitude, longitude, avg_spend_aed, is_aesthetic, hero_video_url, google_maps_url, venue_tags (vibe_tags (slug, display_name))")
+    .select("id, name, neighborhood, city, latitude, longitude, avg_spend_aed, is_aesthetic, hero_video_url, menu_url, google_maps_url, venue_tags (vibe_tags (slug, display_name))")
     .eq("is_active", true)
     .limit(200);
 
   const shaped = (venues || []).map((v) => ({
     id: v.id, name: v.name, neighborhood: v.neighborhood,
     avg_spend_aed: v.avg_spend_aed, is_aesthetic: v.is_aesthetic,
-    hero_video_url: v.hero_video_url, google_maps_url: v.google_maps_url,
+    hero_video_url: v.hero_video_url, menu_url: v.menu_url, google_maps_url: v.google_maps_url,
     city: v.city, latitude: v.latitude, longitude: v.longitude,
     tagList: (v.venue_tags || []).map((vt) => vt.vibe_tags).filter(Boolean),
   }));

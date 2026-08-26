@@ -3,14 +3,11 @@ import { db } from "@/lib/db";
 const URL_PATTERN = /(?:https?:\/\/|www\.|(?:[a-z0-9-]+\.)+(?:com|net|org|io|ae|co|app|xyz|link)\b)/i;
 const HIGH_CONFIDENCE_BLOCKED_PATTERN = /\b(?:porn(?:ography)?|xxx|nudes?|onlyfans|rape|kill\s+yourself|kys|scam(?:mer|med)?|fraud(?:ulent)?|stole|stolen|roaches?|poison(?:ed|ing)?)\b/i;
 
-// `allowLinks` is opt-in per surface. The URL ban exists to stop spam on
-// PUBLIC surfaces (posts, reviews); it was also being applied to private group
-// chat, where sending a friend a link is the whole point.
-export function validateCommunityText(value, { required = false, maxLength = 500, allowLinks = false } = {}) {
+export function validateCommunityText(value, { required = false, maxLength = 500 } = {}) {
   const text = String(value || "").trim();
   if (required && !text) return { error: "Write something before posting." };
   if (text.length > maxLength) return { error: "Keep it under " + maxLength + " characters." };
-  if (!allowLinks && URL_PATTERN.test(text)) return { error: "Links aren't allowed in community posts." };
+  if (URL_PATTERN.test(text)) return { error: "Links aren't allowed in community posts." };
   if (HIGH_CONFIDENCE_BLOCKED_PATTERN.test(text)) return { error: "Please describe the experience without accusations, explicit language, or threats." };
   return { text: text || null };
 }
@@ -26,4 +23,5 @@ export function utcDayStart() {
   const now = new Date();
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
 }
+
 

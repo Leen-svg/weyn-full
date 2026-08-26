@@ -36,10 +36,30 @@ async function verifyBetaAccessToken(token) {
   return timingSafeEqual(supplied, expected);
 }
 
-// API routes real users can hit with no invitation code: redeeming a code
-// itself, uptime checks, the marketing page's waitlist form, and the
-// "friends vote with no account" share links (poll-by-code, group-poll-by-token).
-const PUBLIC_API_PREFIXES = ["/api/beta-access", "/api/health", "/api/waitlist", "/api/polls/", "/api/vote/"];
+// Invitation codes guard account creation, not the public product trial.
+// These mutation routes are intentionally available to signed-out visitors;
+// each one still validates its payload and rate-limits independently. Routes
+// such as saves/reviews/media uploads are listed so their own handlers can
+// return a useful 401 login prompt instead of an unrelated invitation error.
+const PUBLIC_API_PATHS = new Set([
+  "/api/beta-access",
+  "/api/health",
+  "/api/waitlist",
+  "/api/shortlist",
+  "/api/nearby",
+  "/api/polls",
+  "/api/saves",
+  "/api/reviews",
+  "/api/media-upload",
+  "/api/submissions",
+  "/api/video-submissions",
+  "/api/takedowns",
+]);
+const PUBLIC_API_PREFIXES = ["/api/polls/", "/api/vote/"];
+
+function isPublicApi(pathname) {
+  return PUBLIC_API_PATHS.has(pathname) || PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
 
 // Refreshes the Supabase auth session cookie on every request so users stay
 // logged in across visits. Standard @supabase/ssr Next.js App Router pattern.
@@ -71,7 +91,7 @@ export async function proxy(request) {
   if (
     ["POST", "PUT", "PATCH", "DELETE"].includes(method) &&
     pathname.startsWith("/api/") &&
-    !PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+    !isPublicApi(pathname)
   ) {
     const betaToken = request.cookies.get(BETA_ACCESS_COOKIE)?.value;
     if (!user && !(await verifyBetaAccessToken(betaToken))) {

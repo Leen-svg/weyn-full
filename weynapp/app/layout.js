@@ -5,7 +5,7 @@ import AppShell from "@/components/AppShell";
 import CookieBar from "@/components/CookieBar";
 import TabBar from "@/components/TabBar";
 import { Analytics } from "@vercel/analytics/next";
-import { createClient } from "@/lib/supabase/server";
+import { currentSession } from "@/lib/session";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -79,10 +79,7 @@ export const viewport = {
 };
 
 export default async function RootLayout({ children }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await currentSession();
 
   return (
     <html lang="en" className={`${syne.variable} ${hanken.variable} ${kufam.variable}`}>
@@ -99,5 +96,4 @@ export default async function RootLayout({ children }) {
     </html>
   );
 }
-
 

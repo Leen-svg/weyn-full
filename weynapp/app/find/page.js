@@ -17,20 +17,18 @@ export default async function FindPage() {
   } = await supabase.auth.getUser();
 
   return (
-    <>
-      <p className="eyebrow">Find</p>
-      <h1>We&apos;re feeling…</h1>
-      <p className="sub">City, mood, budget. Three spots. Then the group votes.</p>
+    <div className="screen-find">
+      <header className="screen-find__header">
+        <span className="eyebrow">Find your next spot</span>
+        <h1>We&apos;re feeling…</h1>
+        <p className="sub">Tap what fits, or tell Weyn in a sentence. Three spots, then the group votes.</p>
+      </header>
 
-      <div style={{ marginTop: 34 }}>
+      <div className="screen-find__selector">
         <VibeSelector groups={groups} zones={zones} isLoggedIn={!!user} />
       </div>
 
       <ComingSoonMap />
-    </>
+    </div>
   );
 }
-
-
-
-

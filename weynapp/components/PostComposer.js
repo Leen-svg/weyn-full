@@ -13,7 +13,8 @@ export default function PostComposer({ onPosted }) {
   const [venueResults, setVenueResults] = useState([]);
   const [venue, setVenue] = useState(null);
   const [body, setBody] = useState("");
-  const [visibility, setVisibility] = useState("public");
+  const [visibility, setVisibility] = useState("");
+  const [photo, setPhoto] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
 
@@ -29,13 +30,29 @@ export default function PostComposer({ onPosted }) {
 
   async function submit() {
     if (!venue || !body.trim()) return;
+    if (!visibility) {
+      setErr("Choose Private, Friends, or Public before posting.");
+      return;
+    }
     setBusy(true);
     setErr(null);
     try {
+      let mediaId = null;
+      if (photo) {
+        const upload = new FormData();
+        upload.set("file", photo);
+        upload.set("contextType", "post");
+        upload.set("venueId", venue.id);
+        upload.set("visibility", visibility);
+        const uploadResponse = await fetch("/api/media-upload", { method: "POST", body: upload });
+        const uploadBody = await uploadResponse.json();
+        if (!uploadResponse.ok) throw new Error(uploadBody.error || "Couldn't upload that photo");
+        mediaId = uploadBody.mediaId;
+      }
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venueId: venue.id, body, visibility }),
+        body: JSON.stringify({ venueId: venue.id, body, visibility, mediaId }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Couldn't post");
@@ -43,6 +60,8 @@ export default function PostComposer({ onPosted }) {
       setVenue(null);
       setVenueQuery("");
       setBody("");
+      setPhoto(null);
+      setVisibility("");
       onPosted?.(d.pointsEarned);
     } catch (e) {
       setErr(e.message);
@@ -86,9 +105,21 @@ export default function PostComposer({ onPosted }) {
             </div>
             <Textarea placeholder="Why do you recommend it?" value={body} maxLength={500} onChange={(e) => setBody(e.target.value)} />
             <div className="flex items-center gap-2">
-              <div className="ml-auto flex gap-1">
+              <div className="ml-auto flex flex-wrap gap-1" role="radiogroup" aria-label="Post audience">
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={visibility === "private"}
+                  onClick={() => setVisibility("private")}
+                  className={`chip ${visibility === "private" ? "sel" : ""}`}
+                  style={{ padding: "4px 10px", fontSize: 11 }}
+                >
+                  🔒 Private
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={visibility === "public"}
                   onClick={() => setVisibility("public")}
                   className={`chip ${visibility === "public" ? "sel" : ""}`}
                   style={{ padding: "4px 10px", fontSize: 11 }}
@@ -97,6 +128,8 @@ export default function PostComposer({ onPosted }) {
                 </button>
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={visibility === "friends"}
                   onClick={() => setVisibility("friends")}
                   className={`chip ${visibility === "friends" ? "sel" : ""}`}
                   style={{ padding: "4px 10px", fontSize: 11 }}
@@ -105,9 +138,10 @@ export default function PostComposer({ onPosted }) {
                 </button>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">Photo uploads are paused while stronger image moderation is added.</p>
+            <Input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setPhoto(event.target.files?.[0] || null)} />
+            <p className="text-xs text-muted-foreground">{!visibility ? "Choose who can see this post." : visibility === "private" ? "Only you can see this post." : visibility === "friends" ? "Only accepted friends can see this post." : "Anyone can see this post."} Photos stay private until approved.</p>
             {err && <div className="notice err">{err}</div>}
-            <Button className="w-full" disabled={busy || !body.trim()} onClick={submit}>
+            <Button className="w-full" disabled={busy || !body.trim() || !visibility} onClick={submit}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Post"}
             </Button>
           </>

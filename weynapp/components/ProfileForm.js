@@ -3,7 +3,6 @@ import { useState, useRef } from "react";
 import { Camera, Check, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
-import { orderTagGroups, dedupeTags } from "@/lib/tag-groups";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,15 +12,16 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import styles from "./AccountPages.module.css";
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export default function ProfileForm({ initial, groups }) {
-  const orderedGroups = orderTagGroups(groups);
   const [displayName, setDisplayName] = useState(initial.display_name || "");
   const [bio, setBio] = useState(initial.bio || "");
   const [favoriteTags, setFavoriteTags] = useState(initial.favorite_tags || []);
+  const [favoriteVisibility, setFavoriteVisibility] = useState(initial.favorite_tags_visibility || "");
   const [avatarUrl, setAvatarUrl] = useState(initial.avatar_url || "");
   const [shareActivity, setShareActivity] = useState(!!initial.share_activity_with_friends);
   const [uploading, setUploading] = useState(false);
@@ -77,6 +77,11 @@ export default function ProfileForm({ initial, groups }) {
       setBusy(false);
       return;
     }
+    if (favoriteTags.length && !favoriteVisibility) {
+      setErr("Choose Private, Friends, or Public for your favorite vibes.");
+      setBusy(false);
+      return;
+    }
     const availabilityRes = await fetch(`/api/profile/username?username=${encodeURIComponent(username)}`);
     const availability = await availabilityRes.json();
     if (!availabilityRes.ok || !availability.available) {
@@ -93,23 +98,26 @@ export default function ProfileForm({ initial, groups }) {
       .update({
         display_name: username,
         bio: bio.trim().slice(0, 300) || null,
-        favorite_tags: favoriteTags,
         avatar_url: avatarUrl || null,
         share_activity_with_friends: shareActivity,
       })
       .eq("id", user.id);
     if (error?.code === "23505") setErr("That username is already taken.");
     else if (error) setErr(error.message);
-    else setMsg("Saved.");
+    else {
+      const { error: preferenceError } = await supabase.from("profile_favorite_preferences").upsert({ user_id: user.id, favorite_tags: favoriteTags, visibility: favoriteVisibility || "private", updated_at: new Date().toISOString() });
+      if (preferenceError) setErr(preferenceError.message);
+      else setMsg("Saved.");
+    }
     setBusy(false);
   }
 
   const initials = (displayName || "?").slice(0, 2).toUpperCase();
 
   return (
-    <form onSubmit={save} className="space-y-5">
-      <Card>
-        <CardContent className="flex items-center gap-5 pt-6">
+    <form onSubmit={save} className={`${styles.settingsForm} profile-settings-form`}>
+      <Card className={styles.avatarCard}>
+        <CardContent>
           <div className="relative">
             <button
               type="button"
@@ -158,16 +166,22 @@ export default function ProfileForm({ initial, groups }) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Favorite vibes</CardTitle>
-          <CardDescription>Shown on your public profile. Helps power your weekly picks later.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <details className={styles.preferences}>
+        <summary>
+          <span><strong>Recommendation preferences</strong><small>Optional · choose vibes only if you want more personal picks</small></span>
+          <b aria-hidden="true">+</b>
+        </summary>
+        <Card className={styles.preferencesCard}>
+          <CardHeader>
+            <CardTitle>Favorite vibes</CardTitle>
+            <CardDescription>Used for recommendations. You choose whether these appear to anyone else.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+          <p className={styles.preferenceIntro}>Pick only the tags that genuinely help Weyn narrow down your recommendations. You can remove a choice at any time.</p>
           {favoriteTags.length > 0 && (
-            <div className="rounded-lg border p-3">
-              <div className="mb-2 text-xs font-semibold text-muted-foreground">Your picks</div>
-              <div className="flex flex-wrap gap-2">
+            <div className={styles.selectedTags}>
+              <strong>Your picks</strong>
+              <div className={styles.tagWrap}>
                 {favoriteTags.map((slug) => {
                   const t = groups.flatMap((g) => g.tags).find((x) => x.slug === slug);
                   if (!t) return null;
@@ -182,12 +196,12 @@ export default function ProfileForm({ initial, groups }) {
             </div>
           )}
           <Accordion type="multiple" className="w-full">
-            {orderedGroups.map((cat) => (
+            {groups.map((cat) => (
               <AccordionItem key={cat.slug} value={cat.slug}>
                 <AccordionTrigger className="text-sm font-semibold">{cat.name}</AccordionTrigger>
                 <AccordionContent>
                   <div className="flex flex-wrap gap-2">
-                    {dedupeTags(cat.tags).map((t) => {
+                    {cat.tags.map((t) => {
                       const on = favoriteTags.includes(t.slug);
                       return (
                         <Badge
@@ -206,8 +220,24 @@ export default function ProfileForm({ initial, groups }) {
               </AccordionItem>
             ))}
           </Accordion>
-        </CardContent>
-      </Card>
+          <fieldset className={styles.audienceGroup}>
+            <legend>Who can see these favorite vibes?</legend>
+            <div className={styles.audienceOptions}>
+              {[
+                ["private", "Only me", "Used privately for recommendations"],
+                ["friends", "Friends", "Accepted Weyn friends"],
+                ["public", "Public", "Shown on your public profile"],
+              ].map(([value, label, help]) => (
+                <label className={styles.audienceOption} key={value}>
+                  <input type="radio" name="favorite-vibes-audience" value={value} checked={favoriteVisibility === value} onChange={() => setFavoriteVisibility(value)} />
+                  <strong>{label}</strong><small>{help}</small>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          </CardContent>
+        </Card>
+      </details>
 
       <Card>
         <CardHeader>
@@ -215,7 +245,7 @@ export default function ProfileForm({ initial, groups }) {
           <CardDescription>The lowkey social stuff, opt-in only.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className={styles.privacyRow}>
             <div>
               <div className="text-sm font-medium">Share my activity with friends</div>
               <div className="text-xs text-muted-foreground">
@@ -244,4 +274,3 @@ export default function ProfileForm({ initial, groups }) {
     </form>
   );
 }
-

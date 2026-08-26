@@ -3,7 +3,7 @@ import { db } from "./db";
 // Attach every piece of metadata shared by VenueCard. Keeping this in one
 // hydrator prevents individual screens from accidentally omitting media or
 // tags when they use a narrower venue query.
-export async function withCovers(venues) {
+export async function withCovers(venues, { maxMediaPerVenue = 6 } = {}) {
   if (!venues?.length) return venues || [];
   const ids = venues.map((v) => v.id);
   const [{ data: media }, { data: tagLinks }] = await Promise.all([
@@ -36,9 +36,14 @@ export async function withCovers(venues) {
   return venues.map((v) => ({
     ...v,
     cover_url: coverMap[v.id] || null,
-    media: mediaMap[v.id] || [],
+    media: (() => {
+      const all = mediaMap[v.id] || [];
+      const limited = all.slice(0, Math.max(1, maxMediaPerVenue));
+      const cover = coverMap[v.id];
+      if (cover && !limited.some((item) => item.url === cover)) limited.unshift({ url: cover, type: "image" });
+      return limited.slice(0, Math.max(1, maxMediaPerVenue));
+    })(),
+    media_count: (mediaMap[v.id] || []).length + (v.hero_video_url && !(mediaMap[v.id] || []).some((item) => item.url === v.hero_video_url) ? 1 : 0),
     tags: (tagMap[v.id] || []).map((tag) => tag.display_name),
   }));
 }
-
-

@@ -94,4 +94,3 @@ alter table public.posts alter column venue_id drop not null;
 
 commit;
 
-

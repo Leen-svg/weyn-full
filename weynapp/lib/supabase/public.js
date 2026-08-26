@@ -13,3 +13,4 @@ export const SUPABASE_URL =
 
 export const SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_lA14C58eXlCuL0Q4j0Y7Zw_wXWghRul";
+

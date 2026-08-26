@@ -12,3 +12,4 @@ export default function Q({ size = "1em", color = "var(--pink)" }) {
     </span>
   );
 }
+

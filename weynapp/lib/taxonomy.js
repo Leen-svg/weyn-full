@@ -36,3 +36,4 @@ async function loadTaxonomy() {
     .filter((c) => c.tags.length > 0);
   return { groups, zones: zones || [] };
 }
+

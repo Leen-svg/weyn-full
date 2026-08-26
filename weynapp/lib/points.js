@@ -17,3 +17,4 @@ export async function awardPoints(userId, delta, reason) {
   await db().rpc("award_points", { p_user_id: userId, p_delta: delta, p_reason: reason });
 }
 
+

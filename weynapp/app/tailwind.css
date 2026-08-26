@@ -52,8 +52,8 @@
   --radius-sm: 10px;
   --radius-xl: var(--radius-lg);
 
-  --font-sans: var(--font-hanken), "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-syne), "Syne", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body);
+  --font-display: var(--font-syne);
 }
 
 @layer base {
@@ -68,15 +68,3 @@
   }
 }
 
-
-/* Tailwind ships a `.block { display: block }` utility, and the utilities
-   layer outranks our `weyn` layer no matter the specificity. Our own
-   `.btn.block` full-width modifier therefore lost `.btn`'s `inline-flex`,
-   which knocked button icons onto their own line and inflated the button
-   height. Re-asserting it inside the same layer, at higher specificity,
-   restores the intended centering without touching the utility itself. */
-@layer utilities {
-  .btn.block {
-    display: inline-flex;
-  }
-}

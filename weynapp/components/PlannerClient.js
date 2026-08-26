@@ -1,12 +1,10 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import MapChooser from "./MapChooser";
 import { buildTimeline, coordinates, orderStops } from "@/lib/planner-utils.mjs";
 
-// Both <input type="time"> and a native <select> hand the open picker/options
-// list off to the OS or browser to render, which can't be restyled and looks
-// jarring against the app's design system. This renders every pixel itself.
+// Use a native select so keyboard, screen-reader, and mobile picker behaviour
+// remains predictable while the visible field still follows Weyn's styling.
 const START_TIME_OPTIONS = Array.from({ length: 36 }, (_, i) => {
   const totalMinutes = 6 * 60 + i * 30; // 06:00 through 23:30
   const hours24 = Math.floor(totalMinutes / 60) % 24;
@@ -16,81 +14,6 @@ const START_TIME_OPTIONS = Array.from({ length: 36 }, (_, i) => {
   const label = `${hours12}:${String(minutes).padStart(2, "0")} ${hours24 < 12 ? "AM" : "PM"}`;
   return { value, label };
 });
-
-function normalizeTimeQuery(text) {
-  return text.toLowerCase().replace(/[\s:]/g, "");
-}
-
-function TimeSelect({ value, onChange }) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const rootRef = useRef(null);
-  const listRef = useRef(null);
-  const inputRef = useRef(null);
-
-  const selected = START_TIME_OPTIONS.find((option) => option.value === value) || START_TIME_OPTIONS[0];
-  const filtered = query.trim()
-    ? START_TIME_OPTIONS.filter((option) => normalizeTimeQuery(option.label).includes(normalizeTimeQuery(query)))
-    : START_TIME_OPTIONS;
-
-  useEffect(() => {
-    function onDocPointerDown(event) {
-      if (rootRef.current && !rootRef.current.contains(event.target)) { setOpen(false); setQuery(""); }
-    }
-    document.addEventListener("mousedown", onDocPointerDown);
-    return () => document.removeEventListener("mousedown", onDocPointerDown);
-  }, []);
-
-  useEffect(() => {
-    if (open) listRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
-  }, [open]);
-
-  function commit(option) {
-    onChange(option.value);
-    setQuery("");
-    setOpen(false);
-  }
-
-  return (
-    <div className="time-select" ref={rootRef}>
-      <input
-        ref={inputRef}
-        type="text"
-        role="combobox"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        className="time-select-trigger"
-        value={open ? query : selected.label}
-        onFocus={(event) => { setQuery(selected.label); setOpen(true); event.target.select(); }}
-        onChange={(event) => { setQuery(event.target.value); setOpen(true); }}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") { setQuery(""); setOpen(false); inputRef.current?.blur(); }
-          else if (event.key === "Enter") { event.preventDefault(); if (filtered.length) commit(filtered[0]); }
-        }}
-      />
-      <ChevronDown className="time-select-caret" aria-hidden="true" />
-      {open && (
-        <ul className="time-select-list" role="listbox" ref={listRef}>
-          {filtered.length === 0 && <li className="time-select-empty">No matching time</li>}
-          {filtered.map((option) => (
-            <li key={option.value}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={option.value === value}
-                className={`time-select-option${option.value === value ? " selected" : ""}`}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => commit(option)}
-              >
-                {option.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
 
 async function optimizedStops(items) {
   if (items.length < 3 || items.some((place) => !coordinates(place))) return orderStops(items);
@@ -106,8 +29,8 @@ async function optimizedStops(items) {
 export default function PlannerClient() {
   const [data, setData] = useState(null), [error, setError] = useState(""), [notice, setNotice] = useState("");
   const [input, setInput] = useState(""), [busy, setBusy] = useState(false), [picked, setPicked] = useState([]), [ordered, setOrdered] = useState([]);
-  const [startTime, setStartTime] = useState("10:00"), [title, setTitle] = useState("");
-  const load = async () => { try { const response = await fetch("/api/planner"); const body = await response.json(); if (!response.ok) throw new Error(body.error || "Couldn't load your plans"); setData(body); } catch (loadError) { setError(loadError.message); } };
+  const [startTime, setStartTime] = useState("10:00"), [title, setTitle] = useState(""), [visibility, setVisibility] = useState("");
+  const load = async () => { try { const response = await fetch("/api/planner", { cache: "no-store" }); const body = await response.json(); if (!response.ok) throw new Error(body.error || "Couldn't load your plans"); setData(body); } catch (loadError) { setError(loadError.message); } };
   useEffect(() => { load(); }, []);
   const places = data?.places || [];
   const neighborhoods = useMemo(() => Object.entries(places.reduce((all, place) => { const name = place.neighborhood || place.city || "Saved elsewhere"; all[name] = (all[name] || 0) + 1; return all; }, {})).sort((a, b) => b[1] - a[1]), [places]);
@@ -115,28 +38,47 @@ export default function PlannerClient() {
 
   async function importPlace() {
     setBusy(true); setError(""); setNotice("");
-    const response = await fetch("/api/import-place", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ input }) });
-    const body = await response.json(); setBusy(false);
-    if (!response.ok) return setError(body.error || "Couldn't import that place");
-    setInput(""); setNotice(body.matched ? `Saved ${body.place.name}.` : `Added ${body.place.name} to your private list.`); load();
+    try {
+      const response = await fetch("/api/import-place", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ input }) });
+      const body = await response.json();
+      if (!response.ok) return setError(body.error || "Couldn't import that place");
+      setInput("");
+      setNotice(body.matched ? `Saved ${body.place.name}.` : `Added ${body.place.name} to your private list.`);
+      await load();
+    } catch {
+      setError("Weyn couldn't reach the place importer. Check your connection and try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  async function togglePlace(key) {
+  function togglePlace(key) {
     const next = picked.includes(key) ? picked.filter((item) => item !== key) : picked.length < 4 ? [...picked, key] : picked;
-    setPicked(next); setOrdered(await optimizedStops(places.filter((place) => next.includes(`${place.kind}:${place.id}`))));
+    setPicked(next);
+    setOrdered(orderStops(places.filter((place) => next.includes(`${place.kind}:${place.id}`))));
+  }
+
+  async function optimizePicked() {
+    setBusy(true);
+    setError("");
+    try {
+      setOrdered(await optimizedStops(places.filter((place) => picked.includes(`${place.kind}:${place.id}`))));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function createBoard() {
-    if (!title.trim() || !picked.length) return;
+    if (!title.trim() || !picked.length || !visibility) return;
     setBusy(true); setError("");
-    const response = await fetch("/api/boards", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title, isPublic: true }) });
+    const response = await fetch("/api/boards", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title, visibility }) });
     const body = await response.json();
     if (!response.ok) { setBusy(false); return setError(body.error); }
     for (const [position, place] of ordered.entries()) {
       const add = await fetch(`/api/boards/${body.board.id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "add", kind: place.kind, placeId: place.id, position }) });
       if (!add.ok) { setBusy(false); return setError("The board was created, but one place could not be added."); }
     }
-    setTitle(""); setBusy(false); setNotice("Board created. Open it to invite friends, vote, or reorder places."); load();
+    setTitle(""); setVisibility(""); setBusy(false); setNotice("Board created. Open it to invite friends, vote, or reorder places."); load();
   }
 
   async function follow(curator) {
@@ -148,77 +90,103 @@ export default function PlannerClient() {
 
   return (
     <div className="planner-stack">
-      <section className="card">
-        <span className="eyebrow">Magic import</span>
-        <h2>Paste to map</h2>
-        <p className="sub">Paste a TikTok or Instagram link with its caption, or a WhatsApp message. Weyn extracts one UAE place and saves it privately.</p>
-        <textarea value={input} onChange={(event) => setInput(event.target.value)} maxLength={4000} placeholder="Paste the link plus caption, place name, or message…" />
-        <button className="btn primary block" disabled={busy || !input.trim()} onClick={importPlace}>{busy ? "Finding it…" : "Save to Want to Try"}</button>
-      </section>
+      {notice && <div className="notice" role="status">{notice}</div>}
+      {error && <div className="notice err" role="alert">{error}</div>}
 
-      <section className="card">
-        <div className="toggle-row">
-          <div>
-            <strong>Ghost Mode</strong>
-            <div className="sub">Hide your public posts and friend activity while you browse and save.</div>
+      <div className="planner-top-grid">
+        <section className="card planner-import">
+          <span className="eyebrow">Magic import</span>
+          <h2>Paste to map</h2>
+          <p className="sub">Paste a TikTok, Instagram link, or WhatsApp message. Weyn finds the UAE place and saves it privately.</p>
+          <label className="field planner-import-field">
+            <span>Link, caption, or message</span>
+            <textarea value={input} onChange={(event) => setInput(event.target.value)} maxLength={4000} placeholder="Paste a link, caption, place name, or message…" />
+          </label>
+          <button className="btn primary block" disabled={busy || !input.trim()} onClick={importPlace}>{busy ? "Finding it…" : "Save place"}</button>
+        </section>
+
+        <section className="card planner-saved-summary">
+          <div className="toggle-row planner-ghost-row">
+            <div>
+              <strong>Ghost mode</strong>
+              <div className="sub">Keep your browsing and reviews out of friend activity.</div>
+            </div>
+            <label className="planner-ghost-toggle">
+              <span className="sr-only">Ghost mode</span>
+              <input
+                type="checkbox"
+                checked={data.ghostMode}
+                onChange={async (event) => {
+                  const value = event.target.checked;
+                  setData({ ...data, ghostMode: value });
+                  await fetch("/api/planner", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "ghost", ghostMode: value }) });
+                }}
+              />
+            </label>
           </div>
-          <input
-            aria-label="Ghost Mode"
-            type="checkbox"
-            checked={data.ghostMode}
-            onChange={async (event) => {
-              const value = event.target.checked;
-              setData({ ...data, ghostMode: value });
-              await fetch("/api/planner", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "ghost", ghostMode: value }) });
-            }}
-          />
-        </div>
-      </section>
+          <div className="planner-neighborhoods">
+            <span className="eyebrow">Saved by area</span>
+            {neighborhoods.length ? (
+              <div className="tag-row">{neighborhoods.map(([name, count]) => <span className="tag-pill" key={name}>{name} · {count}</span>)}</div>
+            ) : <p className="sub">Save a few places and they will appear here.</p>}
+          </div>
+        </section>
+      </div>
 
-      <section className="card">
-        <span className="eyebrow">Your saved map</span>
-        <h2>Plan by neighborhood</h2>
-        <p className="sub">These counts use your real saved places; no missing amenity or seasonal data is assumed.</p>
-        <div className="tag-row">{neighborhoods.map(([name, count]) => <span className="tag-pill" key={name}>{name} · {count}</span>)}</div>
-      </section>
-
-      <section className="card">
-        <h2>Build a Perfect Day</h2>
-        <p className="sub">Choose up to four places. Weyn optimizes the stop order, estimates travel time, and lets each person open their preferred map app.</p>
-        <button
-          className="btn primary block"
-          type="button"
-          disabled={picked.length < 2}
-          onClick={async () => setOrdered(await optimizedStops(places.filter((place) => picked.includes(`${place.kind}:${place.id}`))))}
-        >
-          Perfect Day
-        </button>
-        <div className="field">
-          <span>Start time</span>
-          <TimeSelect value={startTime} onChange={setStartTime} />
+      <section className="card planner-builder">
+        <div className="planner-section-heading">
+          <div>
+            <span className="eyebrow">Perfect day</span>
+            <h2>Choose the stops</h2>
+          </div>
+          <p className="sub">Pick up to four places. Weyn orders them and estimates when you will arrive.</p>
         </div>
-        <div className="venue-list-single">
-          {places.map((place) => {
-            const key = `${place.kind}:${place.id}`;
-            const selected = picked.includes(key);
-            return (
-              <div className={`card ${selected ? "picked" : ""}`} key={key}>
-                <label className="toggle-row">
+
+        <div className="planner-controls">
+          <label className="field">
+            <span>Start time</span>
+            <select value={startTime} onChange={(event) => setStartTime(event.target.value)}>
+              {START_TIME_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+          <button
+            className="btn primary"
+            type="button"
+            disabled={picked.length < 2 || busy}
+            onClick={optimizePicked}
+          >
+            {busy ? "Optimizing…" : "Optimize selected route"}
+          </button>
+        </div>
+
+        {places.length ? (
+          <div className="planner-place-grid">
+            {places.map((place) => {
+              const key = `${place.kind}:${place.id}`;
+              const selected = picked.includes(key);
+              return (
+                <label className={`planner-place-option ${selected ? "picked" : ""}`} key={key}>
                   <input type="checkbox" checked={selected} onChange={() => togglePlace(key)} />
-                  <span><strong>{place.name}</strong><br /><small>{place.neighborhood || place.city || "Private place"}</small></span>
+                  <span><strong>{place.name}</strong><small>{place.neighborhood || place.city || "Private place"}</small></span>
                 </label>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : <div className="planner-empty"><strong>No saved places yet.</strong><span>Save a spot from Discover or Find, then return here.</span></div>}
+
         {itinerary.length > 0 && (
-          <div className="card">
+          <div className="planner-route">
             <h3>Your route</h3>
             {itinerary.map((place, index) => (
-              <div key={`${place.kind}:${place.id}`} className="details-row">
+              <div key={`${place.kind}:${place.id}`} className="planner-route-stop">
+                <span className="planner-route-number">{index + 1}</span>
                 <div>
-                  <strong>{place.arrival} · {index + 1}. {place.name}</strong>
-                  {place.travelToNext && <div className="sub">About {place.travelToNext} min drive to the next stop</div>}
+                  <strong>{place.arrival} · {place.name}</strong>
+                  {index < itinerary.length - 1 && (
+                    <div className="sub">
+                      {place.travelToNext ? `About ${place.travelToNext} minutes to the next stop` : "Travel time unavailable until both places are mapped"}
+                    </div>
+                  )}
                 </div>
                 <MapChooser venue={place} compact />
               </div>
@@ -227,22 +195,45 @@ export default function PlannerClient() {
         )}
       </section>
 
-      <section className="card">
-        <span className="eyebrow">Burner list + trip board</span>
-        <h2>Share this plan</h2>
-        <div className="field">
-          <input type="text" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="Oman Roadtrip 2026" />
+      <section className="card planner-share">
+        <div>
+          <span className="eyebrow">Collaborate</span>
+          <h2>Share this plan</h2>
+          <p className="sub">Create a board so friends can vote, reorder stops, and add ideas.</p>
         </div>
-        <button className="btn primary block" disabled={busy || !picked.length || !title.trim()} onClick={createBoard}>Create collaborative board</button>
-        {data.boards.map((board) => (
-          <div className="details-row" key={board.id}>
-            <strong>{board.title}</strong>
-            <div>
-              <a className="btn small ghost" href={`/plan/boards/${board.id}`}>Edit</a>{" "}
-              <button className="btn small ghost" onClick={() => navigator.share ? navigator.share({ title: board.title, url: `${location.origin}/b/${board.share_slug}` }) : navigator.clipboard.writeText(`${location.origin}/b/${board.share_slug}`)}>Share</button>
+        <div className="planner-share-form">
+          <label className="field"><span>Board name</span><input type="text" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="Friday in Dubai" /></label>
+          <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend>Who can see this board?</legend>
+            <div className="chips" role="radiogroup" aria-label="Board visibility">
+              {[
+                ["private", "Private", "Only you"],
+                ["friends", "Friends", "Your accepted friends"],
+                ["public", "Public", "Anyone on Weyn"],
+              ].map(([value, label, detail]) => (
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={visibility === value}
+                  className={`chip ${visibility === value ? "sel" : ""}`}
+                  onClick={() => setVisibility(value)}
+                  key={value}
+                  title={detail}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
+            {!visibility && <small>Choose Private, Friends, or Public before creating the board.</small>}
+          </fieldset>
+          <button className="btn primary" disabled={busy || !picked.length || !title.trim() || !visibility} onClick={createBoard}>Create board</button>
+        </div>
+        {!!data.boards.length && <div className="planner-board-list">{data.boards.map((board) => (
+          <div className="planner-board-row" key={board.id}>
+            <strong>{board.title} <small className={`saved-visibility ${board.archived_at ? "private" : board.visibility || (board.is_public ? "public" : "private")}`}>{board.archived_at ? "archived" : board.visibility || (board.is_public ? "public" : "private")}</small></strong>
+            <div><a className="btn small ghost" href={`/plan/boards/${board.id}`}>Open</a>{!board.archived_at && board.visibility !== "private" && <button className="btn small ghost" onClick={() => navigator.share ? navigator.share({ title: board.title, url: `${location.origin}/b/${board.share_slug}` }) : navigator.clipboard.writeText(`${location.origin}/b/${board.share_slug}`)}>Share</button>}</div>
           </div>
-        ))}
+        ))}</div>}
       </section>
 
       {data.curators.length > 0 && (
@@ -260,8 +251,6 @@ export default function PlannerClient() {
         </section>
       )}
 
-      {notice && <div className="notice">{notice}</div>}
-      {error && <div className="notice err">{error}</div>}
     </div>
   );
 }

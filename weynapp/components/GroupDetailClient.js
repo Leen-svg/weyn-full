@@ -1,9 +1,8 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Send, Vote, Loader2, ArrowLeft, Share2, UserPlus, UserMinus, Archive, ChevronDown, MapPin, Search, Sparkles } from "lucide-react";
+import { Send, Vote, Loader2, ArrowLeft, Share2, UserPlus, UserMinus, Archive, ChevronDown, MapPin, Search, Sparkles, RotateCcw, Trash2, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,23 +21,20 @@ function MessageBubble({ msg, mine }) {
   const author = msg.profile_public;
   const initials = (author?.display_name || "?").slice(0, 2).toUpperCase();
   const sentAt = new Date(msg.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  const listPath = msg.body.match(/\/lists\/[a-z0-9]+/i)?.[0];
-  const messageText = listPath ? msg.body.replace(listPath, "").trim() : msg.body;
+  const legacyListPath = msg.body.match(/\/lists\/[a-z0-9]+/i)?.[0];
+  const share = msg.structured_share;
+  const messageText = legacyListPath ? msg.body.replace(legacyListPath, "").trim() : msg.body;
   return (
     <div className={`message-row flex items-end gap-2 ${mine ? "mine flex-row-reverse" : ""}`}>
       <Avatar className="h-7 w-7 shrink-0">
         <AvatarImage src={safeUrl(author?.avatar_url)} alt="" />
         <AvatarFallback className="text-[10px] font-bold">{initials}</AvatarFallback>
       </Avatar>
-      {/* No rounded-2xl here on purpose: bubbles have asymmetric
-          corners (the tail corner differs for sent vs received) and
-          that lives in CSS. A Tailwind radius utility sits in the
-          `utilities` layer, above our `weyn` layer, so it would win
-          and square the tail back off. */}
-      <div className="message-bubble max-w-[78%] px-3 py-2 text-sm">
+      <div className="message-bubble max-w-[78%] rounded-2xl px-3 py-2 text-sm">
         {!mine && <div className="mb-0.5 text-[11px] font-bold opacity-70">{author?.display_name || "Someone"}</div>}
         <div>{messageText}</div>
-        {listPath && <Link className="message-list-link" href={listPath}>Open shared list →</Link>}
+        {share && <Link className="message-list-link" href={share.href}><strong>{share.title}</strong><span>{share.subtitle}</span><span>Open in Weyn →</span></Link>}
+        {!share && legacyListPath && <Link className="message-list-link" href={legacyListPath}>Open shared list →</Link>}
         <div className="message-time">{sentAt}</div>
       </div>
     </div>
@@ -417,30 +413,14 @@ function MembersManager({ groupId, members, creatorId, currentUserId, onChanged 
 }
 
 export default function GroupDetailClient({ groupId, group, members: initialMembers, taxonomy, currentUserId }) {
-  const router = useRouter();
-  const isGroupOwner = group.created_by === currentUserId;
-  const [leaveBusy, setLeaveBusy] = useState(false);
-
-  async function leaveOrDeleteGroup() {
-    const verb = isGroupOwner ? "delete this group for everyone" : "leave this group";
-    if (!confirm(`Are you sure you want to ${verb}? This can't be undone.`)) return;
-    setLeaveBusy(true);
-    const res = await fetch(`/api/groups/${groupId}`, { method: "DELETE" });
-    if (res.ok) {
-      router.push("/groups");
-      router.refresh();
-    } else {
-      setLeaveBusy(false);
-      alert("Something went wrong, try again.");
-    }
-  }
-
+  const [groupState, setGroupState] = useState(group);
   const [members, setMembers] = useState(initialMembers);
   const [messages, setMessages] = useState(null);
   const [text, setText] = useState("");
   const [polls, setPolls] = useState(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [sendBusy, setSendBusy] = useState(false);
+  const [settingsBusy, setSettingsBusy] = useState(false);
   const [chatError, setChatError] = useState(null);
   const [celebratingPollId, setCelebratingPollId] = useState(null);
   const celebratedRef = useRef(new Set());
@@ -449,7 +429,10 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
   const loadMembers = useCallback(async () => {
     const res = await fetch(`/api/groups/${groupId}`);
     const d = await res.json();
-    if (res.ok) setMembers(d.members || []);
+    if (res.ok) {
+      setMembers(d.members || []);
+      if (d.group) setGroupState(d.group);
+    }
   }, [groupId]);
 
   const loadMessages = useCallback(async () => {
@@ -542,8 +525,36 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
     }
   }
 
+  async function changeGroup(action, visibilityValue) {
+    const isDelete = action === "delete" || action === "leave";
+    const creator = groupState.created_by === currentUserId;
+    const prompt = creator
+      ? `Delete “${groupState.name}” permanently? The chat, members and votes will be removed.`
+      : `Leave “${groupState.name}”? You will lose access to its chat and votes.`;
+    if (isDelete && !window.confirm(prompt)) return;
+    setSettingsBusy(true);
+    setChatError(null);
+    try {
+      const response = await fetch(`/api/groups/${groupId}`, {
+        method: isDelete ? "DELETE" : "PATCH",
+        headers: { "content-type": "application/json" },
+        body: isDelete ? undefined : JSON.stringify({ action, visibility: visibilityValue }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Couldn’t update the group");
+      if (isDelete) window.location.assign("/groups");
+      else setGroupState((current) => ({ ...current, archived_at: action === "archive" ? body.archived_at : action === "restore" ? null : current.archived_at, visibility: action === "visibility" ? visibilityValue : current.visibility }));
+    } catch (updateError) {
+      setChatError(updateError.message || "Couldn’t update the group");
+    } finally {
+      setSettingsBusy(false);
+    }
+  }
+
   const currentPoll = polls?.find((poll) => !poll.expired) || null;
   const archivedPolls = (polls || []).filter((poll) => poll.id !== currentPoll?.id);
+  const isCreator = groupState.created_by === currentUserId;
+  const groupArchived = !!groupState.archived_at;
 
   return (
     <div className="social-stack group-detail-view space-y-5">
@@ -551,11 +562,9 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
         <ArrowLeft className="h-4 w-4" /> Groups
       </Link>
 
-      <div className="flex items-center justify-between gap-2">
-        <h1 style={{ marginBottom: 0 }}>{group.name}</h1>
-        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={leaveBusy} onClick={leaveOrDeleteGroup}>
-          {leaveBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : isGroupOwner ? "Delete group" : "Leave group"}
-        </Button>
+      <div className="flex items-center gap-2">
+        <h1 style={{ marginBottom: 0 }}>{groupState.name}</h1>
+        <span className={`saved-visibility ${groupState.visibility || "private"}`}>{groupState.visibility || "private"}</span>
       </div>
       <div className="flex items-center gap-3">
         <div className="flex -space-x-2">
@@ -566,8 +575,32 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
             </Avatar>
           ))}
         </div>
-        <MembersManager groupId={groupId} members={members} creatorId={group.created_by} currentUserId={currentUserId} onChanged={loadMembers} />
+        {!groupArchived && <MembersManager groupId={groupId} members={members} creatorId={groupState.created_by} currentUserId={currentUserId} onChanged={loadMembers} />}
       </div>
+
+      <section className="group-settings-panel" aria-label="Group settings">
+        {isCreator ? (
+          <>
+            <div>
+              <strong>Group visibility</strong>
+              <small>The group name can be discoverable; chat and votes always stay invite-only.</small>
+            </div>
+            <div className="chips" role="radiogroup" aria-label="Group visibility">
+              {[["private", "🔒 Private"], ["friends", "👋 Friends"], ["public", "🌍 Public"]].map(([value, label]) => (
+                <button type="button" role="radio" aria-checked={groupState.visibility === value} className={`chip ${groupState.visibility === value ? "sel" : ""}`} disabled={settingsBusy} onClick={() => changeGroup("visibility", value)} key={value}>{label}</button>
+              ))}
+            </div>
+            <div className="group-settings-panel__actions">
+              <button className="btn small ghost" type="button" disabled={settingsBusy} onClick={() => changeGroup(groupArchived ? "restore" : "archive")}>{groupArchived ? <RotateCcw /> : <Archive />}{groupArchived ? "Restore group" : "Archive group"}</button>
+              <button className="btn small ghost danger" type="button" disabled={settingsBusy} onClick={() => changeGroup("delete")}><Trash2 /> Delete group</button>
+            </div>
+          </>
+        ) : (
+          <button className="btn small ghost danger" type="button" disabled={settingsBusy} onClick={() => changeGroup("leave")}><LogOut /> Leave group</button>
+        )}
+      </section>
+
+      {groupArchived && <div className="notice">This group is archived. Restore it to send messages, manage members, or start a vote.</div>}
 
       <section className="group-current-vote" aria-labelledby="current-vote-heading">
         <div className="group-section-heading">
@@ -588,14 +621,14 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
           )}
         </div>
         {polls === null && <div className="group-loading-card">Loading the latest vote…</div>}
-        {polls !== null && currentPoll && <PollResults poll={currentPoll} groupId={groupId} memberCount={members.length} onVoted={loadPolls} />}
+        {polls !== null && currentPoll && <PollResults poll={currentPoll} groupId={groupId} memberCount={members.length} onVoted={loadPolls} archived={groupArchived} />}
         {polls !== null && !currentPoll && (
           <div className="group-empty-vote">
             <Vote className="h-5 w-5" />
             <span><strong>No vote running</strong><small>Start one and settle the plan here.</small></span>
           </div>
         )}
-        {polls !== null && <PollComposer groups={taxonomy.groups} zones={taxonomy.zones} onCreated={{ groupId, refresh: loadPolls }} hasCurrent={!!currentPoll} />}
+        {polls !== null && !groupArchived && <PollComposer groups={taxonomy.groups} zones={taxonomy.zones} onCreated={{ groupId, refresh: loadPolls }} hasCurrent={!!currentPoll} />}
       </section>
 
       <Card className="group-chat">
@@ -621,7 +654,7 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
             <div ref={bottomRef} />
           </div>
           {chatError && <div className="group-chat-error" role="alert">{chatError}</div>}
-          <form className="group-chat-composer" onSubmit={(event) => { event.preventDefault(); send(); }}>
+          {!groupArchived && <form className="group-chat-composer" onSubmit={(event) => { event.preventDefault(); send(); }}>
             <Input
               placeholder="Message the group…"
               maxLength={1000}
@@ -631,7 +664,7 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
             <Button type="submit" size="icon" aria-label="Send message" disabled={!text.trim() || sendBusy}>
               {sendBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
-          </form>
+          </form>}
         </CardContent>
       </Card>
 
@@ -655,5 +688,3 @@ export default function GroupDetailClient({ groupId, group, members: initialMemb
     </div>
   );
 }
-
-

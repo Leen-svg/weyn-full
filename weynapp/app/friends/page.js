@@ -13,15 +13,17 @@ export default async function FriendsPage() {
   if (!user) redirect("/login?next=/friends");
 
   return (
-    <>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-        <h1 style={{ marginBottom: 0 }}>Friends</h1>
-        <Link className="btn small ghost" href="/groups">
-          Groups
+    <div className="screen-social">
+      <header className="screen-social__header">
+      <div className="screen-social__title-row">
+        <h1>Friends</h1>
+        <Link className="btn small" href="/groups">
+          👋 Groups →
         </Link>
       </div>
       <p className="sub">Add people, vote together, see where they&apos;ve been, only if they let you.</p>
+      </header>
       <FriendsClient />
-    </>
+    </div>
   );
 }

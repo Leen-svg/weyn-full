@@ -24,3 +24,4 @@ export default async function OnboardingPage({ searchParams }) {
   return <UsernameOnboarding next={next} />;
 }
 
+

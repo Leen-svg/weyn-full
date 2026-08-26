@@ -6,3 +6,4 @@ export default async function PollPage({ params }) {
   const { code } = await params;
   return <PollClient code={code} />;
 }
+

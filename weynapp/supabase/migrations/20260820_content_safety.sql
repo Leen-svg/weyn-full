@@ -146,3 +146,4 @@ grant execute on function public.award_new_people_for_vote(uuid, uuid) to authen
 
 commit;
 
+

@@ -3,17 +3,16 @@ export default function WelcomeHero() {
     <section className="welcome-hero">
       <div className="welcome-hero__copy">
         <p className="eyebrow">Abu Dhabi · Dubai</p>
-        <h1>
-          Welcome
-          <br />
-          to Weyn
-        </h1>
-        <p className="sub">Your private circle for the best spots. Three options, then the group votes.</p>
+        <h1>Welcome to Weyn</h1>
+        <p className="sub">Curated places across both cities. Save what you like, choose three, then let the group vote.</p>
         <a className="btn primary block" href="/signup">
-          Sign up
+          Create an account
         </a>
         <a className="btn ghost block" href="/login">
           Log in
+        </a>
+        <a className="btn ghost block" href="/signup">
+          Enter invitation code
         </a>
       </div>
     </section>

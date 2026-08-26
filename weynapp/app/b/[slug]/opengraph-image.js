@@ -13,3 +13,4 @@ export default async function Image({ params }) {
   const names = (rows || []).map((row) => row.venues?.name || row.personal_places?.name).filter(Boolean);
   return new ImageResponse(<div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 70, background: "linear-gradient(135deg,#edf8ff,#fff5d9 55%,#ffe8f0)", color: "#182a43", fontFamily: "Arial" }}><div style={{ display: "flex", fontSize: 34, fontWeight: 800 }}>WEYN · SHARED LIST</div><div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex", fontSize: 72, fontWeight: 900, letterSpacing: -3 }}>{board?.title || "A Weyn list"}</div><div style={{ display: "flex", marginTop: 28, fontSize: 30 }}>{names.length ? names.join("  ·  ") : "Open the list to see every place"}</div></div><div style={{ display: "flex", fontSize: 26 }}>Open anywhere. No download needed.</div></div>, size);
 }
+

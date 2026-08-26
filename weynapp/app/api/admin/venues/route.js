@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
-import { safeUrl } from "@/lib/sanitize";
+import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 import { NextResponse } from "next/server";
 
 export async function GET(req) {
@@ -13,7 +13,7 @@ export async function GET(req) {
 
   let query = s
     .from("venues")
-    .select("id, name, neighborhood, zone_slug, city, avg_spend_aed, hero_video_url, google_maps_url, description, age_restriction, is_aesthetic, is_trending, trending_rank, is_active, venue_tags(tag_id)")
+    .select("id, name, neighborhood, zone_slug, city, avg_spend_aed, hero_video_url, menu_url, google_maps_url, description, age_restriction, is_aesthetic, is_trending, trending_rank, is_active, venue_tags(tag_id)")
     .order("name")
     .limit(50);
   if (q) query = query.ilike("name", `%${q}%`);
@@ -34,7 +34,7 @@ export async function POST(req) {
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const { name, neighborhood, city, avg_spend_aed, description, google_maps_url, hero_video_url, latitude, longitude, age_restriction, is_aesthetic, is_trending, tag_ids } = body;
+  const { name, neighborhood, city, avg_spend_aed, description, google_maps_url, hero_video_url, menu_url, latitude, longitude, age_restriction, is_aesthetic, is_trending, tag_ids } = body;
   if (!name?.trim()) return NextResponse.json({ error: "name required" }, { status: 400 });
 
   const s = db();
@@ -46,8 +46,9 @@ export async function POST(req) {
       city: city === "Dubai" ? "Dubai" : "Abu Dhabi",
       avg_spend_aed: Number.isFinite(avg_spend_aed) ? avg_spend_aed : 0,
       description: description?.trim().slice(0, 1000) || null,
-      google_maps_url: google_maps_url ? safeUrl(google_maps_url) : null,
-      hero_video_url: hero_video_url ? safeUrl(hero_video_url) : null,
+      google_maps_url: google_maps_url ? normalizeHttpUrl(google_maps_url) : null,
+      hero_video_url: hero_video_url ? normalizeHttpUrl(hero_video_url) : null,
+      menu_url: menu_url ? normalizeHttpUrl(menu_url) : null,
       latitude: Number.isFinite(latitude) ? latitude : null,
       longitude: Number.isFinite(longitude) ? longitude : null,
       age_restriction: ["18-plus", "21-plus"].includes(age_restriction) ? age_restriction : "all-ages",
@@ -86,6 +87,7 @@ export async function PATCH(req) {
     "city",
     "avg_spend_aed",
     "hero_video_url",
+    "menu_url",
     "google_maps_url",
     "description",
     "is_trending",
@@ -98,8 +100,9 @@ export async function PATCH(req) {
   ];
   const clean = {};
   for (const k of allowed) if (k in patch) clean[k] = patch[k];
-  if ("hero_video_url" in clean) clean.hero_video_url = clean.hero_video_url ? safeUrl(clean.hero_video_url) : null;
-  if ("google_maps_url" in clean) clean.google_maps_url = clean.google_maps_url ? safeUrl(clean.google_maps_url) : null;
+  if ("hero_video_url" in clean) clean.hero_video_url = clean.hero_video_url ? normalizeHttpUrl(clean.hero_video_url) : null;
+  if ("menu_url" in clean) clean.menu_url = clean.menu_url ? normalizeHttpUrl(clean.menu_url) : null;
+  if ("google_maps_url" in clean) clean.google_maps_url = clean.google_maps_url ? normalizeHttpUrl(clean.google_maps_url) : null;
   if (clean.is_trending) clean.trending_set_at = new Date().toISOString();
 
   const { error } = await db().from("venues").update(clean).eq("id", id);
@@ -127,4 +130,3 @@ export async function PATCH(req) {
   }
   return NextResponse.json({ ok: true });
 }
-

@@ -1,44 +1,41 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { privatePageMetadata } from "@/lib/seo";
+import styles from "@/components/AccountPages.module.css";
 
 export const metadata = privatePageMetadata({
   title: "Your Weyn Points",
-  description: "Track the points you earn for useful ratings, group votes, and approved community contributions.",
+  description: "See your Weyn points balance, recent activity, and ways to earn more.",
 });
 
 const REASON_LABEL = {
-  signup_bonus: "Joined weyn",
-  rated_a_place: "Rated a place ⭐",
-  tried_new_place: "Tried a new place 🏅",
-  shared_a_spot: "Shared a spot 📣",
-  new_person: "Made a new friend 👋",
-  suggested_a_place: "Suggested a place 📍",
-  suggested_a_tag_fix: "Suggested a tag fix 🏷️",
-  viewed_ratings: "Checked out ratings 👀",
-  posted: "Posted a spot 📣",
+  signup_bonus: "Joined Weyn",
+  rated_a_place: "Rated a place",
+  tried_new_place: "Tried a new place",
+  shared_a_spot: "Shared a spot",
+  new_person: "Planned with someone new",
+  suggested_a_place: "Suggested a place",
+  suggested_a_tag_fix: "Improved a place tag",
+  viewed_ratings: "Viewed place ratings",
+  posted: "Posted a spot",
 };
 
-const CATEGORIES = [
-  { emoji: "⭐", label: "Rate a place", body: "Your first rating for each place earns 15 points." },
-  { emoji: "👋", label: "New people", body: "Vote in a group poll with someone new for 5 points, once per person and up to 3 times a day." },
-  { emoji: "📣", label: "Share it", body: "Send a poll to the group." },
+const POINT_RULES = [
+  ["Rate a place", "Your first useful rating for a place can earn points."],
+  ["Improve Weyn", "Approved places and tag corrections earn points."],
+  ["Plan together", "Some group votes and social actions earn points."],
 ];
 
-const EARN_MORE = [
-  { emoji: "📍", label: "Add a spot", body: "Submit a missing place. You earn points after it is approved.", href: "/submit", pts: "+10" },
-  { emoji: "🏷️", label: "Rate our tags", body: "Suggest a tag correction. You earn points after it is approved.", href: "/rate", pts: "+5" },
-  { emoji: "🎬", label: "Creators", body: "Got a video for a spot? Get featured and credited.", href: "/creators", pts: "" },
+const EARN_LINKS = [
+  { href: "/submit", label: "Suggest a missing place", points: "+10 after approval" },
+  { href: "/rate", label: "Correct a place tag", points: "+5 after approval" },
+  { href: "/creators", label: "Submit creator media", points: "Get featured" },
 ];
 
 export default async function RewardsPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/rewards");
 
   const [{ data: profile }, { data: ledger }] = await Promise.all([
@@ -46,79 +43,52 @@ export default async function RewardsPage() {
     supabase.from("points_ledger").select("id, delta, reason, created_at").order("created_at", { ascending: false }).limit(50),
   ]);
 
+  const balance = profile?.points_balance || 0;
+
   return (
-    <>
-      <h1>Rewards</h1>
-      <p className="sub">Every point is banked and yours, we&apos;re building out real perks to redeem them for soon. Keep earning, it&apos;ll be worth it. 🏅</p>
+    <div className={`${styles.page} rewards-page`}>
+      <header className={styles.rewardsHero}>
+        <div className={styles.rewardsHeroCopy}>
+          <span className="eyebrow">Your points</span>
+          <h1>Useful contributions add up</h1>
+          <p>Earn points for ratings, approved suggestions, and helping your group decide. Perks are coming later; points currently have no cash value.</p>
+        </div>
+        <div className={styles.balance} aria-label={`${balance} points`}><strong>{balance}</strong><span>points</span></div>
+      </header>
 
-      <Card className="mb-5" style={{ background: "var(--purple)", color: "var(--white)" }}>
-        <CardContent className="pt-6 text-center">
-          <div className="text-xs font-bold uppercase tracking-widest opacity-80">Your balance</div>
-          <div className="mt-1 text-5xl font-extrabold" style={{ fontFamily: "var(--font-display)" }}>
-            {profile?.points_balance ?? 0}
-          </div>
-          <div className="mt-1 text-sm opacity-80">points</div>
-        </CardContent>
-      </Card>
-
-      <Card className="mb-5">
-        <CardHeader>
-          <CardTitle>How you earn them</CardTitle>
-          <CardDescription>Weyn rewards discovering your city with your people. Redeeming for real perks is coming.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-3">
-            {CATEGORIES.map((c) => (
-              <div key={c.label} className="rounded-lg border p-3 text-center">
-                <div className="text-2xl">{c.emoji}</div>
-                <div className="mt-1 text-sm font-semibold">{c.label}</div>
-                <div className="text-xs text-muted-foreground">{c.body}</div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="mb-5">
-        <CardHeader>
-          <CardTitle>Ways to earn more</CardTitle>
-          <CardDescription>Contribute to Weyn and rack up points.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {EARN_MORE.map((c) => (
-            <Link key={c.href} href={c.href} className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent">
-              <div className="text-2xl">{c.emoji}</div>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold">{c.label}</div>
-                <div className="text-xs text-muted-foreground">{c.body}</div>
-              </div>
-              {c.pts && <Badge variant="outline">{c.pts}</Badge>}
-            </Link>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Activity</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {!ledger?.length && <p className="text-sm text-muted-foreground">Nothing yet, go find a spot.</p>}
-          {ledger?.map((l) => (
-            <div key={l.id} className="flex items-center justify-between border-b py-2 last:border-0">
-              <div>
-                <div className="text-sm font-medium">{REASON_LABEL[l.reason] || l.reason}</div>
-                <div className="text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</div>
-              </div>
-              <Badge variant={l.delta >= 0 ? "default" : "destructive"}>
-                {l.delta >= 0 ? "+" : ""}
-                {l.delta}
-              </Badge>
+      <div className={styles.rewardsGrid}>
+        <section className={styles.rewardsPanel}>
+          <div className={styles.panelTitle}><span className="eyebrow">Ledger</span><h2>Recent activity</h2></div>
+          {!ledger?.length ? (
+            <div className={styles.empty}><strong>No point activity yet.</strong><span>Rate a place or suggest an improvement to get started.</span></div>
+          ) : (
+            <div className={styles.ledger}>
+              {ledger.map((item) => (
+                <div key={item.id}>
+                  <span><strong>{REASON_LABEL[item.reason] || item.reason}</strong><small>{new Date(item.created_at).toLocaleDateString("en-AE", { day: "numeric", month: "short", year: "numeric" })}</small></span>
+                  <b className={item.delta >= 0 ? styles.positive : styles.negative}>{item.delta >= 0 ? "+" : ""}{item.delta}</b>
+                </div>
+              ))}
             </div>
-          ))}
-        </CardContent>
-      </Card>
-    </>
+          )}
+        </section>
+
+        <aside className={styles.rewardsAside}>
+          <section className={styles.rewardsPanel}>
+            <div className={styles.panelTitle}><span className="eyebrow">Simple rules</span><h2>How points work</h2></div>
+            <div className={styles.ruleList}>
+              {POINT_RULES.map(([title, body]) => <div key={title}><strong>{title}</strong><span>{body}</span></div>)}
+            </div>
+          </section>
+
+          <section className={styles.rewardsPanel}>
+            <div className={styles.panelTitle}><span className="eyebrow">Contribute</span><h2>Earn more</h2></div>
+            <div className={styles.linkList}>
+              {EARN_LINKS.map((item) => <Link href={item.href} key={item.href}><span><strong>{item.label}</strong><small>{item.points}</small></span><b aria-hidden="true">→</b></Link>)}
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
   );
 }
-

@@ -27,4 +27,3 @@ export function verifyBetaAccessToken(token) {
   return crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
 }
 
-

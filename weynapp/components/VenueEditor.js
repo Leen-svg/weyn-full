@@ -1,14 +1,16 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { safeUrl } from "@/lib/sanitize";
+import { parseUrlList } from "@/lib/media-url.mjs";
 import { createClient } from "@/lib/supabase/client";
+import VenueMedia from "@/components/VenueMedia";
 
 const MAX_IMAGE_EDGE = 1600;
 const MAX_COMPRESSED_IMAGE_BYTES = 1.5 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 const EMPTY_VENUE = {
   placeId: "", name: "", neighborhood: "", city: "Abu Dhabi", avg_spend_aed: 0,
-  description: "", google_maps_url: "", hero_video_url: "", latitude: null, longitude: null,
+  description: "", google_maps_url: "", hero_video_url: "", menu_url: "", latitude: null, longitude: null,
   age_restriction: "all-ages", is_aesthetic: false, is_trending: false,
 };
 
@@ -58,6 +60,17 @@ async function uploadVenueFile(venueId, source) {
   if (!completeRes.ok) throw new Error(completed.error || "Could not save upload");
 }
 
+async function addVenueMediaUrl(venueId, url, mediaType) {
+  const res = await fetch("/api/admin/venues/media", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ intent: "url", venueId, url, mediaType }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `Could not add ${mediaType} URL`);
+  return data;
+}
+
 export default function VenueEditor() {
   const [q, setQ] = useState("");
   const [venues, setVenues] = useState([]);
@@ -70,6 +83,8 @@ export default function VenueEditor() {
   const [newVenue, setNewVenue] = useState(EMPTY_VENUE);
   const [newTagIds, setNewTagIds] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
+  const [newImageUrls, setNewImageUrls] = useState("");
+  const [newVideoUrls, setNewVideoUrls] = useState("");
   const [suggesting, setSuggesting] = useState(false);
   const [createStatus, setCreateStatus] = useState("");
 
@@ -116,6 +131,14 @@ export default function VenueEditor() {
         setCreateStatus(`Uploading ${index + 1} of ${newFiles.length}…`);
         await uploadVenueFile(d.id, newFiles[index]);
       }
+      const urlItems = [
+        ...parseUrlList(newImageUrls).map((url) => ({ url, type: "image" })),
+        ...parseUrlList(newVideoUrls).map((url) => ({ url, type: "video" })),
+      ];
+      for (let index = 0; index < urlItems.length; index += 1) {
+        setCreateStatus(`Adding URL ${index + 1} of ${urlItems.length}…`);
+        await addVenueMediaUrl(d.id, urlItems[index].url, urlItems[index].type);
+      }
     } catch (error) {
       setErr(`Venue created, but media upload failed: ${error.message}`);
     }
@@ -123,6 +146,8 @@ export default function VenueEditor() {
     setNewVenue(EMPTY_VENUE);
     setNewTagIds([]);
     setNewFiles([]);
+    setNewImageUrls("");
+    setNewVideoUrls("");
     setCreateStatus("");
     setCreating(false);
     await search(q);
@@ -211,6 +236,10 @@ export default function VenueEditor() {
               <label>Optional external video URL</label>
               <input type="url" value={newVenue.hero_video_url} onChange={(e) => setNewVenue({ ...newVenue, hero_video_url: e.target.value })} />
             </div>
+            <div className="field">
+              <label>Place menu URL</label>
+              <input type="url" value={newVenue.menu_url} onChange={(e) => setNewVenue({ ...newVenue, menu_url: e.target.value })} placeholder="https://restaurant.example/menu or a PDF menu" />
+            </div>
             <div className="venue-form-grid">
               <div className="field">
                 <label>Age access</label>
@@ -234,6 +263,10 @@ export default function VenueEditor() {
               <p className="venue-media-help">Select several files. Every photo is resized, converted to WebP, and compressed below 1.5 MB automatically. Videos upload directly.</p>
               <input type="file" accept="image/*,video/*" multiple onChange={(e) => setNewFiles([...(e.target.files || [])])} />
               {newFiles.length > 0 && <div className="media-upload-status">{newFiles.length} file{newFiles.length === 1 ? "" : "s"} ready</div>}
+              <div className="venue-url-grid">
+                <div><label htmlFor="new-image-urls">Image URLs · one per line</label><textarea id="new-image-urls" value={newImageUrls} onChange={(e) => setNewImageUrls(e.target.value)} placeholder={"https://cdn.example.com/photo-1.jpg\nhttps://cdn.example.com/photo-2.jpg"} /></div>
+                <div><label htmlFor="new-video-urls">Video URLs · one per line</label><textarea id="new-video-urls" value={newVideoUrls} onChange={(e) => setNewVideoUrls(e.target.value)} placeholder={"YouTube, Vimeo, TikTok, Instagram, MP4, WebM, or another public URL"} /></div>
+              </div>
             </div>
             {createStatus && <div className="media-upload-status" role="status">{createStatus}</div>}
             <button className="btn primary block" disabled={busy || !newVenue.name.trim()} onClick={createVenue}>
@@ -322,6 +355,7 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
   const [avgSpend, setAvgSpend] = useState(venue.avg_spend_aed ?? 0);
   const [description, setDescription] = useState(venue.description || "");
   const [heroVideo, setHeroVideo] = useState(venue.hero_video_url || "");
+  const [menuUrl, setMenuUrl] = useState(venue.menu_url || "");
   const [ageRestriction, setAgeRestriction] = useState(venue.age_restriction || "all-ages");
   const [isAesthetic, setIsAesthetic] = useState(!!venue.is_aesthetic);
   const [media, setMedia] = useState([]);
@@ -329,9 +363,9 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
   const [mediaError, setMediaError] = useState(null);
-  const [mediaUrl, setMediaUrl] = useState("");
-  const [mediaType, setMediaType] = useState("image");
-  const [mediaBusy, setMediaBusy] = useState(false);
+  const [imageUrlText, setImageUrlText] = useState("");
+  const [videoUrlText, setVideoUrlText] = useState("");
+  const [addingUrls, setAddingUrls] = useState(false);
 
   const loadMedia = useCallback(async () => {
     const res = await fetch(`/api/admin/venues/media?venueId=${venue.id}`);
@@ -364,53 +398,6 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
     }
   }
 
-  async function addMediaLink() {
-    const rawUrl = mediaUrl.trim();
-    const url = /^https?:\/\//i.test(rawUrl) ? safeUrl(rawUrl) : null;
-    if (!url) {
-      setMediaError("Enter a valid http(s) image or video URL.");
-      return;
-    }
-    setMediaBusy(true);
-    setMediaError(null);
-    const res = await fetch("/api/admin/venues/media", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ intent: "link", venueId: venue.id, url, mediaType }),
-    });
-    const data = await res.json();
-    if (!res.ok) setMediaError(data.error || "Could not add media link");
-    else {
-      setMediaUrl("");
-      await loadMedia();
-    }
-    setMediaBusy(false);
-  }
-
-  async function moveMedia(index, direction) {
-    const destination = index + direction;
-    if (destination < 0 || destination >= media.length || mediaBusy) return;
-    const previous = media;
-    const reordered = [...media];
-    const [moved] = reordered.splice(index, 1);
-    reordered.splice(destination, 0, moved);
-    setMedia(reordered);
-    setMediaBusy(true);
-    setMediaError(null);
-    const res = await fetch("/api/admin/venues/media", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ venueId: venue.id, orderedIds: reordered.map((item) => item.id) }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setMedia(previous);
-      setMediaError(data.error || "Could not reorder media");
-      await loadMedia();
-    }
-    setMediaBusy(false);
-  }
-
   async function removeMedia(id) {
     await fetch("/api/admin/venues/media", {
       method: "DELETE",
@@ -418,6 +405,28 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
       body: JSON.stringify({ id }),
     });
     await loadMedia();
+  }
+
+  async function addUrls(mediaType) {
+    const value = mediaType === "image" ? imageUrlText : videoUrlText;
+    const urls = parseUrlList(value);
+    if (!urls.length) { setMediaError("Add at least one valid full http(s) URL, one per line."); return; }
+    setAddingUrls(true);
+    setMediaError(null);
+    try {
+      for (let index = 0; index < urls.length; index += 1) {
+        setUploadStatus(`Adding ${mediaType} URL ${index + 1} of ${urls.length}…`);
+        await addVenueMediaUrl(venue.id, urls[index], mediaType);
+      }
+      if (mediaType === "image") setImageUrlText(""); else setVideoUrlText("");
+      await loadMedia();
+      setUploadStatus(`${urls.length} ${mediaType} URL${urls.length === 1 ? "" : "s"} added`);
+    } catch (error) {
+      setMediaError(error.message || "Could not add URLs");
+      setUploadStatus("");
+    } finally {
+      setAddingUrls(false);
+    }
   }
 
   return (
@@ -479,6 +488,10 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
         <label>Hero video URL</label>
         <input type="url" value={heroVideo} onChange={(e) => setHeroVideo(e.target.value)} />
       </div>
+      <div className="field">
+        <label>Place menu URL</label>
+        <input type="url" value={menuUrl} onChange={(e) => setMenuUrl(e.target.value)} placeholder="https://restaurant.example/menu or a PDF menu" />
+      </div>
       <div className="venue-form-grid">
         <div className="field">
           <label>Age access</label>
@@ -493,35 +506,28 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
 
       <div className="field">
         <label>Photos & videos</label>
-        <p className="venue-media-help">Upload files or add direct image/video links. Use the arrow controls to choose the order shown on venue cards; the first item is the cover.</p>
-        <div className="media-grid admin-media-grid">
-          {media.map((m, index) => (
-            <div className="media-thumb admin-media-thumb" key={m.id}>
-              {m.media_type === "video" ? (
-                <video src={safeUrl(m.url)} muted preload="metadata" controls />
-              ) : (
-                <img src={safeUrl(m.url)} alt={`${venue.name} media ${index + 1}`} />
-              )}
-              {index === 0 && <span className="media-cover-label">Cover</span>}
-              <button type="button" className="media-remove" aria-label={`Remove media ${index + 1}`} onClick={() => removeMedia(m.id)} disabled={mediaBusy}>✕</button>
-              <div className="media-order-controls">
-                <button type="button" aria-label={`Move media ${index + 1} earlier`} onClick={() => moveMedia(index, -1)} disabled={index === 0 || mediaBusy}>←</button>
-                <span>{index + 1}</span>
-                <button type="button" aria-label={`Move media ${index + 1} later`} onClick={() => moveMedia(index, 1)} disabled={index === media.length - 1 || mediaBusy}>→</button>
-              </div>
+        <p className="venue-media-help">Select several files at once. Every photo is resized to at most 1600px, converted to WebP, and compressed below 1.5 MB before upload. Videos can be up to 50 MB.</p>
+        <div className="media-grid">
+          {media.map((m) => (
+            <div className="media-thumb" key={m.id}>
+              <VenueMedia item={{ type: m.media_type, url: safeUrl(m.url) }} venueName={venue.name} preview />
+              <button type="button" className="media-remove" aria-label="Remove media" onClick={() => removeMedia(m.id)}>✕</button>
             </div>
           ))}
         </div>
-        <div className="media-link-row">
-          <select aria-label="Media link type" value={mediaType} onChange={(e) => setMediaType(e.target.value)} disabled={mediaBusy}>
-            <option value="image">Image link</option>
-            <option value="video">Video link</option>
-          </select>
-          <input type="url" value={mediaUrl} onChange={(e) => setMediaUrl(e.target.value)} placeholder="https://…" aria-label="Image or video URL" />
-          <button type="button" className="btn small" onClick={addMediaLink} disabled={mediaBusy || !mediaUrl.trim()}>Add link</button>
+        <input type="file" accept="image/*,video/*" multiple onChange={uploadFile} disabled={uploading} />
+        <div className="venue-url-grid">
+          <div>
+            <label htmlFor={`image-urls-${venue.id}`}>Add image URLs · one per line</label>
+            <textarea id={`image-urls-${venue.id}`} value={imageUrlText} onChange={(e) => setImageUrlText(e.target.value)} placeholder={"https://cdn.example.com/photo-1.jpg\nhttps://cdn.example.com/photo-2.jpg"} />
+            <button className="btn small ghost" type="button" disabled={addingUrls} onClick={() => addUrls("image")}>+ Add image URLs</button>
+          </div>
+          <div>
+            <label htmlFor={`video-urls-${venue.id}`}>Add video URLs · one per line</label>
+            <textarea id={`video-urls-${venue.id}`} value={videoUrlText} onChange={(e) => setVideoUrlText(e.target.value)} placeholder="YouTube, Vimeo, TikTok, Instagram, MP4, WebM, or another public URL" />
+            <button className="btn small ghost" type="button" disabled={addingUrls} onClick={() => addUrls("video")}>+ Add video URLs</button>
+          </div>
         </div>
-        <div className="media-upload-divider"><span>or upload files</span></div>
-        <input type="file" accept="image/*,video/*" multiple onChange={uploadFile} disabled={uploading || mediaBusy} />
         {uploadStatus && <div className="media-upload-status" role="status">{uploadStatus}</div>}
         {mediaError && <div className="notice err" role="alert">{mediaError}</div>}
       </div>
@@ -537,6 +543,7 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
             avg_spend_aed: avgSpend,
             description,
             hero_video_url: heroVideo || null,
+            menu_url: menuUrl || null,
             age_restriction: ageRestriction,
             is_aesthetic: isAesthetic,
           }, tagIds)

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, Heart, Users, ShieldCheck, LogOut, Trophy, Eye, MessagesSquare, Plus, Clapperboard, Tags, Flag } from "lucide-react";
+import { User, Heart, Users, ShieldCheck, LogOut, Trophy, Eye, MessagesSquare, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,7 +57,10 @@ export default function ProfileMenu({ userId, displayName, avatarUrl, points, is
         </div>
         <DropdownMenuSeparator className="profile-menu-separator" />
         <DropdownMenuItem className={itemClass} render={<Link href="/profile" />}>
-          <User className="h-4 w-4" /> Edit profile
+          <User className="h-4 w-4" /> Your profile
+        </DropdownMenuItem>
+        <DropdownMenuItem className={itemClass} render={<Link href="/profile/edit" />}>
+          <Settings className="h-4 w-4" /> Edit profile
         </DropdownMenuItem>
         {userId && (
           <DropdownMenuItem className={itemClass} render={<Link href={`/u/${userId}`} target="_blank" />}>
@@ -76,18 +79,6 @@ export default function ProfileMenu({ userId, displayName, avatarUrl, points, is
         <DropdownMenuItem className={itemClass} render={<Link href="/groups" />}>
           <MessagesSquare className="h-4 w-4" /> Groups
         </DropdownMenuItem>
-        <DropdownMenuItem className={itemClass} render={<Link href="/submit" />}>
-          <Plus className="h-4 w-4" /> Add a spot
-        </DropdownMenuItem>
-        <DropdownMenuItem className={itemClass} render={<Link href="/creators" />}>
-          <Clapperboard className="h-4 w-4" /> Creators
-        </DropdownMenuItem>
-        <DropdownMenuItem className={itemClass} render={<Link href="/rate" />}>
-          <Tags className="h-4 w-4" /> Rate tags
-        </DropdownMenuItem>
-        <DropdownMenuItem className={itemClass} render={<Link href="/takedown" />}>
-          <Flag className="h-4 w-4" /> Video takedown
-        </DropdownMenuItem>
         {isAdmin && (
           <DropdownMenuItem className={`${itemClass} profile-menu-admin`} render={<Link href="/admin" />}>
             <ShieldCheck className="h-4 w-4" /> Admin
@@ -101,4 +92,3 @@ export default function ProfileMenu({ userId, displayName, avatarUrl, points, is
     </DropdownMenu>
   );
 }
-

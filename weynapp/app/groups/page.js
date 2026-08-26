@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import GroupsClient from "@/components/GroupsClient";
 import { privatePageMetadata } from "@/lib/seo";
+import styles from "@/components/AccountPages.module.css";
 
 export const metadata = privatePageMetadata({
   title: "Your Groups",
@@ -16,13 +17,13 @@ export default async function GroupsPage() {
   if (!user) redirect("/login?next=/groups");
 
   return (
-    <>
-      <p className="eyebrow">Together</p>
-      <h1>Your groups</h1>
-      <p className="sub">Vote on a spot. Chat. Actually go.</p>
+    <div className={`${styles.page} screen-messages`}>
+      <header className={`${styles.header} ${styles.groupHeader}`}>
+        <span className="eyebrow">Your people</span>
+        <h1>Messages</h1>
+        <p className="sub">Group up with friends, vote on where to go, chat about it.</p>
+      </header>
       <GroupsClient />
-    </>
+    </div>
   );
 }
-
-

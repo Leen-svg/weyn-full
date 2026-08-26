@@ -9,3 +9,4 @@ export default async function AdminPage() {
   if (!admin) redirect("/login?next=/admin");
   return <AdminClient />;
 }
+

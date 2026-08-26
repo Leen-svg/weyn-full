@@ -4,7 +4,8 @@ import VenueEditor from "./VenueEditor";
 import AdminUsers from "./AdminUsers";
 import AdminTagsZones from "./AdminTagsZones";
 import AdminImport from "./AdminImport";
-import AdminCuratedLists from "./AdminCuratedLists";
+import AdminEditorialLists from "./AdminEditorialLists";
+import AdminMediaQuality from "./AdminMediaQuality";
 import { safeUrl } from "@/lib/sanitize";
 
 export default function AdminClient() {
@@ -40,11 +41,13 @@ export default function AdminClient() {
   const tabs = [
     ["submissions", "New spots", data.submissions.length],
     ["content", "Content reports", data.contentReports.length],
+    ["photos", "Photo review", data.pendingMedia.length],
     ["tags", "Tag disputes", data.disputes.reduce((n, d) => n + d.issues.length, 0)],
     ["videos", "Videos", data.videos.length],
     ["takedowns", "Takedowns", data.takedowns.length],
     ["venues", "Venues", 0],
-    ["curated", "Curated lists", 0],
+    ["media-quality", "Image quality", 0],
+    ["editorial", "Weyn lists", 0],
     ["import", "Bulk import", 0],
     ["taxonomy", "Tags & zones", 0],
     ["users", "Users", 0],
@@ -107,6 +110,25 @@ export default function AdminClient() {
               <div className="admin-actions">
                 <button className="btn small" disabled={busy} onClick={() => act("content", item.key, "restore")}>Keep / restore</button>
                 <button className="btn small ghost" disabled={busy} onClick={() => act("content", item.key, "remove")}>Remove</button>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+
+      {tab === "photos" && (
+        data.pendingMedia.length === 0 ? <p className="sub">No photos waiting for review.</p> :
+        data.pendingMedia.map((item) => (
+          <div className="card" key={item.id}>
+            <div className="admin-row">
+              <div>
+                {safeUrl(item.preview_url) && <img src={safeUrl(item.preview_url)} alt="User-submitted photo awaiting moderation" style={{ width: 220, maxWidth: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 12 }} />}
+                <div className="venue-name">{item.venues?.name || item.context_type}</div>
+                <div className="venue-meta">{item.visibility} · {Math.ceil(item.byte_size / 1024)} KB · {item.mime_type}</div>
+              </div>
+              <div className="admin-actions">
+                <button className="btn small" disabled={busy} onClick={() => act("media", item.id, "approve")}>Approve</button>
+                <button className="btn small ghost" disabled={busy} onClick={() => act("media", item.id, "reject")}>Reject</button>
               </div>
             </div>
           </div>
@@ -183,11 +205,11 @@ export default function AdminClient() {
       )}
 
       {tab === "venues" && <VenueEditor />}
-      {tab === "curated" && <AdminCuratedLists />}
+      {tab === "media-quality" && <AdminMediaQuality />}
+      {tab === "editorial" && <AdminEditorialLists />}
       {tab === "import" && <AdminImport />}
       {tab === "taxonomy" && <AdminTagsZones />}
       {tab === "users" && <AdminUsers />}
     </>
   );
 }
-

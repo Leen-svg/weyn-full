@@ -9,4 +9,3 @@ test("beta access tokens are signed, expire, and reject tampering", async () => 
   assert.equal(verifyBetaAccessToken(`${token}x`), false);
   assert.equal(verifyBetaAccessToken(`1.${token.split(".")[1]}`), false);
 });
-

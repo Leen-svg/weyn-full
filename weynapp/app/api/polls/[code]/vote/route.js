@@ -1,7 +1,7 @@
-import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { payloadTooLarge } from "@/lib/request-security.mjs";
 import { rateLimit } from "@/lib/request-security";
+import { pollAccess } from "@/lib/poll-access";
 
 export async function POST(req, { params }) {
   if (payloadTooLarge(req, 8 * 1024)) return NextResponse.json({ error: "Request too large" }, { status: 413 });
@@ -11,9 +11,9 @@ export async function POST(req, { params }) {
   const { optionId, name, fingerprint } = await req.json();
   if (!optionId || !fingerprint) return NextResponse.json({ error: "Missing vote data" }, { status: 400 });
 
-  const s = db();
-  const { data: poll } = await s.from("polls").select("id, expires_at").eq("short_code", code).single();
-  if (!poll) return NextResponse.json({ error: "Poll not found" }, { status: 404 });
+  const access = await pollAccess(req, code);
+  if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
+  const { poll, service: s } = access;
   if (new Date(poll.expires_at) < new Date()) return NextResponse.json({ error: "This poll has expired" }, { status: 410 });
 
   const { data: option } = await s

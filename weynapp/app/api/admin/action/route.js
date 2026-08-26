@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { awardPoints, POINTS } from "@/lib/points";
 import { NextResponse } from "next/server";
+import { PUBLIC_MEDIA_BUCKET, QUARANTINE_BUCKET } from "@/lib/community-media-server";
 
 export async function POST(req) {
   const admin = await requireAdmin();
@@ -11,8 +12,42 @@ export async function POST(req) {
   const now = new Date().toISOString();
 
   try {
+    // ---- Quarantined community photos ----
+    if (kind === "media") {
+      const { data: media } = await s.from("community_media").select("*").eq("id", id).maybeSingle();
+      if (!media) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      if (media.status !== "pending") return NextResponse.json({ error: "This photo was already reviewed" }, { status: 409 });
+      if (action === "approve") {
+        if (!media.context_id) return NextResponse.json({ error: "This upload is not attached to a post or review. Reject it instead." }, { status: 409 });
+        const { data: source, error: downloadError } = await s.storage.from(QUARANTINE_BUCKET).download(media.storage_path);
+        if (downloadError || !source) throw downloadError || new Error("Couldn't read quarantined photo");
+        const extension = media.storage_path.split(".").pop();
+        const publicPath = `community/${media.user_id}/${media.id}.${extension}`;
+        const { error: uploadError } = await s.storage.from(PUBLIC_MEDIA_BUCKET).upload(publicPath, source, { contentType: media.mime_type, upsert: false });
+        if (uploadError) throw uploadError;
+        const { data: publicData } = s.storage.from(PUBLIC_MEDIA_BUCKET).getPublicUrl(publicPath);
+        const publicUrl = publicData?.publicUrl;
+        if (!publicUrl) throw new Error("Couldn't publish approved photo");
+        if (media.context_id) {
+          const table = media.context_type === "post" ? "posts" : "reviews";
+          const { error: contextError } = await s.from(table).update({ photo_url: publicUrl }).eq("id", media.context_id).eq("user_id", media.user_id);
+          if (contextError) {
+            await s.storage.from(PUBLIC_MEDIA_BUCKET).remove([publicPath]);
+            throw contextError;
+          }
+        }
+        await s.from("community_media").update({ status: "approved", public_path: publicPath, reviewed_at: now, reviewed_by: admin.id }).eq("id", id);
+        await s.storage.from(QUARANTINE_BUCKET).remove([media.storage_path]);
+      } else if (action === "reject") {
+        await s.from("community_media").update({ status: "rejected", reviewed_at: now, reviewed_by: admin.id }).eq("id", id);
+        await s.storage.from(QUARANTINE_BUCKET).remove([media.storage_path]);
+      } else {
+        return NextResponse.json({ error: "Unknown media action" }, { status: 400 });
+      }
+    }
+
     // ---- Venue submissions ----
-    if (kind === "submission") {
+    else if (kind === "submission") {
       const { data: sub } = await s.from("venue_submissions").select("*").eq("id", id).single();
       if (!sub) return NextResponse.json({ error: "Not found" }, { status: 404 });
       if (sub.status !== "pending") return NextResponse.json({ error: "This submission was already reviewed." }, { status: 409 });
@@ -125,4 +160,3 @@ export async function POST(req) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
-
