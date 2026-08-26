@@ -44,7 +44,12 @@ function coordinatesFrom(value) {
   const text = decoded(value);
   const at = /@(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/.exec(text);
   const data = /!3d(-?\d{1,2}(?:\.\d+)?).*?!4d(-?\d{1,3}(?:\.\d+)?)/.exec(text);
-  const pair = at || data;
+  // Apple Maps writes ll=, and Google/Weyn share links carry the pair in
+  // q=, query=, destination= or daddr=. Only @ and !3d/!4d were handled, so
+  // pasting any of those fell back to geocoding the place by name -- less
+  // accurate, and an extra network round trip.
+  const param = /(?:[?&](?:ll|q|query|destination|daddr|sll)=)(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/i.exec(text);
+  const pair = at || data || param;
   if (!pair) return { latitude: null, longitude: null };
   return {
     latitude: numericCoordinate(pair[1], -90, 90),

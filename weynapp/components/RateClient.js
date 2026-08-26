@@ -27,6 +27,7 @@ export default function RateClient({ venues, allTags }) {
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(0);
+  const [lastVote, setLastVote] = useState(null);
 
   useEffect(() => { setOrder(shuffle(venues.map((v) => v.id))); }, [venues]);
 
@@ -51,8 +52,35 @@ export default function RateClient({ venues, allTags }) {
     setBusy(false);
     if (!res.ok) { setMsg({ err: true, text: d.error }); return; }
     setDone((n) => n + 1);
+    // Keep what was just sent so it can be taken back; votes were previously
+    // one-way, and a mis-tap was permanent.
+    setLastVote({ venueId: venue.id, venueName: venue.name, tagSlug: tag_slug || null });
     setMsg({ err: false, text: "Logged, thank you!" });
     setTimeout(() => { setMsg(null); next(); }, 700);
+  }
+
+  async function undoLastVote() {
+    if (!lastVote || busy) return;
+    setBusy(true);
+    const res = await fetch("/api/tag-votes", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        venue_id: lastVote.venueId,
+        tag_slug: lastVote.tagSlug,
+        fingerprint: getFingerprint(),
+      }),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setMsg({ err: true, text: d.error || "Couldn't undo that." });
+      return;
+    }
+    setDone((n) => Math.max(0, n - 1));
+    setLastVote(null);
+    setMsg({ err: false, text: "Taken back." });
+    setTimeout(() => setMsg(null), 1200);
   }
 
   if (!venue) return <p className="sub">Loading venues…</p>;
@@ -75,6 +103,14 @@ export default function RateClient({ venues, allTags }) {
         </div>
 
         {msg && <div className={`notice ${msg.err ? "err" : ""}`}>{msg.text}</div>}
+        {lastVote && (
+          <p className="rate-undo">
+            Sent for <b>{lastVote.venueName}</b>.{" "}
+            <button type="button" className="linklike" onClick={undoLastVote} disabled={busy}>
+              Undo
+            </button>
+          </p>
+        )}
 
         {!mode && (
           <div className="cta-row" style={{ marginTop: 18 }}>

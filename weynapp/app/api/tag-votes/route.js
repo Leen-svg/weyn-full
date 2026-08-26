@@ -50,3 +50,39 @@ export async function POST(req) {
 }
 
 
+
+/* Retract a tag vote.
+
+   Votes could be cast but never taken back, so a mistaken "wrong tag" was
+   permanent from the user's side. Only the voter's own row is removed: signed
+   in, that means their user_id; anonymous, the browser fingerprint that cast
+   it. Points awarded for the original suggestion are deliberately left alone
+   rather than clawed back. */
+export async function DELETE(req) {
+  if (payloadTooLarge(req, 8 * 1024)) return NextResponse.json({ error: "Request too large" }, { status: 413 });
+  const body = await req.json().catch(() => ({}));
+  const venueId = String(body.venue_id || "");
+  if (!venueId) return NextResponse.json({ error: "venue_id required" }, { status: 400 });
+
+  let userId = null;
+  try {
+    const sessionClient = await createServerClient();
+    const { data: { user } } = await sessionClient.auth.getUser();
+    userId = user?.id || null;
+  } catch {
+    // anonymous voters retract by fingerprint
+  }
+
+  const fingerprint = String(body.fingerprint || "");
+  if (!userId && !fingerprint) {
+    return NextResponse.json({ error: "Can't identify that vote" }, { status: 400 });
+  }
+
+  let query = db().from("tag_votes").delete().eq("venue_id", venueId);
+  query = userId ? query.eq("user_id", userId) : query.eq("voter_fingerprint", fingerprint);
+  if (body.tag_slug) query = query.eq("tag_slug", String(body.tag_slug).slice(0, 80));
+
+  const { error } = await query;
+  if (error) return NextResponse.json({ error: "Couldn't undo that vote" }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}

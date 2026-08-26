@@ -904,3 +904,23 @@
   .curated-browser__grid { grid-template-columns: 1fr; }
   .curated-browser__card { grid-template-rows: 116px auto; }
 }
+
+/* ---- Retractable tag vote ---- */
+.rate-undo {
+  margin-top: 10px;
+  font-size: .84rem;
+  color: var(--ui-muted, #607089);
+}
+.app-shell.stitch .linklike {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #6123cc;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.app-shell.stitch .linklike:disabled { opacity: .5; cursor: not-allowed; }
