@@ -7,23 +7,54 @@ function normalized(value) {
     .trim();
 }
 
+// Every `tags` entry below must resolve against the live taxonomy, which is a
+// fixed set of 32 vibe tags. The previous list was written against invented
+// names ("rooftop", "specialty coffee", "brunch"), only 3 of which existed, so
+// almost every phrase resolved to nothing and Ask Weyn answered "try a little
+// more detail". Candidates are real slugs, most specific first.
 const INTENTS = [
-  { triggers: ["rooftop", "roof top", "skyline"], tags: ["rooftop", "rooftop views", "views"] },
-  { triggers: ["quiet", "peaceful", "calm", "conversation"], tags: ["quiet", "intimate", "cozy casual", "hidden gem"] },
-  { triggers: ["date", "romantic", "anniversary"], tags: ["date night", "romantic", "intimate"] },
-  { triggers: ["brunch", "breakfast"], tags: ["brunch", "breakfast"] },
-  { triggers: ["coffee", "cafe", "café"], tags: ["specialty coffee", "coffee", "cafe"] },
-  { triggers: ["shisha", "hookah"], tags: ["shisha served", "shisha"] },
-  { triggers: ["beach", "seaside", "sea view", "waterfront"], tags: ["beach", "waterfront", "sea view"] },
-  { triggers: ["outside", "outdoor", "terrace", "garden"], tags: ["outdoor", "terrace", "garden"] },
-  { triggers: ["late night", "after midnight", "open late"], tags: ["late night", "open late"] },
-  { triggers: ["family", "kids", "children"], tags: ["family", "all ages welcome", "kids"] },
-  { triggers: ["hidden gem", "underrated", "not touristy"], tags: ["hidden gem"] },
-  { triggers: ["food", "restaurant", "dinner", "lunch"], tags: ["foodie approved", "dining"] },
-  { triggers: ["drinks", "cocktail", "bar", "wine", "alcohol"], tags: ["licensed serves alcohol", "licensed", "cocktails"] },
-  { triggers: ["party", "dance", "dancing", "club"], tags: ["loud theatrical", "lively", "dance"] },
-  { triggers: ["walk in", "last minute", "no booking"], tags: ["walk ins welcome", "walk in"] },
-  { triggers: ["aesthetic", "instagrammable", "pretty", "photo"], tags: ["aesthetic focused", "aesthetic"] },
+  // Vibe & noise
+  { triggers: ["quiet", "peaceful", "calm", "conversation", "talk", "chat", "catch up"], tags: ["conversation-friendly"] },
+  { triggers: ["cozy", "cosy", "casual", "chill", "relaxed", "laid back", "low key"], tags: ["cozy-and-casual"] },
+  { triggers: ["moody", "dark", "intimate", "dimly lit", "candlelit", "speakeasy"], tags: ["dark-and-moody"] },
+  { triggers: ["party", "loud", "lively", "dance", "dancing", "club", "buzzing", "energetic", "night out"], tags: ["loud-and-theatrical"] },
+  { triggers: ["aesthetic", "instagrammable", "instagram", "pretty", "photo", "photogenic", "cute"], tags: ["aesthetic-instagrammable"] },
+  { triggers: ["for the gram", "content", "photoshoot"], tags: ["do-it-for-the-gram"] },
+
+  // Occasion
+  { triggers: ["date", "romantic", "anniversary", "valentine"], tags: ["date-night"] },
+  { triggers: ["birthday", "celebration", "big group", "large group", "group dinner", "party of"], tags: ["big-group-celebration"] },
+  { triggers: ["business", "client", "meeting", "work dinner", "professional", "impress"], tags: ["business-impress-a-client"] },
+  { triggers: ["solo", "alone", "by myself", "me time", "on my own"], tags: ["solo-escape"] },
+  { triggers: ["quick", "fast", "short", "grab a", "in and out"], tags: ["quick-catchup"] },
+  { triggers: ["sundowner", "sunset", "golden hour", "weekend", "friday"], tags: ["weekend-sundowners"] },
+  { triggers: ["late night", "after midnight", "open late", "midnight", "3am", "2am"], tags: ["late-night-dining", "late-night-bites"] },
+
+  // Substance & value
+  { triggers: ["food", "restaurant", "dinner", "lunch", "eat", "foodie", "good food", "tasty"], tags: ["foodie-approved"] },
+  { triggers: ["hungry", "big portions", "generous", "filling", "value for money", "cheap eats"], tags: ["generous-portions"] },
+  { triggers: ["hidden gem", "underrated", "not touristy", "local spot", "off the beaten"], tags: ["hidden-gem"] },
+  { triggers: ["touristy", "famous", "landmark", "iconic", "must see"], tags: ["tourist-staple"] },
+  { triggers: ["brunch", "breakfast", "coffee", "cafe"], tags: ["foodie-approved", "cozy-and-casual"] },
+
+  // Climate & seating
+  { triggers: ["outside", "outdoor", "terrace", "garden", "al fresco", "open air"], tags: ["ac-cooled-outdoor-terrace"] },
+  { triggers: ["indoor", "inside", "air conditioned", "aircon", "ac", "escape the heat"], tags: ["indoor-only"] },
+  { triggers: ["rooftop", "roof top", "skyline", "view", "views", "sea view", "marina", "waterfront", "beach", "seaside"], tags: ["sea-marina-view"] },
+
+  // Access & rules
+  { triggers: ["drinks", "cocktail", "cocktails", "bar", "wine", "alcohol", "beer", "licensed"], tags: ["licensed-serves-alcohol"] },
+  { triggers: ["no alcohol", "dry", "alcohol free", "unlicensed", "halal"], tags: ["dry-unlicensed"] },
+  { triggers: ["shisha", "hookah", "smoke"], tags: ["shisha-served"] },
+  { triggers: ["family", "kids", "children", "all ages", "family friendly"], tags: ["all-ages-welcome"] },
+  { triggers: ["21+", "adults only", "over 21", "no kids"], tags: ["strictly-21plus"] },
+
+  // Logistics & lifestyle
+  { triggers: ["walk in", "walk ins", "last minute", "no booking", "spontaneous"], tags: ["walk-ins-welcome"] },
+  { triggers: ["booking", "reserve", "reservation", "book a table"], tags: ["reservation-essential"] },
+  { triggers: ["parking", "valet", "easy parking", "drive"], tags: ["free-valet-dedicated-parking"] },
+  { triggers: ["work", "laptop", "study", "wifi", "remote", "co working"], tags: ["laptop-work-friendly"] },
+  { triggers: ["pet", "dog", "dogs", "pet friendly"], tags: ["pet-friendly"] },
 ];
 
 function includesPhrase(haystack, phrase) {

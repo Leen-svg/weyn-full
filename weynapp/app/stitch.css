@@ -242,7 +242,19 @@
 
 /* Welcome and authentication */
 .weyn-shell--bare .app-layout { min-height: 100dvh; }
+/* Bare screens drop app-main's padding so the welcome hero can run
+   full-bleed. Everything else on those screens is a form, so it gets its own
+   centred, padded column back — without this, auth content sat flush against
+   the window edge. */
 .weyn-shell--bare .app-main { width: 100%; max-width: none; padding: 0; }
+
+.weyn-shell--bare .auth-screen,
+.weyn-shell--bare .confirm-email,
+.weyn-shell--bare .invitation-card {
+  width: min(100%, 460px);
+  margin-inline: auto;
+  padding-inline: 20px;
+}
 .welcome-hero {
   position: relative;
   display: grid;
@@ -638,6 +650,14 @@
 @media (max-width: 719px) {
   .community-collections__controls,
   .community-collection-grid { grid-template-columns: 1fr; }
+  /* These grids declared column minimums that added up to more than a phone
+     is wide (492px and 392px respectively), so they overflowed the screen. */
+  .community-collections__controls { grid-template-columns: 1fr; }
+  .planner-controls { grid-template-columns: 1fr; align-items: stretch; }
+  .planner-share { grid-template-columns: 1fr; gap: 20px; }
+  /* Two curated cards side by side leaves ~170px each — too narrow for the
+     title and meta line to sit properly. */
+  .curated-collection-grid { grid-template-columns: 1fr; }
   .content-manager__controls { align-items: stretch; flex-direction: column; }
   .content-manager__controls > div { justify-content: flex-start; }
   .app-chrome { min-height: 64px; padding: 8px 12px; }
@@ -695,6 +715,11 @@
     display: grid;
     grid-template-columns: 196px minmax(0, 1fr);
     align-items: start;
+  }
+  /* Bare screens render no tabbar, so the 196px sidebar column was left
+     empty and pushed the content off-centre against the right edge. */
+  .weyn-shell--bare .app-layout {
+    display: block;
   }
   .app-main { grid-column: 2; grid-row: 1; padding-bottom: 80px; }
   .tabbar {
