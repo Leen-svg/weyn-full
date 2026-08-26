@@ -12,7 +12,12 @@ export function mergeVenueResults(exact = [], fallback = [], limit = 3) {
   return venues;
 }
 
-export function shortlistResultNote({ total = 0, relaxedCount = 0, nearby = false } = {}) {
+export function shortlistResultNote({ total = 0, relaxedCount = 0, nearby = false, budgetLifted = false, maxSpend = null } = {}) {
+  if (budgetLifted) {
+    const cap = Number.isFinite(Number(maxSpend)) ? `${Number(maxSpend)} AED` : "that budget";
+    return `Nothing here comes in under ${cap}, so these are the closest picks at their usual price. Raise the budget to see more.`;
+  }
+
   if (relaxedCount > 0) {
     const slots = relaxedCount === 1 ? "one remaining spot" : `${relaxedCount} remaining spots`;
     return `We kept your ${nearby ? "Near me distance, " : ""}city, budget, age and aesthetic choices, then filled ${slots} with the best available picks because fewer than three places matched your selected vibes.`;

@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import { Camera, Check, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
+import { orderTagGroups, dedupeTags } from "@/lib/tag-groups";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export default function ProfileForm({ initial, groups }) {
+  const orderedGroups = orderTagGroups(groups);
   const [displayName, setDisplayName] = useState(initial.display_name || "");
   const [bio, setBio] = useState(initial.bio || "");
   const [favoriteTags, setFavoriteTags] = useState(initial.favorite_tags || []);
@@ -196,12 +198,12 @@ export default function ProfileForm({ initial, groups }) {
             </div>
           )}
           <Accordion type="multiple" className="w-full">
-            {groups.map((cat) => (
+            {orderedGroups.map((cat) => (
               <AccordionItem key={cat.slug} value={cat.slug}>
                 <AccordionTrigger className="text-sm font-semibold">{cat.name}</AccordionTrigger>
                 <AccordionContent>
                   <div className="flex flex-wrap gap-2">
-                    {cat.tags.map((t) => {
+                    {dedupeTags(cat.tags).map((t) => {
                       const on = favoriteTags.includes(t.slug);
                       return (
                         <Badge

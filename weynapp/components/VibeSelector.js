@@ -5,6 +5,7 @@ import { Search, Sparkles } from "lucide-react";
 import VenueCard from "./VenueCard";
 import VenueActions from "./VenueActions";
 import { interpretAskWeyn } from "@/lib/ask-weyn.mjs";
+import { orderTagGroups } from "@/lib/tag-groups";
 
 const BUDGETS = [
   { label: "Under 50 AED", value: 50 },
@@ -80,6 +81,8 @@ function AccordionSection({ id, label, count, forceOpen, open, onToggle, childre
 }
 
 export default function VibeSelector({ groups, isLoggedIn = false }) {
+  // "Access & Rules" is housekeeping, not a vibe, so it belongs last.
+  const orderedGroups = orderTagGroups(groups);
   const router = useRouter();
   const [city, setCity] = useState("Abu Dhabi");
   const [selected, setSelected] = useState({});
@@ -246,7 +249,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
       aestheticOnly: aesthetic,
     });
     if (!parsed.tags.length) {
-      setErr("Try a little more detail, for example “quiet rooftop date in Dubai under 150 AED”.");
+      setErr("Try a little more detail, for example “quiet sea view date in Abu Dhabi under 300 AED”.");
       return;
     }
     setSelected(parsed.selected);
@@ -326,7 +329,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
           <input
             id="ask-weyn-input"
             type="text"
-            placeholder="quiet rooftop date in Abu Dhabi under 150…"
+            placeholder="quiet sea view date in Abu Dhabi under 300…"
             value={tagQuery}
             onChange={(event) => setTagQuery(event.target.value)}
             autoComplete="off"
@@ -382,7 +385,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
         ))}
       </div>
 
-      {groups.map((cat) => {
+      {orderedGroups.map((cat) => {
         let visibleTags = cold ? cat.tags.filter((t) => !t.seasonal_exclude) : cat.tags;
         if (visibleTags.length === 0) return null;
         const clusters = groupBySubgroup(visibleTags);

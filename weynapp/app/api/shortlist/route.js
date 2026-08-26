@@ -55,12 +55,45 @@ export async function POST(req) {
   const exact = data || [];
   let fallback = [];
   if (exact.length < 3) {
-    const fallbackResult = await runShortlist({
-      random: true,
-      excludeIds: exact.map((venue) => venue.id),
-      limit: 3 - exact.length,
+    // The previous fallback re-ran with the SAME tag list, only randomised, so
+    // a combination that matched nothing simply returned nothing twice. A
+    // richer sentence through Ask Weyn therefore reliably produced zero spots.
+    // Relax the vibe tags one at a time instead, keeping the constraints the
+    // result note promises to keep: city, budget, age, aesthetic and Near me.
+    for (let keep = safeTags.length - 1; keep >= 0; keep -= 1) {
+      const needed = 3 - exact.length - fallback.length;
+      if (needed <= 0) break;
+      const excludeIds = [...exact, ...fallback].map((venue) => venue.id);
+      const { data: relaxed, error: relaxedError } = await db().rpc(rpcName, {
+        ...sharedParams,
+        p_tag_slugs: safeTags.slice(0, keep),
+        ...nearbyParams,
+        p_random: true,
+        p_exclude_ids: excludeIds,
+        p_limit: needed,
+      });
+      if (!relaxedError && relaxed?.length) fallback = fallback.concat(relaxed);
+    }
+  }
+
+  // Last resort: lift the budget. Abu Dhabi's cheapest place is 175 AED, so
+  // "under 150" there can never match anything however far the tags relax —
+  // the search would return nothing at all rather than something useful.
+  let budgetLifted = false;
+  if (exact.length + fallback.length === 0 && safeSpend < 100000) {
+    const { data: anySpend, error: anySpendError } = await db().rpc(rpcName, {
+      ...sharedParams,
+      p_tag_slugs: [],
+      p_max_spend: 99999,
+      ...nearbyParams,
+      p_random: true,
+      p_exclude_ids: [],
+      p_limit: 3,
     });
-    if (!fallbackResult.error) fallback = fallbackResult.data || [];
+    if (!anySpendError && anySpend?.length) {
+      fallback = anySpend;
+      budgetLifted = true;
+    }
   }
 
   const venues = mergeVenueResults(exact, fallback, 3);
@@ -68,6 +101,7 @@ export async function POST(req) {
   return NextResponse.json({
     venues: await withCovers(venues),
     relaxed: relaxedCount > 0,
-    note: shortlistResultNote({ total: venues.length, relaxedCount, nearby: nearbyRequested }),
+    budgetLifted,
+    note: shortlistResultNote({ total: venues.length, relaxedCount, nearby: nearbyRequested, budgetLifted, maxSpend: safeSpend }),
   });
 }
