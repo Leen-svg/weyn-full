@@ -269,7 +269,7 @@ export default function VenueEditor() {
               </div>
             </div>
             {createStatus && <div className="media-upload-status" role="status">{createStatus}</div>}
-            <button className="btn primary block" disabled={busy || !newVenue.name.trim()} onClick={createVenue}>
+            <button className="btn primary btn-full" disabled={busy || !newVenue.name.trim()} onClick={createVenue}>
               {busy ? "Creating venue…" : "Create venue with everything"}
             </button>
           </div>

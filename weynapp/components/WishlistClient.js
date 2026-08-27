@@ -134,7 +134,7 @@ export default function WishlistClient({ initialVenues }) {
         <div className={styles.pickGrid}>
           {venues.map((venue) => <label className={editing.venueIds.has(venue.id) ? "saved-pick selected" : "saved-pick"} key={venue.id}><input type="checkbox" checked={editing.venueIds.has(venue.id)} onChange={() => { const next = new Set(editing.venueIds); next.has(venue.id) ? next.delete(venue.id) : next.add(venue.id); setEditing({ ...editing, venueIds: next }); }} /><span><strong>{venue.name}</strong><small>{venue.neighborhood || venue.city || "UAE"}</small></span></label>)}
         </div>
-        <button className="btn primary block" disabled={busy || !editing.title.trim() || !editing.visibility} onClick={saveList}>{busy ? "Saving…" : editing.id ? "Save changes" : "Create list"}</button>
+        <button className="btn primary btn-full" disabled={busy || !editing.title.trim() || !editing.visibility} onClick={saveList}>{busy ? "Saving…" : editing.id ? "Save changes" : "Create list"}</button>
       </section>}
 
       <section className="saved-collections">

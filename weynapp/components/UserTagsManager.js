@@ -127,7 +127,7 @@ export default function UserTagsManager({ venues }) {
               ))}
             </div>
           </div>
-          <button className="btn primary block" type="button" disabled={busy || !editing.name.trim() || !editing.visibility} onClick={save}>{busy ? "Saving…" : editing.id ? "Save changes" : "Create tag"}</button>
+          <button className="btn primary btn-full" type="button" disabled={busy || !editing.name.trim() || !editing.visibility} onClick={save}>{busy ? "Saving…" : editing.id ? "Save changes" : "Create tag"}</button>
         </div>
       )}
 

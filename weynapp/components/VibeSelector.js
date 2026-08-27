@@ -335,7 +335,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
             autoComplete="off"
           />
         </div>
-        <button className="btn primary block" type="submit" disabled={loading || !tagQuery.trim()}>
+        <button className="btn primary btn-full" type="submit" disabled={loading || !tagQuery.trim()}>
           {loading ? "Finding your three…" : "Find 3 spots →"}
         </button>
         <p className="sub" style={{ margin: 0, fontSize: 13 }}>City, mood, occasion and budget can all go in one sentence.</p>
@@ -477,7 +477,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
       </div>
 
       <div className="cta-row">
-        <button className="btn primary block" disabled={!ready || loading} onClick={() => getShortlist()}>
+        <button className="btn primary btn-full" disabled={!ready || loading} onClick={() => getShortlist()}>
           {loading ? "Thinking…" : "Weyn? →"}
         </button>
       </div>
@@ -511,7 +511,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
                   </div>
                   <small>{isLoggedIn ? "Private votes open only to you until you explicitly send them to a group." : "Guest votes must be Public. Log in for Private or Friends."}</small>
                 </fieldset>
-                <button className="btn primary block" disabled={loading || !pollVisibility} onClick={makePoll}>
+                <button className="btn primary btn-full" disabled={loading || !pollVisibility} onClick={makePoll}>
                   Create a group vote
                 </button>
                 <p className="group-vote-hint">Then send it straight to one of your Weyn groups or share the link anywhere.</p>

@@ -103,7 +103,7 @@ export default function PollClient({ code }) {
             </div>
             {!data.poll.expired && (
               <button
-                className={`btn small block${voted === o.optionId ? " primary" : ""}`}
+                className={`btn small btn-full${voted === o.optionId ? " primary" : ""}`}
                 style={{ marginTop: 12 }}
                 disabled={busy}
                 onClick={() => vote(o.optionId)}

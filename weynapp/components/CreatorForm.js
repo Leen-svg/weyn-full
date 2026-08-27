@@ -94,7 +94,7 @@ export default function CreatorForm({ venues }) {
       {state.err && <div className="notice err">{state.err}</div>}
 
       <div className="cta-row">
-        <button className="btn block" type="submit" disabled={state.busy}>
+        <button className="btn btn-full" type="submit" disabled={state.busy}>
           {state.busy ? "Sending…" : "Submit video"}
         </button>
       </div>

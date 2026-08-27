@@ -102,7 +102,7 @@ export default function PlannerClient() {
             <span>Link, caption, or message</span>
             <textarea value={input} onChange={(event) => setInput(event.target.value)} maxLength={4000} placeholder="Paste a link, caption, place name, or message…" />
           </label>
-          <button className="btn primary block" disabled={busy || !input.trim()} onClick={importPlace}>{busy ? "Finding it…" : "Save place"}</button>
+          <button className="btn primary btn-full" disabled={busy || !input.trim()} onClick={importPlace}>{busy ? "Finding it…" : "Save place"}</button>
         </section>
 
         <section className="card planner-saved-summary">

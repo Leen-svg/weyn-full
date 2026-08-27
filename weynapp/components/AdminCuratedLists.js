@@ -159,7 +159,7 @@ export default function AdminCuratedLists() {
                   <button
                     key={venue.id}
                     type="button"
-                    className="btn small ghost block"
+                    className="btn small ghost btn-full"
                     style={{ justifyContent: "flex-start", marginBottom: 4 }}
                     onClick={() => addVenue(list.id, venue.id)}
                   >

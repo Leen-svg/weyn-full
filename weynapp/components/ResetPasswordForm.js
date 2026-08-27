@@ -40,7 +40,7 @@ export default function ResetPasswordForm() {
             <PasswordInput id="new-password" required minLength={6} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
           </div>
           {err && <div className="notice err">{err}</div>}
-          <button className="btn block" disabled={busy} type="submit">
+          <button className="btn btn-full" disabled={busy} type="submit">
             {busy ? "…" : "Update password"}
           </button>
         </form>

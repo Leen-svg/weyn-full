@@ -181,7 +181,7 @@ export default function AuthForm({ mode }) {
         </fieldset>
       )}
 
-      <button className="btn google block" disabled={busy || (mode === "signup" && !consentReady)} onClick={google} type="button">
+      <button className="btn google btn-full" disabled={busy || (mode === "signup" && !consentReady)} onClick={google} type="button">
         <svg className="google-logo" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
           <path fill="#4285F4" d="M17.64 9.205c0-.638-.057-1.252-.164-1.841H9v3.481h4.844c-.209 1.125-.844 2.078-1.797 2.716v2.258h2.909c1.702-1.566 2.684-3.874 2.684-6.614Z" />
           <path fill="#34A853" d="M9 18c2.43 0 4.468-.806 5.956-2.18l-2.91-2.259c-.805.54-1.835.859-3.046.859-2.344 0-4.328-1.584-5.037-3.711H.956v2.332A9 9 0 0 0 9 18Z" />
@@ -231,7 +231,7 @@ export default function AuthForm({ mode }) {
         {err && <div className="notice err" role="alert">{err}</div>}
         {notice && <div className="notice" role="status">{notice}</div>}
 
-        <button className="btn primary block" disabled={busy || (mode === "signup" && !consentReady)} type="submit">
+        <button className="btn primary btn-full" disabled={busy || (mode === "signup" && !consentReady)} type="submit">
           {busy ? "…" : mode === "signup" ? "Create account" : "Log in"}
         </button>
       </form>

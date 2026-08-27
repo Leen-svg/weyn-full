@@ -52,7 +52,7 @@ export default function InvitationGate() {
               {error}
             </div>
           )}
-          <button className="btn primary block" type="submit" disabled={busy || !code.trim()}>
+          <button className="btn primary btn-full" type="submit" disabled={busy || !code.trim()}>
             {busy ? (
               <>
                 <Loader2 className="invite-spinner" /> Checking…

@@ -80,7 +80,7 @@ export default function GuestVoteClient({ token }) {
               <div className={`result-fill${o.votes === max && o.votes > 0 ? " lead" : ""}`} style={{ width: `${(o.votes / max) * 100}%` }} />
             </div>
             {!data.expired && (
-              <button className={`btn small block${voted === o.optionId ? " primary" : ""}`} style={{ marginTop: 12 }} disabled={busy} onClick={() => vote(o.optionId)}>
+              <button className={`btn small btn-full${voted === o.optionId ? " primary" : ""}`} style={{ marginTop: 12 }} disabled={busy} onClick={() => vote(o.optionId)}>
                 {voted === o.optionId ? "Voted ✓" : "Vote for this"}
               </button>
             )}

@@ -993,7 +993,7 @@
   .welcome-hero::after { display: none; }
   .welcome-hero { align-items: center; min-height: auto; padding-block: var(--sp-7); }
   .welcome-hero h1 { max-width: 12ch; }
-  .auth-screen { border: 0; border-radius: 0; box-shadow: none; }
+  .auth-screen { min-height: calc(100dvh - 68px); margin: 0; padding-block: var(--sp-7); border: 0; border-radius: 0; background: transparent; box-shadow: none; }
   .app-shell.stitch:has(.weyn-shell--bare) #ckbar { bottom: max(12px, env(safe-area-inset-bottom)); }
   .app-shell.stitch:has(.weyn-shell--bare):has(#ckbar) .welcome-hero { padding-bottom: 210px; }
   .app-shell.stitch:has(.weyn-shell--bare):has(#ckbar) .app-main { padding-bottom: 164px; }
@@ -1099,17 +1099,17 @@
 }
 
 /* ---- Confirm your email (post-signup) ---- */
-.confirm-email { display: flex; flex-direction: column; padding: 20px 0 32px; }
-.confirm-email__icon {
+.confirm-email { display: flex; flex-direction: column; padding: var(--sp-6) 0 var(--sp-7); }
+.app-shell.stitch .confirm-email__icon {
   width: 60px; height: 60px; display: grid; place-items: center;
   margin-bottom: 22px; border-radius: 20px; background: #efe7ff; color: #630ed4;
 }
 .confirm-email__icon svg { width: 28px; height: 28px; }
-.confirm-email h1 { margin-bottom: 10px; }
-.confirm-email h1:focus-visible { outline: none; }
-.confirm-email .sub { font-size: 15px; line-height: 1.55; max-width: 34ch; margin-bottom: 24px; }
+.app-shell.stitch .confirm-email h1 { margin-bottom: var(--sp-3); }
+.app-shell.stitch .confirm-email h1:focus-visible { outline: none; }
+.app-shell.stitch .confirm-email .sub { max-width: 40ch; margin-bottom: var(--sp-6); font-size: 15px; line-height: 1.6; }
 .confirm-email__address { display: inline-block; font-weight: 750; word-break: break-all; }
-.confirm-email .btn + .btn { margin-top: 10px; }
+.confirm-email .btn + .btn { margin-top: var(--sp-3); }
 .confirm-email__resend {
   display: inline-flex; align-items: center; justify-content: center; gap: 9px;
 }

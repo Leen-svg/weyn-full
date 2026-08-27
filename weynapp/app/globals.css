@@ -89,7 +89,13 @@ main.container { flex: 1; max-width: 760px; padding-top: 110px; padding-bottom: 
 
 /* ---------- button size/layout modifiers (colour variants are in design-system.css) ---------- */
 .btn.small { padding: 8px 15px; font-size: 13px; box-shadow: 3px 3px 0 var(--ink); }
-.btn.block { width: 100%; }
+/* Renamed from .btn.block: `block` is also a Tailwind utility
+   (.block{display:block}) and Tailwind's `utilities` layer outranks this
+   file's `weyn` layer whatever the specificity. Every full-width button in
+   the app was therefore display:block, which drops .btn's inline-flex
+   centering — labels sat left-aligned and icons jammed against the edge
+   instead of sitting beside the text. */
+.btn.btn-full { width: 100%; }
 .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: var(--shadow-pop-sm); }
 .btn.dark { background: var(--ink-deep); color: var(--paper); }
 .btn.dark:hover { background: var(--ink); }

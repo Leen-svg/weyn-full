@@ -154,7 +154,7 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
             <small>{!visibility ? "Choose an audience before submitting." : visibility === "private" ? "Only you can see it." : visibility === "friends" ? "Only accepted friends can see it." : "Anyone can see it on Weyn."}</small>
           </fieldset>
           <p className="sub" style={{ marginTop: 8 }}>Photos stay private in quarantine until an admin approves them.</p>
-          <button className="btn small block" style={{ marginTop: 8 }} disabled={busy || !rating || !visibility} onClick={submitReview}>
+          <button className="btn small btn-full" style={{ marginTop: 8 }} disabled={busy || !rating || !visibility} onClick={submitReview}>
             {busy ? "Saving…" : "Submit review"}
           </button>
         </div>

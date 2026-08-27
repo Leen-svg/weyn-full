@@ -79,13 +79,13 @@ export default function ConfirmEmail({ email, next = "/app", onUseDifferentEmail
       </p>
 
       {webmail && (
-        <a className="btn primary block" href={webmail.url} target="_blank" rel="noopener noreferrer">
+        <a className="btn primary btn-full" href={webmail.url} target="_blank" rel="noopener noreferrer">
           {webmail.label}
         </a>
       )}
 
       <button
-        className="btn ghost block confirm-email__resend"
+        className="btn ghost btn-full confirm-email__resend"
         type="button"
         onClick={resend}
         disabled={busy || secondsLeft > 0}
