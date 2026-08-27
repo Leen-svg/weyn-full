@@ -5,6 +5,8 @@ import { isCurationFormat, importCurationRecords } from "@/lib/venueImport";
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 const VENUE_FIELDS = [
   "name", "neighborhood", "city", "avg_spend_aed", "google_maps_url", "hero_video_url", "menu_url",
   "description", "zone_slug", "category", "cuisine", "age_restriction", "is_aesthetic",
@@ -103,7 +105,7 @@ export async function POST(req) {
     }
     const clean = cleanRow(raw);
     try {
-      let existingId = raw.id || null;
+      let existingId = UUID.test(raw.id || "") ? raw.id : null;
       if (!existingId) {
         const { data: existing } = await s
           .from("venues")
