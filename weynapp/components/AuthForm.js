@@ -31,7 +31,10 @@ export default function AuthForm({ mode }) {
 
   async function submit(e) {
     e.preventDefault();
-    if (website) return; // bot filled the hidden field, silently drop
+    if (website) {
+      setErr("Your browser autofilled a hidden field. Clear it and try again, or reload the page.");
+      return;
+    }
     if (mode === "signup" && !consentReady) {
       setErr("Accept the Terms, Privacy Policy, and beta notice before creating an account.");
       return;
@@ -40,45 +43,73 @@ export default function AuthForm({ mode }) {
     setErr(null);
     setNotice(null);
     const supabase = createClient();
+    // Supabase surfaces transport failures as { error: { message: "Failed to
+    // fetch" } }, which is not something to show a person.
+    const readable = (message) =>
+      !message || /failed to fetch|networkerror|load failed/i.test(message)
+        ? "Couldn't reach the server. Check your connection and try again."
+        : message;
+    const guard = (work) =>
+      Promise.race([
+        work,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 20000)
+        ),
+      ]);
 
-    if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-          data: {
-            terms_version: "2026-08-22",
-            privacy_version: "2026-08-22",
-            beta_acknowledged: true,
+    // Every auth call here can THROW rather than resolve to { error } — a
+    // dropped connection, a CORS failure, an SDK-level fault. Without this
+    // guard the exception escaped the handler, the finally-less function never
+    // cleared `busy`, and the button sat on "…" disabled forever showing no
+    // message at all. Pressing "Create account" genuinely did nothing.
+    try {
+      if (mode === "signup") {
+        const { data, error } = await guard(supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+            data: {
+              terms_version: "2026-08-22",
+              privacy_version: "2026-08-22",
+              beta_acknowledged: true,
+            },
           },
-        },
-      });
-      if (error) setErr(error.message);
-      else if (data.session) {
-        router.push(`/onboarding?next=${encodeURIComponent(next)}`);
-        router.refresh();
+        }));
+        if (error) setErr(readable(error.message));
+        else if (data.session) {
+          router.push(`/onboarding?next=${encodeURIComponent(next)}`);
+          router.refresh();
+        } else {
+          setAwaitingConfirmation(email);
+        }
+      } else {
+        const { error } = await guard(supabase.auth.signInWithPassword({ email, password }));
+        if (error) setErr(readable(error.message));
+        else {
+          const { data: { user } } = await supabase.auth.getUser();
+          const { data: profile } = user
+            ? await supabase.from("profile_public").select("display_name").eq("id", user.id).maybeSingle()
+            : { data: null };
+          const hasUsername = /^[a-z0-9_]{3,24}$/.test(profile?.display_name || "");
+          // A client push races the server components reading the auth cookie,
+          // so the app re-rendered as a guest and bounced back to the welcome
+          // screen. A full navigation guarantees the server sees the session.
+          window.location.assign(hasUsername ? next : `/onboarding?next=${encodeURIComponent(next)}`);
+          return;
+        }
       }
-      else {
-        setAwaitingConfirmation(email);
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setErr(error.message);
-      else {
-        const { data: { user } } = await supabase.auth.getUser();
-        const { data: profile } = user
-          ? await supabase.from("profile_public").select("display_name").eq("id", user.id).maybeSingle()
-          : { data: null };
-        const hasUsername = /^[a-z0-9_]{3,24}$/.test(profile?.display_name || "");
-        // A client push races the server components reading the auth cookie,
-        // so the app re-rendered as a guest and bounced back to the welcome
-        // screen. A full navigation guarantees the server sees the session.
-        window.location.assign(hasUsername ? next : `/onboarding?next=${encodeURIComponent(next)}`);
-        return;
-      }
+    } catch (cause) {
+      setErr(
+        cause?.message === "timeout"
+          ? "That took too long. Check your connection and try again."
+          : cause?.message?.includes("fetch") || cause?.name === "TypeError"
+            ? "Couldn't reach the server. Check your connection and try again."
+            : cause?.message || "Something went wrong. Please try again."
+      );
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   async function google() {
@@ -89,12 +120,18 @@ export default function AuthForm({ mode }) {
     setBusy(true);
     setErr(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
-    });
-    if (error) {
-      setErr(error.message);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+      });
+      if (error) {
+        setErr(error.message);
+        setBusy(false);
+      }
+      // On success the browser navigates away, so `busy` is left set on purpose.
+    } catch (cause) {
+      setErr(cause?.message || "Couldn't start Google sign-in. Please try again.");
       setBusy(false);
     }
   }
@@ -159,7 +196,7 @@ export default function AuthForm({ mode }) {
       <form onSubmit={submit}>
         <input
           type="text"
-          name="website"
+          name="weyn-ref-code"
           value={website}
           onChange={(e) => setWebsite(e.target.value)}
           tabIndex={-1}

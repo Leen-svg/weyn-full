@@ -144,7 +144,7 @@ export default function WishlistClient({ initialVenues }) {
           <div><span className={`saved-visibility ${list.visibility}`}>{list.visibility}</span><h3>{list.title}</h3>{list.description && <p>{list.description}</p>}</div>
           <div className="tag-row">{(list.tags || []).map((tag) => <span className="tag-pill" key={tag}>#{tag}</span>)}</div>
           <span className="saved-list-meta">{list.saved_list_items?.length || 0} place{list.saved_list_items?.length === 1 ? "" : "s"}</span>
-          <div className="saved-list-actions"><button type="button" onClick={() => startList(list)} aria-label={`Edit ${list.title}`}><Pencil /></button><button type="button" onClick={() => setSharing(list)} aria-label={`Share ${list.title}`}><Share2 /></button><a href={`/lists/${list.share_slug}`}>Open</a><button type="button" disabled={busy} onClick={() => changeListState(list.id, "archive")} aria-label={`Archive ${list.title}`}><Archive /></button><button type="button" onClick={() => removeList(list.id)} aria-label={`Delete ${list.title}`}><Trash2 /></button></div>
+          <div className="saved-list-actions"><button type="button" onClick={() => startList(list)}><Pencil aria-hidden="true" />Edit</button><button type="button" onClick={() => setSharing(list)}><Share2 aria-hidden="true" />Share</button><a href={`/lists/${list.share_slug}`}>Open</a><button type="button" disabled={busy} onClick={() => changeListState(list.id, "archive")}><Archive aria-hidden="true" />Archive</button><button className="is-danger" type="button" onClick={() => removeList(list.id)}><Trash2 aria-hidden="true" />Delete</button></div>
         </article>)}</div>
       </section>
 
@@ -153,7 +153,7 @@ export default function WishlistClient({ initialVenues }) {
         <div className={styles.listGrid}>{archived.map((list) => <article className={`saved-list-card ${styles.listCard}`} key={list.id}>
           <div><span className="saved-visibility private">archived</span><h3>{list.title}</h3>{list.description && <p>{list.description}</p>}</div>
           <span className="saved-list-meta">{list.saved_list_items?.length || 0} place{list.saved_list_items?.length === 1 ? "" : "s"}</span>
-          <div className="saved-list-actions"><button type="button" disabled={busy} onClick={() => changeListState(list.id, "restore")} aria-label={`Restore ${list.title}`}><RotateCcw /></button><button type="button" onClick={() => removeList(list.id)} aria-label={`Delete ${list.title}`}><Trash2 /></button></div>
+          <div className="saved-list-actions"><button type="button" disabled={busy} onClick={() => changeListState(list.id, "restore")}><RotateCcw aria-hidden="true" />Restore</button><button className="is-danger" type="button" onClick={() => removeList(list.id)}><Trash2 aria-hidden="true" />Delete</button></div>
         </article>)}</div>
       </details>}
 

@@ -135,14 +135,14 @@ export default function UserTagsManager({ venues }) {
       {!!tags.length && <div className={styles.listGrid}>{tags.map((tag) => <article className={`saved-list-card ${styles.listCard}`} key={tag.id}>
         <div><span className={`saved-visibility ${tag.visibility}`}>{tag.visibility}</span><h3>#{tag.name}</h3>{tag.description && <p>{tag.description}</p>}</div>
         <span className="saved-list-meta">{tag.user_tag_venues?.length || 0} place{tag.user_tag_venues?.length === 1 ? "" : "s"}</span>
-        <div className="saved-list-actions"><button type="button" onClick={() => start(tag)} aria-label={`Edit ${tag.name}`}><Pencil /></button><button type="button" disabled={busy} onClick={() => lifecycle(tag.id, "archive")} aria-label={`Archive ${tag.name}`}><Archive /></button><button type="button" disabled={busy} onClick={() => lifecycle(tag.id, "delete")} aria-label={`Delete ${tag.name}`}><Trash2 /></button></div>
+        <div className="saved-list-actions"><button type="button" onClick={() => start(tag)}><Pencil aria-hidden="true" />Edit</button><button type="button" disabled={busy} onClick={() => lifecycle(tag.id, "archive")}><Archive aria-hidden="true" />Archive</button><button className="is-danger" type="button" disabled={busy} onClick={() => lifecycle(tag.id, "delete")}><Trash2 aria-hidden="true" />Delete</button></div>
       </article>)}</div>}
 
       {!!archived.length && <details className="saved-collections">
         <summary className={styles.savedHead}><strong>Archived tags</strong><span className="saved-count">{archived.length}</span></summary>
         <div className={styles.listGrid}>{archived.map((tag) => <article className={`saved-list-card ${styles.listCard}`} key={tag.id}>
           <div><span className="saved-visibility private">archived</span><h3>#{tag.name}</h3></div>
-          <div className="saved-list-actions"><button type="button" disabled={busy} onClick={() => lifecycle(tag.id, "restore")} aria-label={`Restore ${tag.name}`}><RotateCcw /></button><button type="button" disabled={busy} onClick={() => lifecycle(tag.id, "delete")} aria-label={`Delete ${tag.name}`}><Trash2 /></button></div>
+          <div className="saved-list-actions"><button type="button" disabled={busy} onClick={() => lifecycle(tag.id, "restore")}><RotateCcw aria-hidden="true" />Restore</button><button className="is-danger" type="button" disabled={busy} onClick={() => lifecycle(tag.id, "delete")}><Trash2 aria-hidden="true" />Delete</button></div>
         </article>)}</div>
       </details>}
 
