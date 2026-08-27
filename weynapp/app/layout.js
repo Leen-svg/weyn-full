@@ -48,8 +48,13 @@ export const metadata = {
   formatDetection: { email: false, address: false, telephone: false },
   robots: { index: false, follow: false, nocache: true },
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-    shortcut: "/favicon.svg",
+    // Desktop browser tab: the circular W. Home screen and installed app:
+    // the rounded-square wordmark.
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+    ],
+    shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
   appleWebApp: {
@@ -70,7 +75,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#F9F9F9",
+  themeColor: "#F2F2F3",
   colorScheme: "light",
   width: "device-width",
   initialScale: 1,

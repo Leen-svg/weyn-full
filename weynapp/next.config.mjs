@@ -1,5 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Venue photography is served from Google Places; user uploads come from
+  // Supabase storage. Listing the two hosts explicitly lets next/image
+  // optimise them — AVIF/WebP, per-breakpoint resizing and long-lived
+  // caching — instead of shipping the full-size original to every device.
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "lh4.googleusercontent.com" },
+      { protocol: "https", hostname: "lh5.googleusercontent.com" },
+      { protocol: "https", hostname: "lh6.googleusercontent.com" },
+      { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
+    ],
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 2592000,
+  },
   async headers() {
     const securityHeaders = [
       { key: "X-Content-Type-Options", value: "nosniff" },

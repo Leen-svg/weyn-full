@@ -22,7 +22,7 @@
   "menuColor": "default",
   "menuAccent": "subtle",
   "registries": {
-    "@kokonutui": "https://kokonutui.com/r/{name}.json"
+    "@kokonutui": "https://kokonutui.com/r/{name}.json",
+    "@loading-ui": "https://loading-ui.com/r/{name}.json"
   }
 }
-

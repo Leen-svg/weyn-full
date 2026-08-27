@@ -6,18 +6,16 @@ export default function manifest() {
     start_url: "/app",
     scope: "/",
     display: "standalone",
-    background_color: "#F9F9F9",
-    theme_color: "#8E7CE8",
+    background_color: "#F2F2F3",
+    theme_color: "#17181C",
     orientation: "portrait-primary",
+    // Installed-app icons are the rounded-square wordmark. The circular W is
+    // the desktop browser-tab favicon and is deliberately not used here.
     icons: [
-      {
-        src: "/favicon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
-        purpose: "any maskable",
-      },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icon-192-maskable.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: "/icon-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }
-
-

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Bookmark, ChevronLeft, ChevronRight, MapPin, Play, Send } from "lucide-react";
 import ShareToGroupButton from "./ShareToGroupButton";
@@ -233,12 +234,13 @@ function DiscoverSlide({ venue, priority, saved, onSave }) {
           >
             {shots.map((url, index) => (
               <div className="discover-slide__shot" key={url}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={url}
                   alt=""
-                  loading={priority && index === 0 ? "eager" : "lazy"}
-                  fetchPriority={priority && index === 0 ? "high" : "auto"}
+                  fill
+                  sizes="(max-width: 719px) 100vw, (max-width: 1099px) 100vw, 60vw"
+                  priority={priority && index === 0}
+                  quality={72}
                   onError={() => setBroken((prev) => new Set(prev).add(url))}
                 />
               </div>

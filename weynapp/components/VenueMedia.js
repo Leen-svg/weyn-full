@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { useState } from "react";
 import { normalizeHttpUrl, videoPresentation } from "@/lib/media-url.mjs";
 
@@ -8,7 +10,17 @@ export default function VenueMedia({ item, venueName, index = 0, priority = fals
   const url = normalizeHttpUrl(item.url);
   if (!url) return null;
   if (item.type === "image") {
-    return <img src={url} alt={preview ? "" : `${venueName} photo ${index + 1}`} width="720" height="405" sizes="(max-width: 680px) calc(100vw - 32px), (max-width: 1100px) 50vw, 560px" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.hidden = true; }} />;
+    return (
+      <Image
+        src={url}
+        alt={preview ? "" : `${venueName} photo ${index + 1}`}
+        fill
+        sizes="(max-width: 680px) calc(100vw - 32px), (max-width: 1100px) 50vw, 560px"
+        priority={priority}
+        quality={72}
+        onError={(event) => { event.currentTarget.hidden = true; }}
+      />
+    );
   }
   const presentation = videoPresentation(url);
   if (!presentation) return null;

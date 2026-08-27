@@ -577,6 +577,7 @@
   background: var(--ui-fill);
 }
 .app-shell.stitch .venue-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.app-shell.stitch .venue-media-slide { position: relative; }
 .app-shell.stitch .venue-city-badge { position: absolute; top: var(--sp-2); right: var(--sp-2); z-index: 3; padding: 3px var(--sp-2); }
 .venue-card .venue-cover { aspect-ratio: 4 / 3; border-radius: 0; }
 .venue-card .venue-card-body { display: grid; gap: var(--sp-3); padding: var(--sp-4); }
@@ -1365,7 +1366,7 @@
   scrollbar-width: none;
 }
 .discover-slide__track::-webkit-scrollbar { display: none; }
-.discover-slide__shot { width: 100%; height: 100%; flex: 0 0 100%; scroll-snap-align: center; }
+.discover-slide__shot { position: relative; width: 100%; height: 100%; flex: 0 0 100%; scroll-snap-align: center; }
 .discover-slide__shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
 .app-shell.stitch .discover-slide__arrow {
@@ -1937,4 +1938,60 @@
   color: var(--ui-ink);
   font-weight: 600;
   overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   LOADING — spinner, skeletons, route fallbacks
+   ============================================================ */
+@keyframes weyn-swirl-spin { to { transform: rotate(360deg); } }
+@keyframes weyn-swirl-dash {
+  0%   { stroke-dasharray: 1, 800;   stroke-dashoffset: 0; }
+  50%  { stroke-dasharray: 400, 400; stroke-dashoffset: -200px; }
+  100% { stroke-dasharray: 800, 1;   stroke-dashoffset: -800px; }
+}
+.weyn-swirl { display: block; width: 100%; height: 100%; color: var(--ui-purple); }
+.weyn-swirl__circle {
+  transform-origin: center;
+  animation:
+    weyn-swirl-dash var(--duration, 1.5s) ease-in-out infinite alternate,
+    weyn-swirl-spin calc(var(--duration, 1.5s) * 1.3333) linear infinite;
+}
+
+.page-loader {
+  display: grid;
+  min-height: 46dvh;
+  place-content: center;
+  justify-items: center;
+  gap: var(--sp-4);
+}
+.page-loader__spinner { width: 56px; height: 56px; }
+.page-loader__label { color: var(--ui-muted); font-size: var(--t-meta); font-weight: 600; }
+
+/* Skeletons carry a moving highlight rather than a pulsing opacity, which
+   reads as "working" instead of "broken". */
+@keyframes weyn-shimmer { to { background-position: -200% 0; } }
+.skeleton {
+  display: block;
+  border-radius: var(--r-sm);
+  background: linear-gradient(90deg, #e9e9ec 25%, #f4f4f6 37%, #e9e9ec 63%);
+  background-size: 200% 100%;
+  animation: weyn-shimmer 1.4s linear infinite;
+}
+.skeleton-text { display: grid; gap: var(--sp-2); }
+.skeleton-card {
+  display: grid;
+  gap: var(--sp-3);
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: #fff;
+  box-shadow: var(--lift-1);
+}
+.skeleton-card__media { aspect-ratio: 5 / 4; border-radius: 0; }
+.skeleton-card__body { display: grid; gap: var(--sp-2); padding: 0 var(--sp-4) var(--sp-4); }
+
+/* A spinner that ignores this setting is exactly the kind of motion the
+   setting exists to stop. */
+@media (prefers-reduced-motion: reduce) {
+  .weyn-swirl__circle { animation: weyn-swirl-spin 2.4s linear infinite; stroke-dasharray: 500, 300; }
+  .skeleton { animation: none; background: #ebebee; }
 }
