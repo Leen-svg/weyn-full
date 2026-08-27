@@ -16,9 +16,40 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
   const [reviewMsg, setReviewMsg] = useState(null);
   const [needsLogin, setNeedsLogin] = useState(false);
 
+  // Check-in: confirm you went, earn points, then get offered the rating for
+  // more. `visit` holds what the server said so the reward is shown once and
+  // the follow-up is only offered when there is actually something to earn.
+  const [visit, setVisit] = useState(null);
+  const [visitBusy, setVisitBusy] = useState(false);
+
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const [reviews, setReviews] = useState(null);
   const [loadingReviews, setLoadingReviews] = useState(false);
+
+  async function confirmVisit() {
+    if (visitBusy) return;
+    setVisitBusy(true);
+    setNeedsLogin(false);
+    try {
+      const res = await fetch("/api/check-ins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venueId: venue.id }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        setNeedsLogin(true);
+      } else if (res.ok) {
+        setVisit(body);
+      } else {
+        setReviewMsg(body.error || "Couldn't confirm that visit.");
+      }
+    } catch {
+      setReviewMsg("Couldn't reach the server. Try again.");
+    } finally {
+      setVisitBusy(false);
+    }
+  }
 
   async function toggleSave() {
     setBusy(true);
@@ -111,6 +142,14 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
         <button className={`btn small ${saved ? "" : "ghost"}`} disabled={busy} onClick={toggleSave} type="button">
           {saved ? "★ Saved" : "☆ Save"}
         </button>
+        <button
+          className={`btn small ${visit ? "" : "ghost"}`}
+          disabled={visitBusy}
+          onClick={confirmVisit}
+          type="button"
+        >
+          {visitBusy ? "…" : visit ? "✓ Went here" : "📍 I went here"}
+        </button>
         <button className="btn small ghost" onClick={() => setRateOpen((v) => !v)} type="button">
           ⭐ Rate it
         </button>
@@ -119,6 +158,30 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
         </button>
         <ShareToGroupButton text={`📍 Check out ${venue.name}${venue.neighborhood ? ` in ${venue.neighborhood}` : ""}.`} share={{ type: "venue", id: venue.id }} />
       </div>
+
+      {visit && (
+        <div className="visit-reward" role="status">
+          <strong>
+            {visit.pointsEarned
+              ? `Nice one. +${visit.pointsEarned} points for visiting.`
+              : "You already logged this visit today."}
+          </strong>
+          {visit.hasRated ? (
+            <span>You have already rated this place — thanks.</span>
+          ) : (
+            <>
+              <span>Rate it and earn another {visit.ratePoints} points.</span>
+              <button
+                className="btn small"
+                type="button"
+                onClick={() => { setRateOpen(true); setVisit(null); }}
+              >
+                Rate it, +{visit.ratePoints}
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {needsLogin && (
         <div className="notice" style={{ marginTop: 10 }}>

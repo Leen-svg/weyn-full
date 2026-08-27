@@ -49,6 +49,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/nearby",
   "/api/polls",
   "/api/saves",
+  "/api/check-ins",
   "/api/reviews",
   "/api/media-upload",
   "/api/submissions",

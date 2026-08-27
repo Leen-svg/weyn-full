@@ -2078,3 +2078,55 @@
   box-shadow: none;
 }
 .app-shell.stitch .compose-dialog [data-slot="card"] > * { padding: 0; }
+
+/* ---------- Visit reward (check-in → rate) ---------- */
+.visit-reward {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--ui-lilac);
+  color: #4c1d95;
+  font-size: var(--t-meta);
+}
+.visit-reward strong { font-weight: 700; }
+.visit-reward span { color: #5b21b6; }
+.app-shell.stitch .visit-reward .btn {
+  min-height: 36px;
+  margin-left: auto;
+  padding: 0 var(--sp-4);
+  border-color: transparent;
+  background: var(--ui-ink);
+  color: #fff;
+  font-size: var(--t-micro);
+}
+
+/* ---------- Planner: two layout fixes ----------
+   Ghost mode put its switch hard against the right edge of a wide card, far
+   from the label it belongs to; and "Share this plan" split a heading, a
+   field and a visibility picker across three columns, which left the hint
+   text wrapping under a cramped middle column. */
+.planner-ghost-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--sp-4);
+  max-width: 46rem;
+}
+.planner-ghost-row > :first-child { min-width: 0; }
+.app-shell.stitch .planner-ghost-toggle { margin-left: auto; flex: 0 0 auto; }
+
+@media (min-width: 720px) {
+  .planner-share { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); }
+  .planner-share-form {
+    display: grid;
+    max-width: 46rem;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: var(--sp-4);
+  }
+  .planner-share-form .btn { justify-self: start; }
+}

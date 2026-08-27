@@ -2,6 +2,7 @@ import { db } from "./db";
 
 export const POINTS = {
   signup_bonus: 200,
+  checked_in: 20,
   rated_a_place: 15,
   shared_a_spot: 10,
   new_person: 5,
