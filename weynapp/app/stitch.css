@@ -1995,3 +1995,85 @@
   .weyn-swirl__circle { animation: weyn-swirl-spin 2.4s linear infinite; stroke-dasharray: 500, 300; }
   .skeleton { animation: none; background: #ebebee; }
 }
+
+/* ---------- Compose (post) ---------- */
+.app-shell.stitch .compose-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--ui-ink);
+  color: #fff;
+  font: inherit;
+  font-size: var(--t-meta);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.app-shell.stitch .compose-button:hover { background: #0f1015; }
+.app-shell.stitch .compose-button:active { transform: scale(.96); }
+.app-shell.stitch .compose-button svg { width: 16px; height: 16px; }
+/* The header is tight on a phone, so the label drops and the icon carries it. */
+@media (max-width: 560px) {
+  .app-shell.stitch .compose-button { padding: 0; width: 40px; justify-content: center; }
+  .compose-button__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+}
+
+.compose-dialog {
+  /* A modal <dialog> is centred by the UA's `margin: auto`; design-system.css
+     opens with `* { margin: 0 }`, which cancels it and pins the dialog to the
+     top-left corner. */
+  width: min(100% - 2rem, 560px);
+  max-height: min(88dvh, 780px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-xl);
+  background: transparent;
+  overflow: visible;
+}
+.compose-dialog::backdrop { background: rgba(12, 14, 20, .55); backdrop-filter: blur(6px); }
+.compose-dialog__panel {
+  max-height: min(88dvh, 780px);
+  padding: var(--sp-5);
+  overflow-y: auto;
+  border-radius: var(--r-xl);
+  background: var(--ui-bg);
+  box-shadow: var(--lift-2);
+}
+.compose-dialog__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+.app-shell.stitch .compose-dialog__head h2 { font-size: var(--t-h3); }
+.app-shell.stitch .compose-dialog__close {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--ui-fill);
+  color: var(--ui-ink);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.app-shell.stitch .compose-dialog__close:hover { background: #e6e6e9; }
+.compose-dialog__done { padding: var(--sp-7) 0; color: var(--ui-ink); font-weight: 600; text-align: center; }
+/* The composer's own card would double the dialog's surface. Needs to match
+   .app-shell.stitch [data-slot="card"] to win. */
+.app-shell.stitch .compose-dialog [data-slot="card"] {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.app-shell.stitch .compose-dialog [data-slot="card"] > * { padding: 0; }

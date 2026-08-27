@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ProfileMenu from "./ProfileMenu";
 import NotificationBell from "./NotificationBell";
+import ComposeButton from "./ComposeButton";
 
 export default async function AuthNav() {
   const supabase = await createClient();
@@ -25,6 +26,7 @@ export default async function AuthNav() {
 
   return (
     <>
+      <ComposeButton />
       <NotificationBell userId={user.id} />
       <ProfileMenu
         userId={user.id}
