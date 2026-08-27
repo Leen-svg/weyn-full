@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Bookmark, ChevronLeft, ChevronRight, MapPin, Play, Send } from "lucide-react";
 import ShareToGroupButton from "./ShareToGroupButton";
-import { normalizeHttpUrl } from "@/lib/media-url.mjs";
+import { highResPhoto, normalizeHttpUrl } from "@/lib/media-url.mjs";
 
 const CITIES = ["All", "Abu Dhabi", "Dubai"];
 const FOR_YOU = "For you";
@@ -235,12 +235,12 @@ function DiscoverSlide({ venue, priority, saved, onSave }) {
             {shots.map((url, index) => (
               <div className="discover-slide__shot" key={url}>
                 <Image
-                  src={url}
+                  src={highResPhoto(url, 2048)}
                   alt=""
                   fill
                   sizes="(max-width: 719px) 100vw, (max-width: 1099px) 100vw, 60vw"
                   priority={priority && index === 0}
-                  quality={72}
+                  quality={82}
                   onError={() => setBroken((prev) => new Set(prev).add(url))}
                 />
               </div>

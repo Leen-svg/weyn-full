@@ -3,7 +3,7 @@
 import Image from "next/image";
 
 import { useState } from "react";
-import { normalizeHttpUrl, videoPresentation } from "@/lib/media-url.mjs";
+import { highResPhoto, normalizeHttpUrl, videoPresentation } from "@/lib/media-url.mjs";
 
 export default function VenueMedia({ item, venueName, index = 0, priority = false, preview = false }) {
   const [videoLoaded, setVideoLoaded] = useState(false);
@@ -12,12 +12,12 @@ export default function VenueMedia({ item, venueName, index = 0, priority = fals
   if (item.type === "image") {
     return (
       <Image
-        src={url}
+        src={highResPhoto(url, 1600)}
         alt={preview ? "" : `${venueName} photo ${index + 1}`}
         fill
         sizes="(max-width: 680px) calc(100vw - 32px), (max-width: 1100px) 50vw, 560px"
         priority={priority}
-        quality={72}
+        quality={82}
         onError={(event) => { event.currentTarget.hidden = true; }}
       />
     );

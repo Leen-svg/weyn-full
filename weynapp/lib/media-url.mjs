@@ -58,3 +58,41 @@ export function videoPresentation(value) {
   if (DIRECT_VIDEO_PATTERN.test(url)) return { kind: "direct", provider: "Video", src: url, url };
   return { kind: "embed", provider: host, src: url, url };
 }
+
+// Google Places photo URLs carry their size in a trailing parameter, e.g.
+// "=s4800-w1400". Whatever width is baked in is the ceiling — the CDN will not
+// return more than you ask for, so a 1400px source is all next/image ever has
+// to work from, and on a retina phone or a wide desktop slide that is already
+// being upscaled before it reaches the screen. Asking for a larger source
+// costs the visitor nothing: next/image fetches it once on the server, caches
+// it, and still ships a per-breakpoint variant to the browser.
+const GOOGLE_PHOTO_HOST = /^lh\d+\.googleusercontent\.com$/;
+
+export function highResPhoto(url, minWidth = 2048) {
+  if (!url) return url;
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return url;
+  }
+  if (!GOOGLE_PHOTO_HOST.test(parsed.hostname)) return url;
+
+  // The size parameter is the last "=..." segment of the path.
+  const match = parsed.pathname.match(/=([^/]*)$/);
+  if (!match) return url;
+
+  const spec = match[1];
+  const w = Number(spec.match(/(?:^|-)w(\d+)/)?.[1] || 0);
+  const h = Number(spec.match(/(?:^|-)h(\d+)/)?.[1] || 0);
+  if (!w || w >= minWidth) return url;
+
+  // Both dimensions have to scale by the same factor. Raising only the width
+  // on a "=w408-h306-k-no" thumbnail asks the CDN for a 2048x306 sliver.
+  const factor = minWidth / w;
+  let next = spec.replace(/((?:^|-))w\d+/, `$1w${minWidth}`);
+  if (h) next = next.replace(/((?:^|-))h\d+/, `$1h${Math.round(h * factor)}`);
+
+  parsed.pathname = parsed.pathname.slice(0, match.index) + "=" + next;
+  return parsed.toString();
+}

@@ -13,6 +13,10 @@ const nextConfig = {
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
     ],
     formats: ["image/avif", "image/webp"],
+    // Next 16 changed images.qualities to default to [75] and silently coerces
+    // any other `quality` prop to the nearest allowed value, so a quality={82}
+    // on a hero photo was being served at 75 with no warning.
+    qualities: [75, 82],
     minimumCacheTTL: 2592000,
   },
   async headers() {
