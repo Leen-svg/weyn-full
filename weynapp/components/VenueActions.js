@@ -164,7 +164,9 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
           <strong>
             {visit.pointsEarned
               ? `Nice one. +${visit.pointsEarned} points for visiting.`
-              : "You already logged this visit today."}
+              : visit.alreadyCheckedIn
+                ? "You already logged this visit today."
+                : "Visit recorded."}
           </strong>
           {visit.hasRated ? (
             <span>You have already rated this place — thanks.</span>

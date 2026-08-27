@@ -13,9 +13,24 @@ export const POINTS = {
 
 // Writes the ledger row and updates the balance atomically via the
 // award_points() SQL function (service-role only).
+//
+// Returns whether the points actually landed. The result used to be thrown
+// away, so a failed award — a rotated service key, a changed function, the
+// database refusing the call — left the caller telling someone they had
+// earned points that were never credited, with nothing in the logs to say so.
+// Callers that ignore the return value behave exactly as before.
 export async function awardPoints(userId, delta, reason) {
-  if (!userId || !delta) return;
-  await db().rpc("award_points", { p_user_id: userId, p_delta: delta, p_reason: reason });
+  if (!userId || !delta) return false;
+  const { error } = await db().rpc("award_points", {
+    p_user_id: userId,
+    p_delta: delta,
+    p_reason: reason,
+  });
+  if (error) {
+    console.error(`awardPoints failed (${reason}, ${delta} to ${userId}):`, error.message);
+    return false;
+  }
+  return true;
 }
 
 

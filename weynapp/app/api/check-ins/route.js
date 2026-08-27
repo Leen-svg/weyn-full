@@ -62,13 +62,16 @@ export async function POST(req) {
     return NextResponse.json({ error: "Couldn't confirm that visit right now. Try again shortly." }, { status: 500 });
   }
 
-  await awardPoints(user.id, POINTS.checked_in, "checked_in");
+  // Only report points that were actually credited. The visit itself is
+  // recorded either way — it is the reason the row exists — but claiming a
+  // reward that did not land is worse than staying quiet about it.
+  const awarded = await awardPoints(user.id, POINTS.checked_in, "checked_in");
 
   const { data: review } = await supabase.from("reviews").select("id").eq("user_id", user.id).eq("venue_id", venueId).maybeSingle();
   return NextResponse.json({
     ok: true,
     id: row.id,
-    pointsEarned: POINTS.checked_in,
+    pointsEarned: awarded ? POINTS.checked_in : 0,
     hasRated: !!review,
     ratePoints: POINTS.rated_a_place,
   });
