@@ -1,0 +1,57 @@
+/* ============================================================
+   WEYN — LAYOUT TOKENS
+   One spacing scale, one radius scale, one type ramp. Everything
+   downstream measures itself against these, so a "medium gap"
+   means the same thing on Discover as it does in the profile
+   editor. Before this file the codebase shipped 5, 6, 7, 8, 10,
+   11, 12, 14, 16, 17, 18, 20, 22, 23, 26 and 28px gaps side by
+   side, which is what made dense screens read as cluttered.
+   ============================================================ */
+
+:root {
+  /* --- Space. 4px base, doubling-ish. Use the token, not a number. --- */
+  --sp-1: 4px;    /* hairline: icon-to-label, chip inner */
+  --sp-2: 8px;    /* tight: button rows, tag rows */
+  --sp-3: 12px;   /* snug: stacked meta lines */
+  --sp-4: 16px;   /* base: the default gap between siblings */
+  --sp-5: 24px;   /* roomy: inside cards and panels */
+  --sp-6: 32px;   /* group: between related blocks */
+  --sp-7: 48px;   /* section: between sections of one screen */
+  --sp-8: 72px;   /* chapter: between major page regions */
+
+  /* Section rhythm scales with the viewport but stays on the ramp. */
+  --sp-section: clamp(var(--sp-7), 5vw, var(--sp-8));
+
+  /* --- Page gutter. One value, used by the header, main and rails,
+         so their left edges line up instead of drifting apart. --- */
+  --gutter: clamp(20px, 4vw, 56px);
+  --page-max: 1180px;
+
+  /* --- Radius. Four steps. Anything else is a mistake. --- */
+  --r-sm: 14px;   /* inputs, small pills, badges */
+  --r-md: 20px;   /* buttons-as-blocks, chips, notices */
+  --r-lg: 26px;   /* cards, panels */
+  --r-xl: 32px;   /* hero surfaces, media */
+  --r-pill: 999px;
+
+  /* --- Type ramp. Bricolage Grotesque is variable on optical size,
+         so each step sets opsz to match its rendered size. --- */
+  --t-display: clamp(2.75rem, 7vw, 4.25rem);
+  --t-h1: clamp(2.1rem, 4.6vw, 3rem);
+  --t-h2: clamp(1.5rem, 2.6vw, 1.95rem);
+  --t-h3: 1.15rem;
+  --t-body: 0.95rem;
+  --t-meta: 0.8rem;
+  --t-micro: 0.72rem;
+
+  /* --- Elevation. Two levels. A card is either resting or lifted.
+         Surfaces separate from the page by being white on warm grey, not by
+         being outlined — no borders on cards anywhere in the product. --- */
+  --lift-1: 0 1px 2px rgba(20, 22, 30, .03), 0 6px 20px rgba(20, 22, 30, .045);
+  --lift-2: 0 2px 6px rgba(20, 22, 30, .05), 0 16px 40px rgba(20, 22, 30, .09);
+
+  /* --- Motion. Ease-out for anything the user triggered. --- */
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+}

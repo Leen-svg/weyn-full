@@ -10,7 +10,7 @@ import WelcomeHero from "@/components/WelcomeHero";
 import DiscoverCommunityCollections from "@/components/DiscoverCommunityCollections";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Weyn, home" };
+export const metadata = { title: "Home" };
 
 const VENUE_FIELDS = "id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, is_aesthetic, age_restriction, description";
 
@@ -121,15 +121,14 @@ export default async function HomePage() {
   const curatedLists = editorialLists.filter((list) => list.home_section === "curated");
   return (
     <div className="app-home">
-      <section className="app-home__intro" aria-labelledby="discover-title">
+      <section className="app-home__intro" aria-labelledby="home-title">
         <header className="app-home__hero">
           <div>
-            <p className="eyebrow">Abu Dhabi · Dubai</p>
-            <h1 id="discover-title">Discover</h1>
-            <p className="sub">Picks worth leaving the group chat for.</p>
+            <h1 id="home-title">Where to?</h1>
+            <p className="sub">Tell Weyn the mood and the budget. Or just browse what everyone else is going to.</p>
           </div>
-          <Link className="btn primary app-home__find-cta" href="/find">
-            Find a spot →
+          <Link className="btn primary app-home__find-cta" href="/discover">
+            Start browsing →
           </Link>
         </header>
 
@@ -142,7 +141,7 @@ export default async function HomePage() {
           </form>
 
           <nav className="app-home__quick" aria-label="Quick ways to find a place">
-            <Link className="app-home__quick-card app-home__quick-card--lilac" href="/plan">
+            <Link className="app-home__quick-card" href="/plan">
               <strong>Magic Import</strong>
               <span>Paste a TikTok or chat</span>
             </Link>
@@ -160,7 +159,7 @@ export default async function HomePage() {
             <h2>Our picks</h2>
             <p>Worth leaving the group chat for.</p>
           </div>
-          <span>Swipe →</span>
+          <Link className="app-home__section-action" href="/discover">See all</Link>
         </div>
         {picks.length ? (
           <div className="venue-rail" aria-label="Scroll through our picks">
@@ -178,7 +177,7 @@ export default async function HomePage() {
           <h2 id="curated-title">Curated</h2>
           {/* Discover shows these inline, which stops scaling past a handful.
               The browser at /collections holds all of them, with search. */}
-          <Link className="btn small ghost app-home__section-action" href="/collections">
+          <Link className="app-home__section-action" href="/collections">
             Browse all
             {curatedLists.length ? <span aria-hidden="true"> · {curatedLists.length}</span> : null}
           </Link>
@@ -227,7 +226,7 @@ export default async function HomePage() {
       {fresh.length > 0 && (
         <section className="app-home__section">
           <div className="app-home__section-header">
-            <h2 className="group-label">Just added</h2>
+            <h2>Just added</h2>
             <span>{fresh.length} spots</span>
           </div>
           <div className="venue-grid">

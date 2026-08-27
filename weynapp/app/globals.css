@@ -171,7 +171,7 @@ input:focus, select:focus, textarea:focus {
 /* ---------- coming soon ---------- */
 .coming-soon-tile {
   margin-top: 40px; border: 2.5px dashed var(--ink); border-radius: var(--radius-lg);
-  padding: 24px; opacity: 0.85; position: relative; background: var(--white);
+  padding: 24px; position: relative; background: var(--white);
 }
 .coming-soon-badge {
   display: inline-block; background: var(--ink); color: var(--paper);
@@ -227,43 +227,12 @@ input:focus, select:focus, textarea:focus {
 .favorite-pill.c3 { background: var(--purple-wash); }
 
 /* ---------- venue-card v2: image-forward, softer than the brand .card ---------- */
-.venue-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
-}
-.venue-card {
-  background: var(--white);
-  border: 1.5px solid var(--ink);
-  border-radius: var(--radius-md);
-  box-shadow: 3px 3px 0 var(--ink);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-.venue-card.picked { outline: 2.5px solid var(--purple); outline-offset: -2.5px; }
-.venue-cover {
-  position: relative;
-  aspect-ratio: 16 / 10;
-  display: flex; align-items: center; justify-content: center;
-  border-bottom: 1.5px solid var(--ink);
-}
+
 .venue-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .venue-cover-glyph { font-size: 32px; opacity: 0.35; }
-.venue-city-badge {
-  position: absolute; top: 8px; right: 8px;
-  background: var(--ink); color: var(--white);
-  font-size: 10px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase;
-  padding: 3px 8px; border-radius: var(--radius-pill);
-}
-.venue-card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
-.venue-card .venue-name { font-size: 16px; margin-bottom: 2px; }
-.venue-card .venue-meta { font-size: 12.5px; margin: 0 0 8px; }
-.venue-desc { font-size: 13px; color: var(--ink-soft); margin: 0 0 10px; line-height: 1.4; }
-.venue-card .venue-links { margin-top: auto; padding-top: 4px; }
 
 /* Single-column layout (poll results, group votes) reads better full-width */
-.venue-list-single { display: flex; flex-direction: column; gap: 14px; }
+
 .venue-list-single .venue-card { display: grid; grid-template-columns: 120px 1fr; }
 .venue-list-single .venue-cover { aspect-ratio: auto; height: 100%; border-bottom: none; border-right: 1.5px solid var(--ink); }
 @media (max-width: 560px) {
@@ -281,7 +250,7 @@ input:focus, select:focus, textarea:focus {
 .city-card:hover { transform: translateY(-2px); }
 .city-card.sel { background: var(--purple); color: var(--white); box-shadow: 3px 3px 0 var(--ink); transform: translateY(-2px); }
 .city-card-name { font-family: var(--font-display); font-weight: 800; font-size: 16px; }
-.city-card-note { font-size: 12px; opacity: 0.75; font-weight: 600; }
+.city-card-note { font-size: 12px; font-weight: 600; }
 @media (max-width: 480px) { .city-picker { grid-template-columns: 1fr; } }
 
 .details-card {
@@ -299,61 +268,37 @@ input:focus, select:focus, textarea:focus {
    section links move to a bottom tab bar and the pill keeps only
    the wordmark and the account controls.
    ============================================================ */
-.tabbar { display: none; }
 
 @media (max-width: 900px) {
   .nav-links .nav-section { display: none; }
   .nav { padding: 8px 10px 8px 18px; }
   main.container { padding-top: 92px; padding-bottom: 96px; }
 
-  .tabbar {
-    position: fixed; z-index: 100;
-    left: 50%; transform: translateX(-50%);
-    bottom: max(12px, env(safe-area-inset-bottom));
-    width: min(520px, calc(100% - 24px));
-    display: flex; justify-content: space-between; gap: 2px;
-    background: var(--paper);
-    border: var(--border); border-radius: var(--radius-pill);
-    box-shadow: var(--shadow-pop-sm);
-    padding: 6px;
-  }
-  .tabbar .tab {
-    flex: 1 1 0;
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-    padding: 7px 2px 6px;
-    border-radius: var(--radius-pill);
-    text-decoration: none; color: var(--ink);
-    font-family: var(--font-display); font-weight: 700; font-size: 10.5px;
-    line-height: 1;
-    transition: background .15s ease, transform .15s ease;
-  }
-  .tabbar .tab-icon { font-size: 16px; line-height: 1; }
-  .tabbar .tab.active { background: var(--yellow); box-shadow: 2px 2px 0 var(--ink); transform: translateY(-1px); }
-  .tabbar .tab:active { transform: translateY(1px); }
+  
+  
+  
+  
+  
 
   /* the footer would otherwise sit underneath the floating bar */
   footer { padding-bottom: 84px; }
 }
 
-@media (max-width: 380px) {
-  .tabbar .tab-label { font-size: 9.5px; }
-}
 #ckbar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(16px,env(safe-area-inset-bottom));z-index:200;width:min(680px,calc(100% - 24px));
  display:none;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between;
  background:#F9F9F9;border:2.5px solid #1F3044;border-radius:22px;box-shadow:6px 6px 0 #1F3044;padding:14px 18px}
 #ckbar.on{display:flex}
 #ckbar p{margin:0;font-size:13.5px;font-weight:600;color:#54677D;line-height:1.5;flex:1 1 320px}
-#ckbar a{color:#7863DB;font-weight:700}
-#ckbar button{font-family:inherit;font-weight:800;font-size:14px;background:#8E7CE8;color:#fff;border:2.5px solid #1F3044;
+#ckbar a{color:#5B21B6;font-weight:700;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+#ckbar button{font-family:inherit;font-weight:800;font-size:14px;background:#5B21B6;color:#fff;border:2.5px solid #1F3044;
  border-radius:999px;padding:9px 22px;cursor:pointer;box-shadow:4px 4px 0 #1F3044;transition:transform .15s,box-shadow .15s}
 #ckbar button:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #1F3044}
-@media(max-width:520px){#ckbar{bottom:10px;padding:13px 15px}#ckbar button{width:100%}}
+@media(max-width:520px) {#ckbar{bottom:10px;padding:13px 15px}#ckbar button{width:100%}}
 
 /* the mobile tab bar owns the bottom of the screen, lift the cookie notice above it */
 @media (max-width: 900px) {
   #ckbar { bottom: calc(84px + env(safe-area-inset-bottom)); }
 }
-
 
 /* ============================================================
    APP SHELL ALIGNMENT + USABILITY PASS
@@ -369,36 +314,12 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* One calm reading axis across product screens. Admin can opt into .wide. */
-.app-main {
-  width: 100%;
-  max-width: var(--app-reading-width);
-  margin-inline: auto;
-  padding: 104px 20px 76px;
-}
-.app-main.wide { max-width: 980px; }
 
 /* Product screens are continuous flows, not 100px-padded marketing sections. */
-.app-main section { padding: 0; }
-.app-main > section + section { margin-top: 40px; }
 
 /* Product type hierarchy: strong, but not billboard-sized on laptops. */
-.app-main h1 {
-  font-size: clamp(36px, 4vw, 46px);
-  line-height: 1.04;
-  letter-spacing: -1.5px;
-  margin-bottom: 12px;
-}
-.app-main h2:not(.group-label) {
-  font-size: clamp(24px, 3vw, 34px);
-  line-height: 1.12;
-  letter-spacing: -1px;
-}
-.app-main .sub {
-  max-width: 52ch;
-  line-height: 1.55;
-  margin-bottom: 24px;
-}
-.mark { color: var(--pink); }
+
+.mark { color: #C21E56; }
 
 /* Navigation now exposes the same five core destinations as the tab bar. */
 .app-shell .nav {
@@ -433,41 +354,16 @@ input:focus, select:focus, textarea:focus {
 .app-shell footer .container { max-width: var(--app-nav-width); }
 
 /* Consistent density across legacy cards and newer component primitives. */
-.app-main .card {
-  padding: 24px;
-  border: 1px solid rgba(31,48,68,.18);
-  box-shadow: 0 10px 30px rgba(31,48,68,.08);
-}
-.app-main .card.compact {
-  padding: 16px;
-  margin-bottom: 14px;
-  border-radius: var(--radius-md);
-  box-shadow: 0 8px 24px rgba(31,48,68,.08);
-}
+
 .app-main .tag-group-card,
 .app-main .details-card {
   padding: 18px;
   border: 1px solid rgba(31,48,68,.14);
   box-shadow: 0 8px 26px rgba(31,48,68,.055);
 }
-.app-main .cta-row {
-  align-items: center;
-  margin-top: 22px;
-}
 
 /* Laptop cards stay compact; phones get a readable single column. */
-.app-main .venue-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-.app-main .venue-card-body { padding: 14px; }
-.app-main .venue-cover { aspect-ratio: 16 / 9; }
-.app-main .venue-card {
-  border: 1px solid rgba(31,48,68,.18);
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(31,48,68,.08);
-}
-.app-main .venue-cover { border-bottom-color: rgba(31,48,68,.16); }
+
 .venue-media-track {
   width: 100%; height: 100%; display: flex; overflow-x: auto;
   scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-inline: contain;
@@ -497,13 +393,7 @@ input:focus, select:focus, textarea:focus {
 .venue-media-dots button.active { width: 16px; border-radius: 999px; background: var(--white); }
 
 /* Interactive elements should feel equally clickable everywhere. */
-.app-main .chip { min-height: 40px; }
-.app-main .btn.small { min-height: 40px; }
-.app-main input:not([type="checkbox"]):not([type="radio"]),
-.app-main select,
-.app-main textarea {
-  min-height: 44px;
-}
+
 .app-shell :is(a, button, input, select, textarea):focus-visible {
   outline: 3px solid var(--sky);
   outline-offset: 3px;
@@ -517,50 +407,9 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* Product interaction states: brand purple for selection, clean white hover, no thin pill outlines. */
-.app-shell .chip {
-  border: 0;
-  background: rgba(31,48,68,.065);
-  box-shadow: none;
-}
-.app-shell .chip:hover { background: var(--white); color: var(--purple-deep); box-shadow: 0 5px 14px rgba(31,48,68,.09); }
-.app-shell .chip.sel {
-  background: var(--purple-wash);
-  color: var(--purple-deep);
-  box-shadow: 0 5px 16px rgba(120,99,219,.16);
-  transform: translateY(-1px);
-}
-.app-shell .btn:not(.primary):not(.dark) { background: var(--white); }
-.app-shell .btn:not(.primary):not(.dark):hover { background: var(--white); color: var(--purple-deep); }
-.app-shell .btn {
-  border: 0;
-  box-shadow: 0 6px 18px rgba(31,48,68,.1);
-  transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) ease, background var(--motion-fast) ease;
-}
-.app-shell .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(31,48,68,.14); }
-.app-shell .btn:active { transform: scale(.98); box-shadow: 0 3px 10px rgba(31,48,68,.1); }
-.app-shell .tabbar .tab.active {
-  background: var(--purple-wash);
-  color: var(--purple-deep);
-  box-shadow: none;
-}
-.app-shell .tabbar {
-  border: 0;
-  box-shadow: 0 10px 34px rgba(31,48,68,.14);
-}
-.app-main .tag-pill {
-  border: 0;
-  background: var(--purple-wash);
-  color: var(--purple-deep);
-}
 
 /* Short, purposeful motion improves perceived responsiveness without delaying input. */
-.app-main > * { animation: app-enter var(--motion-base) var(--motion-ease) both; }
-.app-main .card,
-.app-main .venue-card,
-.app-main .tag-group-card,
-.app-main .details-card {
-  transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) ease, border-color var(--motion-fast) ease;
-}
+
 @media (hover: hover) and (pointer: fine) {
   .app-main .card:hover,
   .app-main .venue-card:hover { transform: translateY(-3px); box-shadow: 0 16px 38px rgba(31,48,68,.13); }
@@ -767,20 +616,16 @@ input:focus, select:focus, textarea:focus {
   .app-shell .nav-links { gap: 8px; min-width: 0; }
   .app-shell .nav-user { gap: 5px; }
   .app-shell .points-badge { padding-inline: 7px; }
-  .app-main {
-    padding-top: 84px;
-    padding-inline: 14px;
-    padding-bottom: 102px;
-  }
-  .app-main h1 { font-size: clamp(32px, 10vw, 40px); letter-spacing: -1.1px; }
-  .app-main h2:not(.group-label) { font-size: 25px; }
-  .app-main .sub { font-size: 15px; margin-bottom: 20px; }
+  
+  
+  
+  
   .app-main .card,
   .app-main .card.compact { padding: 17px; border-radius: 18px; box-shadow: 0 8px 24px rgba(31,48,68,.08); }
-  .app-main .btn { min-height: 44px; }
-  .app-main [data-slot="button"] { min-height: 44px; }
-  .app-main .cta-row { gap: 9px; }
-  .app-main .cta-row .btn { flex: 1 1 auto; }
+  
+  
+  
+  
   .admin-tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -817,45 +662,14 @@ input:focus, select:focus, textarea:focus {
   .venue-form-grid { grid-template-columns: 1fr; }
   .venue-ai-row .btn { width: 100%; }
 }
-.app-home__hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(31, 48, 68, .12);
-}
-.app-home__hero .sub,
-.app-home__hero .cta-row { margin-bottom: 0; }
-.app-home__hero .cta-row { margin-top: 0; }
+
 .app-home__feed { margin-top: 26px !important; }
 .app-home__feed > div { margin-top: 0 !important; }
-.app-home__section { margin-top: 28px !important; }
-.app-home__section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-.app-home__section-header .group-label { margin: 0; }
-.app-home__section-header h2 { margin: 0; font-size: 25px !important; letter-spacing: -.6px !important; }
-.app-home__section-header p { margin: 3px 0 0; color: var(--ink-soft); font-size: 13px; }
-.app-home__section-header > span {
-  color: var(--ink-soft);
-  font-size: 12px;
-  font-weight: 700;
-}
-.app-home__picks { margin-top: 24px !important; }
-.venue-rail {
-  display: grid; grid-auto-flow: column; grid-auto-columns: min(380px, 84vw); gap: 14px;
-  overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
-  padding: 2px 3px 16px; overscroll-behavior-inline: contain;
-}
+
 .venue-rail::-webkit-scrollbar { display: none; }
-.venue-rail > * { scroll-snap-align: start; }
+
 .home-feed { margin-top: 14px; }
-.app-home__feed-heading { margin-bottom: 12px; }
+
 .venue-create-options { display: flex; flex-direction: column; justify-content: center; gap: 8px; padding-bottom: 18px; }
 .venue-create-options .toggle-row { margin-top: 0; }
 .venue-action-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -874,32 +688,7 @@ input:focus, select:focus, textarea:focus {
 /* At small-laptop/tablet widths the uncluttered top bar and bottom tabs win. */
 @media (max-width: 900px) {
   .primary-nav { display: none; }
-  .app-main {
-    padding-top: 92px;
-    padding-bottom: 104px;
-  }
-}
-
-@media (max-width: 700px) {
-  .app-main { padding-inline: 18px; }
-  .app-main h1 { font-size: clamp(34px, 10vw, 44px); }
-  .app-main .card { padding: 20px; }
-
-  .app-home__hero {
-    grid-template-columns: 1fr;
-    align-items: start;
-    gap: 18px;
-    padding-bottom: 24px;
-  }
-  .app-home__hero .cta-row,
-  .app-home__hero .btn { width: 100%; }
-}
-
-@media (max-width: 560px) {
-  .app-main .venue-grid { grid-template-columns: 1fr; }
-  .app-main .chip { min-height: 44px; }
-  .app-home__section { margin-top: 32px !important; }
-  .app-home__section-header > span { display: none; }
+  
 }
 
 /* Compact account menu: a quick switcher, not a second profile page. */
@@ -1042,7 +831,7 @@ input:focus, select:focus, textarea:focus {
 
 /* One short CSS reveal replaces the large JavaScript animation runtime. */
 .app-reveal { animation: app-card-in 160ms var(--motion-ease) both; }
-.app-main > * { animation: none; }
+
 .app-home { animation-duration: 180ms; }
 .venue-grid > *,
 .venue-list-single > *,
@@ -1088,8 +877,6 @@ input:focus, select:focus, textarea:focus {
   }
 }
 
-
-
 /* ============================================================
    WEYN APP - LIQUID GLASS v2
    Product-only overrides. The static marketing site in /public
@@ -1097,7 +884,7 @@ input:focus, select:focus, textarea:focus {
    ============================================================ */
 :root {
   --font-display: var(--font-bricolage), "Bricolage Grotesque", sans-serif;
-  --font-body: var(--font-space), "Space Grotesk", sans-serif;
+  --font-body: var(--font-bricolage), "Bricolage Grotesque", sans-serif;
   --font-ar: var(--font-kufam), "Kufam", sans-serif;
   --glass-surface: rgba(255, 255, 255, .74);
   --glass-surface-strong: rgba(255, 255, 255, .9);
@@ -1107,18 +894,7 @@ input:focus, select:focus, textarea:focus {
   --glass-shadow-soft: 0 10px 30px rgba(31, 48, 68, .075), inset 0 1px 0 rgba(255, 255, 255, .82);
 }
 
-.app-shell {
-  background:
-    radial-gradient(60rem 34rem at -8% -4%, rgba(255, 228, 94, .28), transparent 60%),
-    radial-gradient(48rem 34rem at 108% 4%, rgba(142, 124, 232, .2), transparent 62%),
-    radial-gradient(40rem 36rem at 54% 72%, rgba(255, 99, 146, .1), transparent 68%),
-    #f7f8fb;
-  background-attachment: scroll;
-}
-.app-shell::before { background-image: none; }
-
 .app-shell .nav,
-.app-shell .tabbar,
 .profile-menu-popover,
 .group-share-menu {
   background: var(--glass-surface-strong);
@@ -1126,20 +902,9 @@ input:focus, select:focus, textarea:focus {
   box-shadow: var(--glass-shadow);
 }
 
-.app-shell .nav::after,
-.app-shell .tabbar::before {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  border-radius: inherit;
-}
 .app-shell .nav::after {
   inset: 1px;
   border-top: 1px solid rgba(255, 255, 255, .96);
-}
-.app-shell .tabbar::before {
-  inset: 1px;
-  border-top: 1px solid rgba(255, 255, 255, .9);
 }
 
 .app-main .card,
@@ -1155,14 +920,6 @@ input:focus, select:focus, textarea:focus {
   box-shadow: var(--glass-shadow-soft);
 }
 
-.app-main .venue-card,
-.app-main .card,
-.app-main .tag-group-card,
-.app-main .details-card {
-  position: relative;
-  isolation: isolate;
-}
-.app-main .venue-card { overflow: hidden; }
 .app-main .card::before,
 .app-main .tag-group-card::before,
 .app-main .details-card::before {
@@ -1175,28 +932,6 @@ input:focus, select:focus, textarea:focus {
   pointer-events: none;
 }
 
-.app-home__hero {
-  min-height: 152px;
-  padding: 26px;
-  border: 1px solid var(--glass-edge);
-  border-radius: 28px;
-  background:
-    radial-gradient(circle at 92% 16%, rgba(255,228,94,.5), transparent 34%),
-    linear-gradient(140deg, rgba(255,255,255,.9), rgba(241,238,252,.7));
-  box-shadow: var(--glass-shadow-soft);
-}
-.app-home__hero h1 { margin-bottom: 8px; }
-.app-home__section-header { padding-inline: 2px; }
-
-.app-shell .btn.primary {
-  color: var(--white);
-  background: linear-gradient(135deg, var(--purple), #7966df);
-  box-shadow: 0 10px 24px rgba(120, 99, 219, .26), inset 0 1px 0 rgba(255,255,255,.34);
-}
-.app-shell .btn.primary:hover {
-  background: linear-gradient(135deg, #9a88ef, var(--purple-deep));
-  box-shadow: 0 14px 30px rgba(120, 99, 219, .32), inset 0 1px 0 rgba(255,255,255,.42);
-}
 .app-shell .btn:not(.primary):not(.dark),
 .app-shell .chip,
 .venue-media-arrow,
@@ -1205,40 +940,7 @@ input:focus, select:focus, textarea:focus {
   background: rgba(255,255,255,.72);
   box-shadow: 0 7px 20px rgba(31,48,68,.075), inset 0 1px 0 rgba(255,255,255,.92);
 }
-.app-shell .chip.sel,
-.primary-nav .nav-section.active,
-.app-shell .tabbar .tab.active {
-  background: linear-gradient(145deg, rgba(241,238,252,.96), rgba(234,244,253,.86));
-  color: var(--purple-deep);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 6px 16px rgba(120,99,219,.13);
-}
 
-.primary-nav .nav-section,
-.app-shell .tabbar .tab {
-  min-height: 38px;
-  font-weight: 750;
-}
-.app-shell .tabbar .tab {
-  gap: 4px;
-}
-.tab-icon {
-  display: grid;
-  place-items: center;
-}
-.tab-icon svg {
-  width: 19px;
-  height: 19px;
-  stroke-width: 2.2;
-}
-.tab-label { letter-spacing: -.1px; }
-
-.app-main input:not([type="checkbox"]):not([type="radio"]),
-.app-main select,
-.app-main textarea {
-  border: 1px solid rgba(31,48,68,.12);
-  background: rgba(255,255,255,.74);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 5px 18px rgba(31,48,68,.055);
-}
 .app-main input:not([type="checkbox"]):not([type="radio"]):focus,
 .app-main select:focus,
 .app-main textarea:focus {
@@ -1247,19 +949,9 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 4px rgba(142,124,232,.12), inset 0 1px 0 #fff;
 }
 
-.venue-cover {
-  background-color: rgba(241,238,252,.62);
-}
-.venue-card-body {
-  background: linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.62));
-}
 .venue-media-dots {
   border: 1px solid rgba(255,255,255,.22);
   background: rgba(21,34,48,.46);
-}
-.app-main .tag-pill {
-  background: rgba(241,238,252,.82);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
 }
 
 .home-skeleton {
@@ -1303,38 +995,20 @@ input:focus, select:focus, textarea:focus {
 
 @media (max-width: 900px) {
   .app-shell .nav,
-  .app-shell .tabbar,
   .profile-menu-popover,
   .group-share-menu {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     background: rgba(255,255,255,.94);
   }
-  .app-shell .tabbar {
-    padding-bottom: max(7px, env(safe-area-inset-bottom));
-  }
+  
 }
 
 @media (max-width: 700px) {
-  .app-shell {
-    background:
-      radial-gradient(28rem 22rem at -20% -4%, rgba(255,228,94,.22), transparent 64%),
-      radial-gradient(26rem 22rem at 118% 6%, rgba(142,124,232,.17), transparent 66%),
-      #f8f9fb;
-  }
-  .app-home__hero {
-    min-height: 0;
-    padding: 22px 18px;
-    border-radius: 24px;
-  }
-  .app-main .venue-card,
-  .app-main .card,
-  .app-main .tag-group-card,
-  .app-main .details-card {
-    background: rgba(255,255,255,.9);
-    box-shadow: 0 10px 28px rgba(31,48,68,.075), inset 0 1px 0 #fff;
-  }
-  .venue-card-body { background: rgba(255,255,255,.94); }
+  
+  
+  
+  
   .home-skeleton__card { height: 220px; }
 }
 
@@ -1343,7 +1017,6 @@ input:focus, select:focus, textarea:focus {
     animation: none;
   }
 }
-
 
 .skip-link {
   position: fixed;
