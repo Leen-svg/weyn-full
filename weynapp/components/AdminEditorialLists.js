@@ -1,6 +1,30 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { safeUrl } from "@/lib/sanitize";
+import { compressImage } from "@/lib/image-compress";
+import { createClient } from "@/lib/supabase/client";
+
+async function uploadHeaderImageFile(file) {
+  const compressed = await compressImage(file);
+  const signRes = await fetch("/api/admin/editorial-lists/cover", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ intent: "sign", contentType: compressed.type, fileSize: compressed.size }),
+  });
+  const signed = await signRes.json();
+  if (!signRes.ok) throw new Error(signed.error || "Could not start upload");
+  const supabase = createClient();
+  const { error: uploadError } = await supabase.storage.from("venue-media").uploadToSignedUrl(signed.path, signed.token, compressed, { contentType: compressed.type });
+  if (uploadError) throw uploadError;
+  const completeRes = await fetch("/api/admin/editorial-lists/cover", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ intent: "complete", path: signed.path }),
+  });
+  const completed = await completeRes.json();
+  if (!completeRes.ok) throw new Error(completed.error || "Could not save upload");
+  return completed.url;
+}
 
 const blank = { id: null, title: "", subtitle: "", city: "Dubai", headerImageUrl: "", homeSection: "curated", sortOrder: 0, isPublished: false, venueIds: [] };
 
@@ -11,6 +35,7 @@ export default function AdminEditorialLists() {
   const [query, setQuery] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   const load = useCallback(async () => {
     const response = await fetch("/api/admin/editorial-lists");
@@ -63,6 +88,21 @@ export default function AdminEditorialLists() {
     setEditing(null); setNotice("Weyn list saved."); await load();
   }
 
+  async function onCoverFileChosen(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setNotice("");
+    setUploadingCover(true);
+    try {
+      const url = await uploadHeaderImageFile(file);
+      setEditing((current) => ({ ...current, headerImageUrl: url }));
+    } catch (e) {
+      setNotice(e.message || "Could not upload that image.");
+    }
+    setUploadingCover(false);
+  }
+
   async function remove(id) {
     if (!confirm("Delete this Weyn list? The venues will not be deleted.")) return;
     const response = await fetch("/api/admin/editorial-lists", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ id }) });
@@ -80,7 +120,12 @@ export default function AdminEditorialLists() {
       <div className="admin-row"><h3>{editing.id ? "Edit Weyn list" : "Create Weyn list"}</h3><button className="btn small ghost" onClick={() => setEditing(null)}>Close</button></div>
       <label className="field"><span>List name</span><input maxLength={100} value={editing.title} onChange={(event) => setEditing({ ...editing, title: event.target.value })} placeholder="Weyn’s Cafes of the Week" /></label>
       <label className="field"><span>Fun intro</span><input maxLength={240} value={editing.subtitle} onChange={(event) => setEditing({ ...editing, subtitle: event.target.value })} placeholder="Fresh coffee, great corners and zero boring catch-ups." /></label>
-      <label className="field"><span>Header image link</span><input inputMode="url" value={editing.headerImageUrl} onChange={(event) => setEditing({ ...editing, headerImageUrl: event.target.value })} placeholder="https://..." /></label>
+      <label className="field"><span>Header image link</span><input type="text" inputMode="url" value={editing.headerImageUrl} onChange={(event) => setEditing({ ...editing, headerImageUrl: event.target.value })} placeholder="https://..." /></label>
+      <label className="field">
+        <span>Or upload an image</span>
+        <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingCover} onChange={onCoverFileChosen} />
+      </label>
+      {uploadingCover && <p className="sub">Uploading…</p>}
       {safeUrl(editing.headerImageUrl) && <img className="editorial-image-preview" src={safeUrl(editing.headerImageUrl)} alt="Current list header preview" />}
       <div className="editorial-grid"><label className="field"><span>Homepage section</span><select value={editing.homeSection} onChange={(event) => setEditing({ ...editing, homeSection: event.target.value })}><option value="our_picks">Our picks</option><option value="curated">Curated collection</option></select></label><label className="field"><span>City</span><select value={editing.city} onChange={(event) => setEditing({ ...editing, city: event.target.value })}><option>Dubai</option><option>Abu Dhabi</option></select></label><label className="field"><span>Homepage order</span><input type="number" min="0" max="999" value={editing.sortOrder} onChange={(event) => setEditing({ ...editing, sortOrder: Number(event.target.value) })} /></label></div>
       <label className="toggle-row"><input type="checkbox" checked={editing.isPublished} onChange={(event) => setEditing({ ...editing, isPublished: event.target.checked })} /><span><strong>Published</strong><br/><small>Visible on the app homepage</small></span></label>
