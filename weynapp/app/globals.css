@@ -234,10 +234,10 @@ input:focus, select:focus, textarea:focus {
 /* Single-column layout (poll results, group votes) reads better full-width */
 
 .venue-list-single .venue-card { display: grid; grid-template-columns: 120px 1fr; }
-.venue-list-single .venue-cover { aspect-ratio: auto; height: 100%; border-bottom: none; border-right: 1.5px solid var(--ink); }
+.venue-list-single .venue-cover { aspect-ratio: auto; height: 100%; border: 0; }
 @media (max-width: 560px) {
   .venue-list-single .venue-card { grid-template-columns: 1fr; }
-  .venue-list-single .venue-cover { aspect-ratio: 16 / 9; border-right: none; border-bottom: 1.5px solid var(--ink); }
+  .venue-list-single .venue-cover { aspect-ratio: 16 / 9; border: 0; }
 }
 
 /* ---------- city picker + details card (find page reorg) ---------- */
@@ -1044,8 +1044,7 @@ input:focus, select:focus, textarea:focus {
     min-width: 0;
     height: 100%;
     aspect-ratio: auto;
-    border-right: 1px solid rgba(31,48,68,.16);
-    border-bottom: 0;
+    border: 0;
   }
   .app-main .venue-list-single .venue-card-body { min-width: 0; }
 }

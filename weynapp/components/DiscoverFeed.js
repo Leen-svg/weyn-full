@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Bookmark, MapPin, Play, Send } from "lucide-react";
+import { Bookmark, ChevronLeft, ChevronRight, MapPin, Play, Send } from "lucide-react";
 import ShareToGroupButton from "./ShareToGroupButton";
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 
@@ -26,6 +26,13 @@ function washFor(id) {
   let hash = 0;
   for (const ch of id || "") hash = (hash * 31 + ch.charCodeAt(0)) % WASHES.length;
   return WASHES[hash];
+}
+
+function placeLabel(venue) {
+  const city = (venue.city || "").trim();
+  const hood = (venue.neighborhood || "").trim();
+  if (!hood || hood.toLowerCase() === city.toLowerCase()) return city || hood;
+  return `${city} · ${hood}`;
 }
 
 function spendLabel(venue) {
@@ -161,12 +168,13 @@ export default function DiscoverFeed({ venues = [], savedIds = [], isLoggedIn = 
 
 function DiscoverSlide({ venue, priority, saved, onSave }) {
   const [playing, setPlaying] = useState(false);
-  // A cover that fails to load falls back to the wash poster rather than
-  // leaving the browser's broken-image glyph sitting over the artwork.
-  const [coverBroken, setCoverBroken] = useState(false);
-  const cover = normalizeHttpUrl(venue.cover_url);
-  const video = normalizeHttpUrl(venue.hero_video_url);
+  const [broken, setBroken] = useState(() => new Set());
+  const [active, setActive] = useState(0);
+  const trackRef = useRef(null);
+  const frame = useRef(0);
+
   const maps = normalizeHttpUrl(venue.google_maps_url);
+  const video = normalizeHttpUrl(venue.hero_video_url);
   const [from, to] = washFor(venue.id);
   const spend = spendLabel(venue);
   const age = venue.age_restriction === "21-plus" ? "21+" : venue.age_restriction === "18-plus" ? "18+" : null;
@@ -175,22 +183,104 @@ function DiscoverSlide({ venue, priority, saved, onSave }) {
     .filter(Boolean)
     .slice(0, 3);
 
+  // A venue usually has several photos. Showing only the cover meant there was
+  // no way to see the rest without leaving the feed.
+  const shots = useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    for (const item of venue.media || []) {
+      const url = normalizeHttpUrl(item?.url);
+      if (!url || item?.type === "video" || seen.has(url)) continue;
+      seen.add(url);
+      out.push(url);
+    }
+    const cover = normalizeHttpUrl(venue.cover_url);
+    if (cover && !seen.has(cover)) out.unshift(cover);
+    return out.filter((u) => !broken.has(u));
+  }, [venue.media, venue.cover_url, broken]);
+
+  useEffect(() => () => cancelAnimationFrame(frame.current), []);
+
+  const goTo = useCallback((index) => {
+    const node = trackRef.current;
+    if (!node) return;
+    const next = Math.max(0, Math.min(shots.length - 1, index));
+    node.scrollTo({ left: node.clientWidth * next, behavior: "smooth" });
+    setActive(next);
+  }, [shots.length]);
+
+  function track() {
+    if (frame.current) return;
+    frame.current = requestAnimationFrame(() => {
+      frame.current = 0;
+      const node = trackRef.current;
+      if (!node?.clientWidth) return;
+      setActive(Math.round(node.scrollLeft / node.clientWidth));
+    });
+  }
+
   return (
     <li className="discover-slide">
       <div className="discover-slide__media" style={{ "--wash-from": from, "--wash-to": to }}>
-        <span className="discover-slide__watermark" aria-hidden="true">
-          {venue.name}
-        </span>
-        {cover && !coverBroken && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={cover}
-            alt=""
-            loading={priority ? "eager" : "lazy"}
-            fetchPriority={priority ? "high" : "auto"}
-            onError={() => setCoverBroken(true)}
-          />
+        <span className="discover-slide__watermark" aria-hidden="true">{venue.name}</span>
+
+        {shots.length > 0 && (
+          <div
+            className="discover-slide__track"
+            ref={trackRef}
+            onScroll={track}
+            aria-label={`${venue.name} photos`}
+          >
+            {shots.map((url, index) => (
+              <div className="discover-slide__shot" key={url}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url}
+                  alt=""
+                  loading={priority && index === 0 ? "eager" : "lazy"}
+                  fetchPriority={priority && index === 0 ? "high" : "auto"}
+                  onError={() => setBroken((prev) => new Set(prev).add(url))}
+                />
+              </div>
+            ))}
+          </div>
         )}
+
+        {shots.length > 1 && (
+          <>
+            <button
+              className="discover-slide__arrow discover-slide__arrow--prev"
+              type="button"
+              aria-label="Previous photo"
+              disabled={active === 0}
+              onClick={() => goTo(active - 1)}
+            >
+              <ChevronLeft aria-hidden="true" />
+            </button>
+            <button
+              className="discover-slide__arrow discover-slide__arrow--next"
+              type="button"
+              aria-label="Next photo"
+              disabled={active === shots.length - 1}
+              onClick={() => goTo(active + 1)}
+            >
+              <ChevronRight aria-hidden="true" />
+            </button>
+            <div className="discover-slide__dots" aria-label={`Photo ${active + 1} of ${shots.length}`}>
+              {shots.map((url, index) => (
+                <button
+                  key={url}
+                  type="button"
+                  className={index === active ? "is-on" : undefined}
+                  aria-label={`Show photo ${index + 1} of ${shots.length}`}
+                  aria-current={index === active ? "true" : undefined}
+                  onClick={() => goTo(index)}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
         {video && !playing && (
           <button className="discover-slide__play" type="button" onClick={() => setPlaying(true)} aria-label={`Play ${venue.name} video`}>
             <Play aria-hidden="true" />
@@ -203,7 +293,7 @@ function DiscoverSlide({ venue, priority, saved, onSave }) {
 
       <div className="discover-slide__panel">
         <div className="discover-slide__copy">
-          <p className="discover-slide__city">{venue.city}{venue.neighborhood ? ` · ${venue.neighborhood}` : ""}</p>
+          <p className="discover-slide__city">{placeLabel(venue)}</p>
           <h2 className="discover-slide__name">{venue.name}</h2>
           {venue.description && <p className="discover-slide__desc">{venue.description}</p>}
 

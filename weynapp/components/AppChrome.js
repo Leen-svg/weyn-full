@@ -9,7 +9,6 @@ export default function AppChrome() {
       <BackButton />
       <div className="app-chrome-brand">
         <Link href="/app" className="logo" aria-label="Weyn home">weyn</Link>
-        <span className="app-chrome-cities">Abu Dhabi · Dubai</span>
       </div>
       <div className="app-chrome-right">
         <Suspense fallback={null}>
