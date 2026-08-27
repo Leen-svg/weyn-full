@@ -642,6 +642,7 @@
   width: 100%;
   align-items: center;
   justify-content: flex-start;
+  flex-wrap: wrap;
   gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
   background: transparent;
@@ -649,7 +650,7 @@
 .discover-venue-card .venue-desc,
 .discover-venue-card .tag-row { display: none; }
 .discover-venue-card .venue-links,
-.discover-venue-card .venue-action-bar { display: flex; flex-wrap: nowrap; gap: var(--sp-2); }
+.discover-venue-card .venue-action-bar { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .discover-venue-card .venue-action-bar { margin-top: 0 !important; margin-right: auto; }
 .discover-venue-card .venue-links { margin-top: 0; }
 .app-shell.stitch .discover-venue-card .venue-links .btn,
@@ -692,8 +693,8 @@
    off-system. A drawn chevron at a restrained size reads as a control. */
 .app-shell.stitch .venue-media-arrow {
   display: grid;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   place-items: center;
   padding: 0;
   border: 1px solid rgba(17, 17, 17, .06);

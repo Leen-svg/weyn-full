@@ -130,7 +130,6 @@ export default function VenueCard({ venue, children, picked, priority = false, v
             </div>
           </div>
         )}
-        {venue.city === "Dubai" && <span className="venue-city-badge">Dubai</span>}
       </div>
       <div className="venue-card-body">
         {!discover && (
