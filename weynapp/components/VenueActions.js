@@ -26,26 +26,63 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
   const [reviews, setReviews] = useState(null);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
+  // Ask the device where it is, so the server can check the visit is real.
+  // Without this a check-in is just a button, and anyone could farm the daily
+  // cap from their sofa.
+  function currentPosition() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("This browser can't share your location."));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => resolve(position.coords),
+        (error) =>
+          reject(
+            new Error(
+              error.code === error.PERMISSION_DENIED
+                ? "Weyn needs your location to confirm you were here. Allow location and try again."
+                : "Couldn't read your location. Try again in a moment."
+            )
+          ),
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+      );
+    });
+  }
+
   async function confirmVisit() {
     if (visitBusy) return;
     setVisitBusy(true);
     setNeedsLogin(false);
+    setReviewMsg(null);
     try {
+      const coords = await currentPosition();
       const res = await fetch("/api/check-ins", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venueId: venue.id }),
+        body: JSON.stringify({
+          venueId: venue.id,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          accuracy: coords.accuracy,
+        }),
       });
       const body = await res.json().catch(() => ({}));
       if (res.status === 401) {
         setNeedsLogin(true);
       } else if (res.ok) {
         setVisit(body);
+      } else if (body.tooFar) {
+        const away =
+          body.distanceM > 1000
+            ? `${(body.distanceM / 1000).toFixed(1)}km`
+            : `${body.distanceM}m`;
+        setReviewMsg(`You're about ${away} away. Check in once you're at the place.`);
       } else {
         setReviewMsg(body.error || "Couldn't confirm that visit.");
       }
-    } catch {
-      setReviewMsg("Couldn't reach the server. Try again.");
+    } catch (cause) {
+      setReviewMsg(cause?.message || "Couldn't confirm that visit.");
     } finally {
       setVisitBusy(false);
     }
