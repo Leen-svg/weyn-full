@@ -32,6 +32,13 @@ export default function UserTagsManager({ venues }) {
 
   useEffect(() => { load(); }, []);
 
+  // A tag changed from a saved place card is the same data as this list.
+  useEffect(() => {
+    const refresh = () => load();
+    window.addEventListener("weyn:tags-changed", refresh);
+    return () => window.removeEventListener("weyn:tags-changed", refresh);
+  }, []);
+
   function start(tag = null) {
     setNotice("");
     setEditing({

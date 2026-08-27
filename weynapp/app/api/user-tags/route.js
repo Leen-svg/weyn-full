@@ -61,6 +61,27 @@ export async function PATCH(req) {
     const { error } = await supabase.from("user_tags").update({ archived_at: body.action === "archive" ? new Date().toISOString() : null, updated_at: new Date().toISOString() }).eq("id", id);
     return error ? NextResponse.json({ error: error.message }, { status: 500 }) : NextResponse.json({ ok: true });
   }
+  // Add or remove one place without rewriting the tag's whole membership.
+  // "update" replaces every venue on the tag, which is wrong for tagging a
+  // single saved place and races when two cards are tagged in quick succession.
+  if (body.action === "attach" || body.action === "detach") {
+    const venueId = String(body.venueId || "");
+    if (!venueId) return NextResponse.json({ error: "venueId required" }, { status: 400 });
+
+    if (body.action === "detach") {
+      const { error } = await supabase.from("user_tag_venues").delete().eq("tag_id", id).eq("venue_id", venueId);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      const { data: venue } = await db().from("venues").select("id").eq("id", venueId).maybeSingle();
+      if (!venue) return NextResponse.json({ error: "That place is not available" }, { status: 404 });
+      const { error } = await supabase.from("user_tag_venues").insert({ tag_id: id, venue_id: venueId });
+      // 23505 means it is already on the tag, which is the desired end state.
+      if (error && error.code !== "23505") return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    await supabase.from("user_tags").update({ updated_at: new Date().toISOString() }).eq("id", id);
+    return NextResponse.json({ ok: true });
+  }
+
   if (body.action !== "update") return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   const name = String(body.name || "").trim().slice(0, 40);
   if (!name) return NextResponse.json({ error: "Give your tag a name" }, { status: 400 });

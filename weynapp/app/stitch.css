@@ -2130,3 +2130,44 @@
   }
   .planner-share-form .btn { justify-self: start; }
 }
+
+/* ---------- Tagging a saved place ---------- */
+.venue-tag-picker { position: relative; display: inline-flex; }
+.app-shell.stitch .venue-tag-picker > .btn { gap: var(--sp-1); }
+
+.venue-tag-picker__menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + var(--sp-2));
+  left: 0;
+  width: min(280px, 84vw);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: #fff;
+  box-shadow: var(--lift-2);
+}
+.venue-tag-picker__note { margin: 0 0 var(--sp-2); color: var(--ui-muted); font-size: var(--t-meta); }
+.venue-tag-picker__list { display: grid; gap: 2px; max-height: 190px; margin: 0 0 var(--sp-3); padding: 0; overflow-y: auto; list-style: none; }
+.venue-tag-picker__list label {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-sm);
+  font-size: var(--t-meta);
+  cursor: pointer;
+}
+.venue-tag-picker__list label:hover { background: var(--ui-fill); }
+.app-shell.stitch .venue-tag-picker__list input { width: 17px; min-height: 17px; flex: 0 0 auto; padding: 0; }
+.venue-tag-picker__new { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-2); }
+.app-shell.stitch .venue-tag-picker__new input { min-height: 38px; font-size: var(--t-meta); }
+.venue-tag-picker__error { margin: var(--sp-2) 0 0; color: #b61f48; font-size: var(--t-micro); }
+
+/* The saved screen's remove control reads as destructive, not as a status. */
+.app-shell.stitch .venue-action-bar .btn.is-danger {
+  border-color: transparent;
+  background: #fdf0f4 !important;
+  color: #b61f48;
+}
+.app-shell.stitch .venue-action-bar .btn.is-danger:hover { background: #fbe1e9 !important; }

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { safeUrl } from "@/lib/sanitize";
 import ShareToGroupButton from "./ShareToGroupButton";
 
-export default function VenueActions({ venue, initialSaved = false, onRemoved }) {
+export default function VenueActions({ venue, initialSaved = false, savedContext = false, onRemoved }) {
   const [saved, setSaved] = useState(initialSaved);
   const [busy, setBusy] = useState(false);
   const [rateOpen, setRateOpen] = useState(false);
@@ -176,8 +176,13 @@ export default function VenueActions({ venue, initialSaved = false, onRemoved })
   return (
     <div className="venue-actions">
       <div className="venue-links venue-action-bar" style={{ marginTop: 10 }}>
-        <button className={`btn small ${saved ? "" : "ghost"}`} disabled={busy} onClick={toggleSave} type="button">
-          {saved ? "★ Saved" : "☆ Save"}
+        <button
+          className={`btn small ${saved && !savedContext ? "" : "ghost"}${savedContext && saved ? " is-danger" : ""}`}
+          disabled={busy}
+          onClick={toggleSave}
+          type="button"
+        >
+          {savedContext && saved ? "✕ Remove" : saved ? "★ Saved" : "☆ Save"}
         </button>
         <button
           className={`btn small ${visit ? "" : "ghost"}`}

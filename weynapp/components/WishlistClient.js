@@ -2,6 +2,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import VenueCard from "./VenueCard";
+import VenueTagPicker from "./VenueTagPicker";
 import VenueActions from "./VenueActions";
 import { Archive, FolderPlus, List, Map, Pencil, RotateCcw, Share2, Trash2 } from "lucide-react";
 import styles from "./AccountPages.module.css";
@@ -186,7 +187,13 @@ export default function WishlistClient({ initialVenues }) {
         <div className="venue-list-single">
           {venues.map((v) => (
             <VenueCard key={v.id} venue={v}>
-              <VenueActions venue={v} initialSaved onRemoved={(id) => setVenues((prev) => prev.filter((x) => x.id !== id))} />
+              <VenueActions
+                venue={v}
+                initialSaved
+                savedContext
+                onRemoved={(id) => setVenues((prev) => prev.filter((x) => x.id !== id))}
+              />
+              <VenueTagPicker venue={v} />
             </VenueCard>
           ))}
         </div>
