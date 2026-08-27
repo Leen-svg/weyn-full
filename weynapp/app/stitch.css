@@ -1910,3 +1910,31 @@
 }
 .collection-card__title { font-size: 1.05rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
 .collection-card__count { color: rgba(255, 255, 255, .82); font-size: var(--t-micro); font-weight: 600; }
+
+/* ---------- Map pins (Mapbox) and account settings ---------- */
+.weyn-map-pin {
+  display: block;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--ui-purple);
+  box-shadow: 0 2px 8px rgba(20, 22, 30, .35);
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.weyn-map-pin:hover { transform: scale(1.15); }
+.weyn-map-pin.is-on { background: var(--ui-ink); transform: scale(1.3); }
+
+.account-security { display: grid; gap: var(--sp-4); margin-top: var(--sp-7); }
+.account-security > [data-slot="card"] { padding: var(--sp-5); }
+.account-email-current {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--ui-fill);
+  color: var(--ui-ink);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getTaxonomy } from "@/lib/taxonomy";
 import ProfileForm from "@/components/ProfileForm";
 import styles from "@/components/AccountPages.module.css";
-import DeleteAccountButton from "@/components/DeleteAccountButton";
+import AccountSecurity from "@/components/AccountSecurity";
 
 export const metadata = { title: "Edit your profile, Weyn" };
 
@@ -28,7 +28,10 @@ export default async function EditProfilePage() {
         <p className="sub">Update what people see and choose what stays private. Your recommendation preferences are optional.</p>
       </header>
       <ProfileForm initial={{ ...(pub || {}), favorite_tags: preferences?.favorite_tags || [], favorite_tags_visibility: preferences?.visibility || "" }} groups={groups} />
-      <DeleteAccountButton />
+      <section className="account-security" aria-label="Account settings">
+        <h2 className="group-label">Account</h2>
+        <AccountSecurity email={user.email} />
+      </section>
     </div>
   );
 }

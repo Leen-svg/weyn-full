@@ -17,6 +17,11 @@ export default function AccountSecurity({ email }) {
   const [pwMsg, setPwMsg] = useState(null);
   const [pwErr, setPwErr] = useState(null);
 
+  const [newEmail, setNewEmail] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailMsg, setEmailMsg] = useState(null);
+  const [emailErr, setEmailErr] = useState(null);
+
   const [confirmText, setConfirmText] = useState("");
   const [delBusy, setDelBusy] = useState(false);
   const [delErr, setDelErr] = useState(null);
@@ -43,6 +48,23 @@ export default function AccountSecurity({ email }) {
     setPwBusy(false);
   }
 
+  // Supabase sends a confirmation link to the new address; the change only
+  // lands once that link is opened, so the copy has to say so.
+  async function changeEmail(e) {
+    e.preventDefault();
+    setEmailBusy(true);
+    setEmailErr(null);
+    setEmailMsg(null);
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
+    if (error) setEmailErr(error.message);
+    else {
+      setEmailMsg(`Confirmation sent to ${newEmail.trim()}. Open it to finish the change — your address stays the same until you do.`);
+      setNewEmail("");
+    }
+    setEmailBusy(false);
+  }
+
   async function deleteAccount() {
     setDelBusy(true);
     setDelErr(null);
@@ -59,6 +81,34 @@ export default function AccountSecurity({ email }) {
 
   return (
     <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Email address</CardTitle>
+          <CardDescription>The address you sign in with.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="account-email-current">{email || "No email on this account"}</p>
+          <form onSubmit={changeEmail} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="new-email">New email address</Label>
+              <Input
+                id="new-email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+              />
+            </div>
+            {emailErr && <p className="text-sm text-destructive">{emailErr}</p>}
+            {emailMsg && <p className="text-sm text-muted-foreground">{emailMsg}</p>}
+            <Button type="submit" disabled={emailBusy || !newEmail.trim() || newEmail.trim() === email}>
+              {emailBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send confirmation"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Change password</CardTitle>

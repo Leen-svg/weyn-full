@@ -1,7 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useMemo, useState } from "react";
 import MapChooser from "./MapChooser";
+
+// mapbox-gl touches window on import, so it can only load in the browser.
+const VenueMapbox = dynamic(() => import("./VenueMapbox"), { ssr: false });
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 import styles from "./WishlistMap.module.css";
 
 function coordinate(value, min, max) {
@@ -39,6 +45,7 @@ export default function WishlistMap({ venues }) {
   const [selectedId, setSelectedId] = useState(null);
   const points = useMemo(() => mappedVenues(venues), [venues]);
   const selectedVenue = points.find((venue) => venue.id === selectedId) || points[0] || null;
+  const select = useCallback((id) => setSelectedId(id), []);
 
   if (!points.length) {
     return (
@@ -52,14 +59,24 @@ export default function WishlistMap({ venues }) {
 
   return (
     <section className={styles.frame} aria-label={`Map of ${points.length} saved places`}>
-      <iframe
-        key={selectedVenue.id}
-        className={styles.map}
-        src={openStreetMapEmbed(selectedVenue)}
-        title={`Map showing ${selectedVenue.name}`}
-        loading="lazy"
-        referrerPolicy="strict-origin-when-cross-origin"
-      />
+      {MAPBOX_TOKEN ? (
+        <VenueMapbox
+          className={styles.map}
+          points={points}
+          selected={selectedVenue}
+          onSelect={select}
+          token={MAPBOX_TOKEN}
+        />
+      ) : (
+        <iframe
+          key={selectedVenue.id}
+          className={styles.map}
+          src={openStreetMapEmbed(selectedVenue)}
+          title={`Map showing ${selectedVenue.name}`}
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      )}
       <div className={styles.count}>{points.length} mapped</div>
       {points.length > 1 && (
         <div className={styles.picker} role="list" aria-label="Choose a saved place on the map">
