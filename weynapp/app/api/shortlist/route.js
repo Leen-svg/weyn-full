@@ -5,7 +5,7 @@ import { cleanStringList, payloadTooLarge, validCoordinates } from "@/lib/reques
 import { rateLimit } from "@/lib/request-security";
 import { mergeVenueResults, shortlistResultNote } from "@/lib/shortlist-utils.mjs";
 import { viewerAccess } from "@/lib/session";
-import { AGE_TIERS } from "@/lib/age";
+import { AGE_TIERS, allowedAgeRestrictions } from "@/lib/age";
 
 const ALLOWED_AGES = new Set(AGE_TIERS);
 
@@ -109,10 +109,52 @@ export async function POST(req) {
 
   const venues = mergeVenueResults(exact, fallback, 3);
   const relaxedCount = Math.max(0, venues.length - exact.length);
+
+  // Paid inventory is eligible for a slot, but only under the roadmap's terms:
+  // it must match a tag actually asked for (relevance floor), it is capped at
+  // one of the three so it can never crowd out organic picks, and it arrives
+  // flagged so the client renders the partner label. It also only ever fills a
+  // slot the organic query could not — never displaces a real venue.
+  const attraction = await pickAttraction({
+    tagSlugs: safeTags,
+    city: safeCity,
+    maxSpend: safeSpend,
+    allowedAges: allowedAgeRestrictions(tier),
+    slotsFree: 3 - venues.length,
+  });
+
   return NextResponse.json({
     venues: await withCoordinates(await withCovers(venues)),
+    attractions: attraction ? [attraction] : [],
     relaxed: relaxedCount > 0,
     budgetLifted,
     note: shortlistResultNote({ total: venues.length, relaxedCount, nearby: nearbyRequested, budgetLifted, maxSpend: safeSpend }),
   });
+}
+
+async function pickAttraction({ tagSlugs, city, maxSpend, allowedAges, slotsFree }) {
+  if (slotsFree <= 0 || !tagSlugs.length) return null;
+
+  const s = db();
+  const { data: tagRows } = await s.from("vibe_tags").select("id").in("slug", tagSlugs);
+  const tagIds = (tagRows || []).map((t) => t.id);
+  if (!tagIds.length) return null;
+
+  const { data: links } = await s.from("attraction_tags").select("attraction_id").in("tag_id", tagIds);
+  const ids = [...new Set((links || []).map((l) => l.attraction_id))];
+  if (!ids.length) return null;
+
+  let q = s
+    .from("attractions")
+    .select("id, title, description, city, neighborhood, category, cover_image_url, affiliate_url, partner, price_from_aed, age_restriction")
+    .eq("is_active", true)
+    .eq("city", city)
+    .in("id", ids)
+    .in("age_restriction", allowedAges)
+    .order("sort_order", { ascending: true })
+    .limit(1);
+  if (Number.isFinite(maxSpend) && maxSpend < 100000) q = q.lte("price_from_aed", maxSpend);
+
+  const { data } = await q;
+  return data?.[0] || null;
 }

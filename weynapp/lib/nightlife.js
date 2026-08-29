@@ -45,7 +45,7 @@ export async function getNightlife(allowedAges, { city = null, limitPerRail = 12
   const nowIso = new Date().toISOString();
   let eventQuery = s
     .from("events")
-    .select("id, title, description, city, neighborhood, starts_at, ends_at, age_restriction, event_type, cover_image_url, ticket_url, price_from_aed, venues(id, name, neighborhood)")
+    .select("id, title, description, city, neighborhood, starts_at, ends_at, age_restriction, event_type, cover_image_url, ticket_url, partner, price_from_aed, venues(id, name, neighborhood)")
     .eq("is_active", true)
     .in("age_restriction", allowedAges)
     .gte("starts_at", nowIso)

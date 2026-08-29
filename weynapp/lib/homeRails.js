@@ -12,7 +12,7 @@ export async function getUpcomingEvents(allowedAges, { limit = 12, city = null }
   const nowIso = new Date().toISOString();
   let q = db()
     .from("events")
-    .select("id, title, description, city, neighborhood, starts_at, ends_at, age_restriction, event_type, cover_image_url, ticket_url, price_from_aed, venues(id, name, neighborhood)")
+    .select("id, title, description, city, neighborhood, starts_at, ends_at, age_restriction, event_type, cover_image_url, ticket_url, partner, price_from_aed, venues(id, name, neighborhood)")
     .eq("is_active", true)
     .in("age_restriction", allowedAges)
     // RLS enforces the same window, but the service-role client bypasses RLS.

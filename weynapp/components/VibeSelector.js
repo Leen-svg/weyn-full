@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Search, Sparkles } from "lucide-react";
 import VenueCard from "./VenueCard";
 import VenueActions from "./VenueActions";
+import AttractionCard from "./AttractionCard";
 import { interpretAskWeyn } from "@/lib/ask-weyn.mjs";
 import { orderTagGroups } from "@/lib/tag-groups";
 
@@ -91,6 +92,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
   const [aesthetic, setAesthetic] = useState(false);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
+  const [attractions, setAttractions] = useState([]);
   const [resultNote, setResultNote] = useState(null);
   const [share, setShare] = useState(null);
   const [sharePollId, setSharePollId] = useState(null);
@@ -235,6 +237,7 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       setResults(data.venues);
+      setAttractions(data.attractions || []);
       setResultNote(data.note || null);
     } catch (e) { setErr(e.message); }
     setLoading(false);
@@ -501,6 +504,16 @@ export default function VibeSelector({ groups, isLoggedIn = false }) {
                   </VenueCard>
                 ))}
               </div>
+              {/* Paid inventory, only ever shown when it matched the tags the
+                  user actually asked for, and never in place of a real venue. */}
+              {attractions.length > 0 && (
+                <div className="shortlist-attractions">
+                  <h3>Also worth booking</h3>
+                  <div className="venue-list-single">
+                    {attractions.map((a) => <AttractionCard key={a.id} attraction={a} />)}
+                  </div>
+                </div>
+              )}
               <div className="cta-row">
                 <fieldset className="field audience-picker">
                   <legend>Who can open this vote?</legend>

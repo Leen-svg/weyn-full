@@ -1,5 +1,7 @@
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 
+const PARTNER_LABELS = { platinumlist: "Platinumlist" };
+
 const TYPE_LABELS = {
   party: "Party",
   "club-night": "Club night",
@@ -45,9 +47,16 @@ export default function EventCard({ event }) {
         {event.price_from_aed ? (
           <p className="event-card__price">From {event.price_from_aed} AED</p>
         ) : null}
+        {/* When the ticket link is an affiliate link, it carries the same
+            disclosure as an attraction: named partner and rel="sponsored". */}
         {ticket && (
-          <a className="btn small" href={ticket} target="_blank" rel="noopener noreferrer">
-            Tickets
+          <a
+            className="btn small"
+            href={ticket}
+            target="_blank"
+            rel={event.partner ? "sponsored nofollow noopener noreferrer" : "noopener noreferrer"}
+          >
+            {event.partner ? `Tickets on ${PARTNER_LABELS[event.partner] || event.partner}` : "Tickets"}
           </a>
         )}
       </div>

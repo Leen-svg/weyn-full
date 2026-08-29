@@ -1228,3 +1228,8 @@ input:focus, select:focus, textarea:focus {
 .attraction-card__where,
 .attraction-card__price { margin: 0; font-size: 12px; opacity: .72; }
 .attraction-card__body .btn { margin-top: 8px; justify-self: start; }
+
+/* Paid suggestions sit visually apart from the three organic picks, so the
+   distinction is obvious at a glance rather than only in the small print. */
+.shortlist-attractions { margin-top: 26px; padding-top: 18px; border-top: 1px solid rgba(31,48,68,.12); }
+.shortlist-attractions h3 { margin: 0 0 12px; font-size: 15px; font-weight: 700; }
