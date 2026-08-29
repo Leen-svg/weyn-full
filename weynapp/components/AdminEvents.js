@@ -5,6 +5,7 @@ const blank = {
   id: null, title: "", description: "", venueId: "", city: "Dubai", neighborhood: "",
   startsAt: "", endsAt: "", ageRestriction: "21-plus", eventType: "party",
   coverImageUrl: "", ticketUrl: "", priceFromAed: "", isActive: true,
+  recurrence: "none", recurrenceUntil: "",
 };
 
 const TYPES = [
@@ -67,6 +68,8 @@ export default function AdminEvents() {
       ticketUrl: event.ticket_url || "",
       priceFromAed: event.price_from_aed ?? "",
       isActive: event.is_active,
+      recurrence: event.recurrence || "none",
+      recurrenceUntil: event.recurrence_until || "",
     } : { ...blank });
   }
 
@@ -96,7 +99,9 @@ export default function AdminEvents() {
   }
 
   const set = (patch) => setEditing((current) => ({ ...current, ...patch }));
-  const isExpired = (e) => new Date(e.ends_at || e.starts_at).getTime() < Date.now();
+  // A weekly series is only expired once it has no occurrence left, which is
+  // exactly what a null next_start means.
+  const isExpired = (e) => !e.next_start;
 
   return (
     <section className="admin-editorial">
@@ -159,6 +164,26 @@ export default function AdminEvents() {
             </label>
           </div>
 
+          <div className="editorial-grid">
+            <label className="field"><span>Repeats</span>
+              <select value={editing.recurrence} onChange={(e) => set({ recurrence: e.target.value })}>
+                <option value="none">One-off</option>
+                <option value="weekly">Every week</option>
+              </select>
+            </label>
+            {editing.recurrence === "weekly" && (
+              <label className="field"><span>Repeat until</span>
+                <input type="date" value={editing.recurrenceUntil} onChange={(e) => set({ recurrenceUntil: e.target.value })} />
+              </label>
+            )}
+          </div>
+          {editing.recurrence === "weekly" && (
+            <p className="sub">
+              Set the start to the <strong>first</strong> occurrence. Weyn shows whichever week is next and drops the
+              series after the repeat-until date.
+            </p>
+          )}
+
           <label className="field"><span>Venue (optional)</span>
             <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search venue name" />
           </label>
@@ -196,7 +221,8 @@ export default function AdminEvents() {
                 </span>
                 <h3>{event.title}</h3>
                 <p className="sub">
-                  {new Date(event.starts_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}
+                  {new Date(event.next_start || event.starts_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}
+                  {event.recurrence === "weekly" ? " · weekly" : ""}
                   {" · "}{event.age_restriction === "21-plus" ? "21+" : event.age_restriction === "18-plus" ? "18+" : "All ages"}
                   {" · "}{event.city}
                   {event.venues?.name ? ` · ${event.venues.name}` : ""}

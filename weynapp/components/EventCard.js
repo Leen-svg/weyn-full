@@ -26,7 +26,10 @@ function formatWhen(startsAt) {
 export default function EventCard({ event }) {
   const cover = normalizeHttpUrl(event.cover_image_url);
   const ticket = normalizeHttpUrl(event.ticket_url);
-  const when = formatWhen(event.starts_at);
+  // For a weekly series, starts_at is the first date the series ever ran —
+  // showing it would advertise a night that has already happened.
+  const when = formatWhen(event.next_start || event.starts_at);
+  const isWeekly = event.recurrence === "weekly";
   const place = event.venues?.name || event.neighborhood || event.city;
   const ageLabel = event.age_restriction === "21-plus" ? "21+" : event.age_restriction === "18-plus" ? "18+" : null;
 
@@ -42,7 +45,12 @@ export default function EventCard({ event }) {
       <div className="event-card__body">
         <span className="event-card__type">{TYPE_LABELS[event.event_type] || TYPE_LABELS.other}</span>
         <h4 className="event-card__title">{event.title}</h4>
-        {when && <p className="event-card__when">{when}</p>}
+        {when && (
+          <p className="event-card__when">
+            {when}
+            {isWeekly && <span className="event-card__repeat"> · every week</span>}
+          </p>
+        )}
         {place && <p className="event-card__where">{place}</p>}
         {event.price_from_aed ? (
           <p className="event-card__price">From {event.price_from_aed} AED</p>

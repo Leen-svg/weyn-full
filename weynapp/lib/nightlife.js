@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { withCovers } from "@/lib/venueMedia";
+import { EVENT_FIELDS, liveSorted } from "@/lib/homeRails";
 
 // The 21+ surface: clubs, bars & lounges, beach clubs, and dated nights.
 //
@@ -40,17 +41,15 @@ export async function getNightlife(allowedAges, { city = null, limitPerRail = 12
     .limit(limitPerRail * NIGHTLIFE_RAILS.length);
   if (city) venueQuery = venueQuery.eq("city", city);
 
-  // RLS on `events` already hides anything expired or inactive, but the
-  // service-role client bypasses RLS — so the window is repeated here.
-  const nowIso = new Date().toISOString();
+  // Recurring series are resolved by the computed `next_start` field, so the
+  // query cannot filter on starts_at — see lib/homeRails.js.
   let eventQuery = s
     .from("events")
-    .select("id, title, description, city, neighborhood, starts_at, ends_at, age_restriction, event_type, cover_image_url, ticket_url, partner, price_from_aed, venues(id, name, neighborhood)")
+    .select(EVENT_FIELDS)
     .eq("is_active", true)
     .in("age_restriction", allowedAges)
-    .gte("starts_at", nowIso)
     .order("starts_at", { ascending: true })
-    .limit(12);
+    .limit(60);
   if (city) eventQuery = eventQuery.eq("city", city);
 
   const [{ data: venues }, { data: events }] = await Promise.all([venueQuery, eventQuery]);
@@ -63,7 +62,7 @@ export async function getNightlife(allowedAges, { city = null, limitPerRail = 12
 
   return {
     rails,
-    events: events || [],
+    events: liveSorted(events, 12),
     isEmpty: rails.length === 0 && (events || []).length === 0,
   };
 }

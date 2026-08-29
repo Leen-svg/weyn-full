@@ -15,6 +15,18 @@ function clean(body) {
   const endsAt = body.endsAt ? new Date(body.endsAt) : null;
   if (endsAt && Number.isNaN(endsAt.getTime())) return { error: "That end time isn't valid" };
   if (endsAt && endsAt < startsAt) return { error: "The end time is before the start time" };
+
+  const recurrence = body.recurrence === "weekly" ? "weekly" : "none";
+  let recurrenceUntil = null;
+  if (recurrence === "weekly") {
+    if (!body.recurrenceUntil) return { error: "A weekly event needs a repeat-until date" };
+    const until = new Date(body.recurrenceUntil);
+    if (Number.isNaN(until.getTime())) return { error: "That repeat-until date isn't valid" };
+    // Otherwise the series is over before it starts and would never show.
+    if (until < startsAt) return { error: "Repeat-until is before the first date" };
+    recurrenceUntil = String(body.recurrenceUntil).slice(0, 10);
+  }
+
   const price = Number(body.priceFromAed);
 
   return {
@@ -26,6 +38,8 @@ function clean(body) {
       neighborhood: String(body.neighborhood || "").trim().slice(0, 120) || null,
       starts_at: startsAt.toISOString(),
       ends_at: endsAt ? endsAt.toISOString() : null,
+      recurrence,
+      recurrence_until: recurrenceUntil,
       age_restriction: AGES.has(body.ageRestriction) ? body.ageRestriction : "all-ages",
       event_type: TYPES.has(body.eventType) ? body.eventType : "party",
       cover_image_url: body.coverImageUrl ? safeUrl(String(body.coverImageUrl).trim()) : null,
@@ -38,10 +52,11 @@ function clean(body) {
 
 export async function GET() {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  // Admin sees expired events too — that's how you notice the catalogue rotting.
+  // Admin sees expired events too — that's how you notice the catalogue
+  // rotting. next_start is null for anything with nothing left to run.
   const { data, error } = await db()
     .from("events")
-    .select("*, venues(id, name, neighborhood)")
+    .select("*, next_start, venues(id, name, neighborhood)")
     .order("starts_at", { ascending: false })
     .limit(200);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
