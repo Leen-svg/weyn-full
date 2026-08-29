@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { currentSession } from "@/lib/session";
+import { currentSession, viewerAccess } from "@/lib/session";
 import { withCovers } from "@/lib/venueMedia";
 import DiscoverFeed from "@/components/DiscoverFeed";
 
@@ -15,11 +15,13 @@ const FEED_SIZE = 40;
 
 export default async function DiscoverPage() {
   const { supabase } = await currentSession();
+  const access = await viewerAccess();
   const [{ data: rows }, { data: { user } = {} }] = await Promise.all([
     db()
       .from("venues")
       .select(VENUE_FIELDS)
       .eq("is_active", true)
+      .in("age_restriction", access.allowedAges)
       .order("is_trending", { ascending: false })
       .order("trending_rank", { ascending: true })
       .order("created_at", { ascending: false })

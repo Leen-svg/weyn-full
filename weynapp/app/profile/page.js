@@ -1,18 +1,21 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { viewerAccess } from "@/lib/session";
 import { safeUrl } from "@/lib/sanitize";
+import { FEATURES } from "@/lib/features";
+import AgePreference from "@/components/AgePreference";
 import styles from "@/components/AccountPages.module.css";
 
 export const metadata = { title: "Your profile, Weyn" };
 
 const LIBRARY_LINKS = [
   { href: "/wishlist", label: "Saved places", description: "Lists, personal tags, and places you want to try" },
-  { href: "/friends", label: "Friends", description: "Requests and people you plan with" },
-  { href: "/groups", label: "Groups", description: "Chats, polls, and shared decisions" },
+  { href: "/friends", label: "Friends", description: "Requests and people you plan with", flag: "friends" },
+  { href: "/groups", label: "Groups", description: "Chats, polls, and shared decisions", flag: "groups" },
   { href: "/profile/content", label: "Posts & reviews", description: "Change privacy, archive, or delete your activity" },
   { href: "/plan", label: "Perfect Day", description: "Turn saved places into a route" },
-  { href: "/rewards", label: "Points", description: "Your balance and recent activity" },
+  { href: "/rewards", label: "Points", description: "Your balance and recent activity", flag: "points" },
 ];
 
 export default async function ProfilePage() {
@@ -20,6 +23,7 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/profile");
 
+  const access = await viewerAccess();
   const [
     { data: profile },
     { data: pub },
@@ -38,9 +42,10 @@ export default async function ProfilePage() {
   const avatar = safeUrl(pub?.avatar_url);
   const stats = [
     [savedCount || 0, "Saved"],
-    [groupCount || 0, "Groups"],
-    [friendships?.length || 0, "Friends"],
+    ...(FEATURES.groups ? [[groupCount || 0, "Groups"]] : []),
+    ...(FEATURES.friends ? [[friendships?.length || 0, "Friends"]] : []),
   ];
+  const libraryLinks = LIBRARY_LINKS.filter((item) => !item.flag || FEATURES[item.flag]);
 
   return (
     <div className={`${styles.page} profile-hub`}>
@@ -52,7 +57,7 @@ export default async function ProfilePage() {
           </div>
           <div>
             <h1>{name}</h1>
-            <p>{profile?.points_balance || 0} points · Abu Dhabi &amp; Dubai</p>
+            <p>{FEATURES.points ? `${profile?.points_balance || 0} points · ` : ""}Abu Dhabi &amp; Dubai</p>
           </div>
         </div>
         <p className={styles.profileBio}>{pub?.bio || "Save good places, make a shortlist, and get the group out of the chat."}</p>
@@ -61,14 +66,23 @@ export default async function ProfilePage() {
         </div>
         <div className={styles.profileActions}>
           <Link className="btn primary" href="/profile/edit">Edit profile</Link>
-          <a className="btn ghost" href={`/u/${user.id}`} target="_blank" rel="noopener noreferrer">View public profile</a>
+          {FEATURES.publicProfiles && (
+            <a className="btn ghost" href={`/u/${user.id}`} target="_blank" rel="noopener noreferrer">View public profile</a>
+          )}
         </div>
       </header>
+
+      {access.eligibleFor21Plus && (
+        <section className={styles.profilePanel}>
+          <div className={styles.panelTitle}><span className="eyebrow">Recommendations</span><h2>What you see</h2></div>
+          <AgePreference initial={access.show21Plus} />
+        </section>
+      )}
 
       <section className={styles.profilePanel}>
         <div className={styles.panelTitle}><span className="eyebrow">Library</span><h2>Your Weyn</h2></div>
         <div className={styles.linkList}>
-          {LIBRARY_LINKS.map((item) => (
+          {libraryLinks.map((item) => (
             <Link href={item.href} key={item.href}>
               <span><strong>{item.label}</strong><small>{item.description}</small></span><b aria-hidden="true">→</b>
             </Link>

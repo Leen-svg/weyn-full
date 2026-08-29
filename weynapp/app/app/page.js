@@ -1,13 +1,14 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { currentSession } from "@/lib/session";
+import { currentSession, viewerAccess } from "@/lib/session";
 import { withCovers } from "@/lib/venueMedia";
+import { getNightlife } from "@/lib/nightlife";
 import VenueCard from "@/components/VenueCard";
 import VenueActions from "@/components/VenueActions";
-import HomeFeed from "@/components/HomeFeed";
+import NightlifeSection from "@/components/NightlifeSection";
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 import WelcomeHero from "@/components/WelcomeHero";
-import DiscoverCommunityCollections from "@/components/DiscoverCommunityCollections";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Home" };
@@ -20,7 +21,7 @@ function editorialSection(list) {
   return label.includes("our-picks") || label.includes("our picks") ? "our_picks" : "curated";
 }
 
-async function getDiscoverContent() {
+async function getDiscoverContent(allowedAges) {
   const s = db();
   const [trendingResult, freshResult, editorialWithSection] = await Promise.all([
     s
@@ -28,12 +29,14 @@ async function getDiscoverContent() {
       .select(VENUE_FIELDS)
       .eq("is_active", true)
       .eq("is_trending", true)
+      .in("age_restriction", allowedAges)
       .order("trending_rank", { ascending: true })
       .limit(6),
     s
       .from("venues")
       .select(VENUE_FIELDS)
       .eq("is_active", true)
+      .in("age_restriction", allowedAges)
       .order("created_at", { ascending: false })
       .limit(9),
     s
@@ -59,11 +62,14 @@ async function getDiscoverContent() {
   const rawLists = editorialResult.data || [];
   const rawTrending = trendingResult.data || [];
   const rawFresh = freshResult.data || [];
+  // Editorial venues arrive nested, so the age filter cannot be pushed into
+  // the query the way it is for the flat lists above.
+  const allowed = new Set(allowedAges);
   const rawEditorialVenues = rawLists.flatMap((list) =>
     [...(list.editorial_list_items || [])]
       .sort((a, b) => a.position - b.position)
       .map((item) => item.venues)
-      .filter(Boolean)
+      .filter((venue) => venue && allowed.has(venue.age_restriction))
   );
   const unique = new Map();
   for (const venue of [...rawTrending, ...rawFresh, ...rawEditorialVenues]) unique.set(venue.id, venue);
@@ -76,41 +82,23 @@ async function getDiscoverContent() {
     description: list.subtitle || "",
     venues: [...(list.editorial_list_items || [])]
       .sort((a, b) => a.position - b.position)
-      .map((item) => item.venues && venueById.get(item.venues.id))
+      .map((item) => item.venues && allowed.has(item.venues.age_restriction) && venueById.get(item.venues.id))
       .filter(Boolean),
   })).filter((list) => list.venues.length > 0);
 
   return { trending: resolve(rawTrending), fresh: resolve(rawFresh), editorialLists };
 }
 
-async function getInitialPublicPosts(supabase) {
-  const { data } = await supabase
-    .from("posts")
-    .select("id, body, photo_url, visibility, created_at, user_id, venue_id, venues (id, name, neighborhood)")
-    .eq("visibility", "public")
-    .order("created_at", { ascending: false })
-    .limit(8);
-  const posts = data || [];
-  const authorIds = [...new Set(posts.map((post) => post.user_id))];
-  const { data: authors } = authorIds.length
-    ? await supabase
-        .from("profile_public")
-        .select("id, display_name, avatar_url, ghost_mode")
-        .in("id", authorIds)
-        .eq("ghost_mode", false)
-    : { data: [] };
-  const authorMap = Object.fromEntries((authors || []).map((author) => [author.id, author]));
-  return posts
-    .filter((post) => authorMap[post.user_id])
-    .map((post) => ({ ...post, profile_public: authorMap[post.user_id] }));
-}
-
 export default async function HomePage() {
-  const { supabase, user } = await currentSession();
+  const { user } = await currentSession();
   if (!user) return <WelcomeHero />;
-  const [{ trending, fresh, editorialLists }, initialPosts] = await Promise.all([
-    getDiscoverContent(),
-    getInitialPublicPosts(supabase),
+  const access = await viewerAccess();
+  // Accounts that predate the age gate have never answered it. Send them
+  // through onboarding once rather than defaulting them into a tier silently.
+  if (!access.hasAnsweredAge) redirect("/onboarding?next=%2Fapp");
+  const [{ trending, fresh, editorialLists }, nightlife] = await Promise.all([
+    getDiscoverContent(access.allowedAges),
+    access.show21Plus ? getNightlife(access.allowedAges) : Promise.resolve(null),
   ]);
   const adminPicks = editorialLists
     .filter((list) => list.home_section === "our_picks")
@@ -211,17 +199,7 @@ export default async function HomePage() {
         ) : <div className="discover-empty">New collections are being prepared. Check back shortly.</div>}
       </section>
 
-      <DiscoverCommunityCollections isLoggedIn={!!user} />
-
-      <section className="app-home__feed" aria-label="Community feed">
-        <div className="app-home__section-header app-home__feed-heading">
-          <div>
-            <h2>From the community</h2>
-            <p>Fresh opinions from people who actually went.</p>
-          </div>
-        </div>
-        <HomeFeed isLoggedIn={!!user} initialPosts={initialPosts} />
-      </section>
+      {nightlife && <NightlifeSection {...nightlife} />}
 
       {fresh.length > 0 && (
         <section className="app-home__section">

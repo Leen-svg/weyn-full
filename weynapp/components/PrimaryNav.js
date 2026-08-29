@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { FEATURES } from "@/lib/features";
 
 const ITEMS = [
   { href: "/app", label: "Discover" },
   { href: "/find", label: "Find" },
-  { href: "/groups", label: "Groups" },
+  { href: "/groups", label: "Groups", flag: "groups" },
   { href: "/wishlist", label: "Saved" },
   { href: "/plan", label: "Plan" },
-];
+].filter((item) => !item.flag || FEATURES[item.flag]);
 
 export default function PrimaryNav() {
   const pathname = usePathname();

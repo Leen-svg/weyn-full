@@ -4,8 +4,18 @@ import { withCovers, withCoordinates } from "@/lib/venueMedia";
 import { cleanStringList, payloadTooLarge, validCoordinates } from "@/lib/request-security.mjs";
 import { rateLimit } from "@/lib/request-security";
 import { mergeVenueResults, shortlistResultNote } from "@/lib/shortlist-utils.mjs";
+import { viewerAccess } from "@/lib/session";
+import { AGE_TIERS } from "@/lib/age";
 
-const ALLOWED_AGES = new Set(["all-ages", "18-plus", "21-plus"]);
+const ALLOWED_AGES = new Set(AGE_TIERS);
+
+// The request may ask for a narrower tier than the viewer is entitled to
+// (a 21+ user browsing all-ages), but never a wider one. Whatever the body
+// says, the ceiling is the viewer's own tier.
+function clampAge(requested, viewerTier) {
+  const asked = ALLOWED_AGES.has(requested) ? requested : "all-ages";
+  return AGE_TIERS.indexOf(asked) <= AGE_TIERS.indexOf(viewerTier) ? asked : viewerTier;
+}
 
 export async function POST(req) {
   if (payloadTooLarge(req, 16 * 1024)) return NextResponse.json({ error: "Request too large" }, { status: 413 });
@@ -18,7 +28,8 @@ export async function POST(req) {
     return NextResponse.json({ error: "Pick at least one tag" }, { status: 400 });
   }
 
-  const safeAge = ALLOWED_AGES.has(maxAge) ? maxAge : "all-ages";
+  const { tier } = await viewerAccess();
+  const safeAge = clampAge(maxAge, tier);
   const safeCity = city === "Dubai" ? "Dubai" : "Abu Dhabi";
   const safeSpend = Number.isFinite(Number(maxSpend)) ? Math.max(0, Math.min(100000, Number(maxSpend))) : 99999;
   const nearbyRequested = nearby && typeof nearby === "object";

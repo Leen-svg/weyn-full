@@ -12,6 +12,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import { safeUrl } from "@/lib/sanitize";
+import { FEATURES } from "@/lib/features";
 
 const itemClass = "profile-menu-item";
 
@@ -40,7 +41,7 @@ export default function ProfileMenu({ userId, displayName, avatarUrl, points, is
           <AvatarImage src={safeUrl(avatarUrl)} alt="" />
           <AvatarFallback className="text-xs font-bold">{initials}</AvatarFallback>
         </Avatar>
-        <span className="points-badge">{points} pts</span>
+        {FEATURES.points && <span className="points-badge">{points} pts</span>}
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" sideOffset={10} className="profile-menu-popover w-56 rounded-2xl border-0 p-2 ring-0">
@@ -53,7 +54,7 @@ export default function ProfileMenu({ userId, displayName, avatarUrl, points, is
             <div className="truncate text-sm font-bold">@{displayName || "your_profile"}</div>
             <div className="mt-0.5 text-[11px] font-semibold text-muted-foreground">Your Weyn account</div>
           </div>
-          <span className="profile-menu-points">{points}</span>
+          {FEATURES.points && <span className="profile-menu-points">{points}</span>}
         </div>
         <DropdownMenuSeparator className="profile-menu-separator" />
         <DropdownMenuItem className={itemClass} render={<Link href="/profile" />}>
@@ -62,7 +63,7 @@ export default function ProfileMenu({ userId, displayName, avatarUrl, points, is
         <DropdownMenuItem className={itemClass} render={<Link href="/profile/edit" />}>
           <Settings className="h-4 w-4" /> Edit profile
         </DropdownMenuItem>
-        {userId && (
+        {userId && FEATURES.publicProfiles && (
           <DropdownMenuItem className={itemClass} render={<Link href={`/u/${userId}`} target="_blank" />}>
             <Eye className="h-4 w-4" /> View public profile
           </DropdownMenuItem>
@@ -70,15 +71,21 @@ export default function ProfileMenu({ userId, displayName, avatarUrl, points, is
         <DropdownMenuItem className={itemClass} render={<Link href="/wishlist" />}>
           <Heart className="h-4 w-4" /> Wishlist
         </DropdownMenuItem>
-        <DropdownMenuItem className={itemClass} render={<Link href="/rewards" />}>
-          <Trophy className="h-4 w-4" /> Rewards
-        </DropdownMenuItem>
-        <DropdownMenuItem className={itemClass} render={<Link href="/friends" />}>
-          <Users className="h-4 w-4" /> Friends
-        </DropdownMenuItem>
-        <DropdownMenuItem className={itemClass} render={<Link href="/groups" />}>
-          <MessagesSquare className="h-4 w-4" /> Groups
-        </DropdownMenuItem>
+        {FEATURES.points && (
+          <DropdownMenuItem className={itemClass} render={<Link href="/rewards" />}>
+            <Trophy className="h-4 w-4" /> Rewards
+          </DropdownMenuItem>
+        )}
+        {FEATURES.friends && (
+          <DropdownMenuItem className={itemClass} render={<Link href="/friends" />}>
+            <Users className="h-4 w-4" /> Friends
+          </DropdownMenuItem>
+        )}
+        {FEATURES.groups && (
+          <DropdownMenuItem className={itemClass} render={<Link href="/groups" />}>
+            <MessagesSquare className="h-4 w-4" /> Groups
+          </DropdownMenuItem>
+        )}
         {isAdmin && (
           <DropdownMenuItem className={`${itemClass} profile-menu-admin`} render={<Link href="/admin" />}>
             <ShieldCheck className="h-4 w-4" /> Admin

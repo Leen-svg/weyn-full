@@ -1157,3 +1157,50 @@ input:focus, select:focus, textarea:focus {
 .editorial-venue-picker { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; max-height: 420px; overflow: auto; padding: 4px; }
 .editorial-venue-picker .toggle-row { min-width: 0; padding: 10px; border: 1px solid rgba(31,48,68,.1); border-radius: 14px; background: rgba(255,255,255,.72); }
 @media (max-width:640px) { .editorial-grid, .editorial-venue-picker { grid-template-columns: 1fr; } }
+
+/* ---- Age gate + 21+ nightlife ------------------------------------------ */
+
+/* Three side-by-side selects for date of birth. Stacks on narrow phones so
+   the year select never gets too small to read. */
+.dob-field { display: grid; grid-template-columns: 0.8fr 1.4fr 1fr; gap: 8px; }
+.dob-field select {
+  width: 100%; min-width: 0; padding: 10px 12px;
+  border: 1px solid rgba(31,48,68,.16); border-radius: 12px;
+  background: rgba(255,255,255,.9); font: inherit; color: inherit;
+}
+@media (max-width: 380px) { .dob-field { grid-template-columns: 1fr; } }
+
+.age-optin { align-items: flex-start; }
+
+.nightlife-block { margin-top: 18px; }
+.nightlife-block__title { margin: 0; font-size: 15px; font-weight: 700; }
+.nightlife-block__blurb { margin: 2px 0 10px; font-size: 13px; opacity: .72; }
+
+.event-card {
+  display: flex; flex-direction: column; overflow: hidden;
+  min-width: 220px; max-width: 260px; flex: 0 0 auto;
+  border: 1px solid rgba(31,48,68,.1); border-radius: 18px;
+  background: rgba(255,255,255,.78);
+}
+.venue-grid .event-card { min-width: 0; max-width: none; width: 100%; }
+.event-card__cover {
+  position: relative; aspect-ratio: 16 / 10;
+  background-color: var(--purple-wash);
+  background-size: cover; background-position: center;
+}
+.event-card__age {
+  position: absolute; top: 8px; right: 8px;
+  padding: 3px 8px; border-radius: 999px;
+  background: rgba(12,17,25,.78); color: #fff;
+  font-size: 11px; font-weight: 700;
+}
+.event-card__body { display: grid; gap: 4px; padding: 12px 14px 14px; }
+.event-card__type {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .04em; opacity: .6;
+}
+.event-card__title { margin: 0; font-size: 15px; font-weight: 700; }
+.event-card__when { margin: 0; font-size: 13px; font-weight: 600; }
+.event-card__where,
+.event-card__price { margin: 0; font-size: 12px; opacity: .72; }
+.event-card__body .btn { margin-top: 8px; justify-self: start; }
