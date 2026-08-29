@@ -5,7 +5,14 @@ import EventCard from "@/components/EventCard";
 
 // Rendered only for viewers whose age tier is 21-plus. The caller decides
 // that; this component never re-derives eligibility.
-export default function NightlifeSection({ rails, events, isEmpty }) {
+//
+// showEvents is off by default: on Home the dated inventory already has its
+// own rail at the top of the page, so repeating it here would show the same
+// cards twice.
+export default function NightlifeSection({ rails, events, isEmpty, showEvents = false }) {
+  // With events suppressed, "empty" is purely about the venue rails —
+  // otherwise a section with only events would render an empty shell.
+  const nothingToShow = showEvents ? isEmpty : rails.length === 0;
   return (
     <section className="app-home__section app-home__nightlife" aria-labelledby="nightlife-title">
       <div className="app-home__section-header">
@@ -16,13 +23,13 @@ export default function NightlifeSection({ rails, events, isEmpty }) {
         <Link className="app-home__section-action" href="/nightlife">See all</Link>
       </div>
 
-      {isEmpty ? (
+      {nothingToShow ? (
         <div className="discover-empty">
           We&apos;re still filling this in. Nothing 21+ is listed yet.
         </div>
       ) : (
         <>
-          {events.length > 0 && (
+          {showEvents && events.length > 0 && (
             <div className="nightlife-block">
               <h3 className="nightlife-block__title">What&apos;s on</h3>
               <div className="venue-rail" aria-label="Upcoming 21+ nights">

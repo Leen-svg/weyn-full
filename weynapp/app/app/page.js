@@ -4,9 +4,11 @@ import { db } from "@/lib/db";
 import { currentSession, viewerAccess } from "@/lib/session";
 import { withCovers } from "@/lib/venueMedia";
 import { getNightlife } from "@/lib/nightlife";
+import { getUpcomingEvents, getAttractions } from "@/lib/homeRails";
 import VenueCard from "@/components/VenueCard";
 import VenueActions from "@/components/VenueActions";
 import NightlifeSection from "@/components/NightlifeSection";
+import { EventsSection, AttractionsSection } from "@/components/HomeRails";
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 import WelcomeHero from "@/components/WelcomeHero";
 
@@ -96,9 +98,11 @@ export default async function HomePage() {
   // Accounts that predate the age gate have never answered it. Send them
   // through onboarding once rather than defaulting them into a tier silently.
   if (!access.hasAnsweredAge) redirect("/onboarding?next=%2Fapp");
-  const [{ trending, fresh, editorialLists }, nightlife] = await Promise.all([
+  const [{ trending, fresh, editorialLists }, nightlife, events, attractions] = await Promise.all([
     getDiscoverContent(access.allowedAges),
     access.show21Plus ? getNightlife(access.allowedAges) : Promise.resolve(null),
+    getUpcomingEvents(access.allowedAges),
+    getAttractions(access.allowedAges),
   ]);
   const adminPicks = editorialLists
     .filter((list) => list.home_section === "our_picks")
@@ -140,6 +144,9 @@ export default async function HomePage() {
           </nav>
         </div>
       </section>
+
+      <EventsSection events={events} />
+      <AttractionsSection attractions={attractions} />
 
       <section className="app-home__section app-home__picks" aria-label="Our picks">
         <div className="app-home__section-header">

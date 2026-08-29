@@ -6,6 +6,7 @@ import AdminTagsZones from "./AdminTagsZones";
 import AdminImport from "./AdminImport";
 import AdminEditorialLists from "./AdminEditorialLists";
 import AdminEvents from "./AdminEvents";
+import AdminAttractions from "./AdminAttractions";
 import AdminMediaQuality from "./AdminMediaQuality";
 import { safeUrl } from "@/lib/sanitize";
 
@@ -50,6 +51,7 @@ export default function AdminClient() {
     ["media-quality", "Image quality", 0],
     ["editorial", "Weyn lists", 0],
     ["events", "Events", 0],
+    ["attractions", "Attractions", 0],
     ["import", "Bulk import", 0],
     ["taxonomy", "Tags & zones", 0],
     ["users", "Users", 0],
@@ -210,6 +212,7 @@ export default function AdminClient() {
       {tab === "media-quality" && <AdminMediaQuality />}
       {tab === "editorial" && <AdminEditorialLists />}
       {tab === "events" && <AdminEvents />}
+      {tab === "attractions" && <AdminAttractions />}
       {tab === "import" && <AdminImport />}
       {tab === "taxonomy" && <AdminTagsZones />}
       {tab === "users" && <AdminUsers />}

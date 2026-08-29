@@ -1204,3 +1204,27 @@ input:focus, select:focus, textarea:focus {
 .event-card__where,
 .event-card__price { margin: 0; font-size: 12px; opacity: .72; }
 .event-card__body .btn { margin-top: 8px; justify-self: start; }
+
+/* Attraction (affiliate) cards reuse the event card's shape so the two rails
+   at the top of Home read as one system. */
+.attraction-card {
+  display: flex; flex-direction: column; overflow: hidden;
+  min-width: 220px; max-width: 260px; flex: 0 0 auto;
+  border: 1px solid rgba(31,48,68,.1); border-radius: 18px;
+  background: rgba(255,255,255,.78);
+}
+.venue-grid .attraction-card { min-width: 0; max-width: none; width: 100%; }
+.attraction-card__cover {
+  aspect-ratio: 16 / 10;
+  background-color: var(--sky-wash);
+  background-size: cover; background-position: center;
+}
+.attraction-card__body { display: grid; gap: 4px; padding: 12px 14px 14px; }
+.attraction-card__category {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .04em; opacity: .6;
+}
+.attraction-card__title { margin: 0; font-size: 15px; font-weight: 700; }
+.attraction-card__where,
+.attraction-card__price { margin: 0; font-size: 12px; opacity: .72; }
+.attraction-card__body .btn { margin-top: 8px; justify-self: start; }
