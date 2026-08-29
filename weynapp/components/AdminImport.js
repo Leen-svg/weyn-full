@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import AdminContactEnrich from "./AdminContactEnrich";
 
 const CHUNK_SIZE = 40;
 
@@ -174,6 +175,7 @@ export default function AdminImport() {
   }
 
   return (
+    <>
     <div className="card">
       <strong style={{ fontSize: 15 }}>Bulk import venues</strong>
       <p className="sub" style={{ marginTop: 6, fontSize: 13 }}>
@@ -247,5 +249,7 @@ export default function AdminImport() {
         </div>
       )}
     </div>
+    <AdminContactEnrich />
+    </>
   );
 }
