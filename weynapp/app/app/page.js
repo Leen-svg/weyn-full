@@ -15,7 +15,7 @@ import WelcomeHero from "@/components/WelcomeHero";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Home" };
 
-const VENUE_FIELDS = "id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, is_aesthetic, age_restriction, description";
+const VENUE_FIELDS = "id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, phone, booking_phone, booking_url, opening_hours, is_aesthetic, age_restriction, description";
 
 function editorialSection(list) {
   if (list.home_section === "our_picks" || list.home_section === "curated") return list.home_section;

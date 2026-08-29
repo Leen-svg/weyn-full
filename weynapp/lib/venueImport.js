@@ -62,6 +62,13 @@ function nearestZone(lat, lng) {
   return bestD <= 0.09 ? best : null; // ~10km at this latitude
 }
 
+// Keep digits and a leading +, so a tel: link actually dials.
+function cleanPhone(value) {
+  if (value == null) return null;
+  const normalized = String(value).trim().replace(/[^\d+]/g, "");
+  return /\d{6,}/.test(normalized) ? normalized.slice(0, 32) : null;
+}
+
 function spendMidpoint(band) {
   switch (band) {
     case "Under 100 AED":
@@ -216,6 +223,19 @@ export async function importCurationRecords(records) {
         has_shisha: (c.access_and_rules || []).includes("Shisha Served"),
         opening_hours: m.opening_hours || [],
       };
+
+      // Contact + booking details, when the batch carries them. Only assigned
+      // when present so a batch without these columns cannot blank out values
+      // that were filled in by another source.
+      const phone = cleanPhone(m.phone);
+      const bookingPhone = cleanPhone(m.booking_phone ?? m.bookingPhone);
+      const bookingUrl = m.booking_url ?? m.bookingUrl;
+      const website = m.website;
+      if (phone) fields.phone = phone;
+      if (bookingPhone) fields.booking_phone = bookingPhone;
+      if (bookingUrl) fields.booking_url = bookingUrl;
+      if (website) fields.website = website;
+      if (m.menu_url ?? m.menu?.url) fields.menu_url = m.menu_url ?? m.menu.url;
 
       let venueId = venueIdByPlaceId[r.venue_id];
       if (venueId) {

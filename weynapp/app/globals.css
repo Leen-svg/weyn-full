@@ -1234,3 +1234,4 @@ input:focus, select:focus, textarea:focus {
 .shortlist-attractions { margin-top: 26px; padding-top: 18px; border-top: 1px solid rgba(31,48,68,.12); }
 .shortlist-attractions h3 { margin: 0 0 12px; font-size: 15px; font-weight: 700; }
 .event-card__repeat { font-weight: 600; opacity: .6; }
+.venue-hours { margin-top: 2px; font-size: 12px; opacity: .7; }

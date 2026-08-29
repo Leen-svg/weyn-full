@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Discover" };
 
 const VENUE_FIELDS =
-  "id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, is_aesthetic, age_restriction, description";
+  "id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, phone, booking_phone, booking_url, opening_hours, is_aesthetic, age_restriction, description";
 
 // One place fills the screen, so the feed is paged rather than exhaustive:
 // enough to browse for a while, not the whole table.

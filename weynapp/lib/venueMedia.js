@@ -63,12 +63,16 @@ export async function withCovers(venues, { maxMediaPerVenue = 6 } = {}) {
 export async function withRpcExtras(venues) {
   if (!venues?.length) return venues || [];
   const missing = venues.filter(
-    (v) => v.latitude == null || v.longitude == null || v.menu_url === undefined
+    (v) =>
+      v.latitude == null ||
+      v.longitude == null ||
+      v.menu_url === undefined ||
+      v.booking_url === undefined
   );
   if (!missing.length) return venues;
   const { data } = await db()
     .from("venues")
-    .select("id, latitude, longitude, city, menu_url")
+    .select("id, latitude, longitude, city, menu_url, phone, booking_phone, booking_url, opening_hours")
     .in("id", missing.map((v) => v.id));
   const byId = new Map((data || []).map((row) => [row.id, row]));
   return venues.map((venue) => {
@@ -80,6 +84,10 @@ export async function withRpcExtras(venues) {
       longitude: venue.longitude ?? row.longitude,
       city: venue.city ?? row.city,
       menu_url: venue.menu_url ?? row.menu_url,
+      phone: venue.phone ?? row.phone,
+      booking_phone: venue.booking_phone ?? row.booking_phone,
+      booking_url: venue.booking_url ?? row.booking_url,
+      opening_hours: venue.opening_hours ?? row.opening_hours,
     };
   });
 }

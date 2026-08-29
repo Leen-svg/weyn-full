@@ -10,7 +10,7 @@ import { EVENT_FIELDS, liveSorted } from "@/lib/homeRails";
 // place (lib/age.js) so it cannot drift between surfaces.
 
 const VENUE_FIELDS =
-  "id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, is_aesthetic, age_restriction, category, description";
+  "id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, phone, booking_phone, booking_url, opening_hours, is_aesthetic, age_restriction, category, description";
 
 // "club" has no rows yet — the catalogue has never had the category. It is
 // listed first anyway so the rail exists the moment venues are tagged.

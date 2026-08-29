@@ -34,7 +34,7 @@ async function getCollection(id) {
   const { data: links } = await s
     .from("curated_list_venues")
     .select(
-      "position, venues (id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, is_aesthetic, age_restriction, description)"
+      "position, venues (id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, phone, booking_phone, booking_url, opening_hours, is_aesthetic, age_restriction, description)"
     )
     .eq("list_id", list.id)
     .order("position", { ascending: true });

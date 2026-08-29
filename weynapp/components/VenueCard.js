@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 import MapChooser from "./MapChooser";
 import VenueMedia from "./VenueMedia";
+import { hoursForToday } from "@/lib/opening-hours.mjs";
 
 const PLACEHOLDER_GRADIENTS = [
   "linear-gradient(135deg, var(--purple-wash), var(--sky-wash))",
@@ -23,6 +24,11 @@ export default function VenueCard({ venue, children, picked, priority = false, v
   const ageLabel = venue.age_restriction === "21-plus" ? "21+" : venue.age_restriction === "18-plus" ? "18+" : null;
   const videoUrl = normalizeHttpUrl(venue.hero_video_url);
   const menuUrl = normalizeHttpUrl(venue.menu_url);
+  const bookingUrl = normalizeHttpUrl(venue.booking_url);
+  // A reservation link beats a phone call, and the booking number beats the
+  // switchboard — so only the best available option is offered, not all three.
+  const callNumber = venue.booking_phone || venue.phone || null;
+  const todayHours = hoursForToday(venue.opening_hours);
   const coverUrl = normalizeHttpUrl(venue.cover_url);
   const initialMedia = (venue.media || [])
     .map((item) => ({ type: item.type, url: normalizeHttpUrl(item.url) }))
@@ -140,6 +146,7 @@ export default function VenueCard({ venue, children, picked, priority = false, v
               {venue.is_aesthetic ? " · 📸 aesthetic" : ""}
               {ageLabel ? ` · 🔞 ${ageLabel}` : ""}
             </div>
+            {todayHours && <div className="venue-hours">Today: {todayHours}</div>}
           </>
         )}
         {venue.description && <p className="venue-desc">{venue.description}</p>}
@@ -158,6 +165,11 @@ export default function VenueCard({ venue, children, picked, priority = false, v
           )}
           {hasMoreMedia && <button className="btn small ghost" type="button" disabled={loadingMedia} onClick={loadAllMedia}>{loadingMedia ? "Loading gallery…" : `View all ${venue.media_count} media`}</button>}
           {menuUrl && <a className="btn small ghost" href={menuUrl} target="_blank" rel="noopener noreferrer">☰ Menu</a>}
+          {bookingUrl ? (
+            <a className="btn small" href={bookingUrl} target="_blank" rel="noopener noreferrer">Book</a>
+          ) : callNumber ? (
+            <a className="btn small" href={`tel:${callNumber}`}>Call to book</a>
+          ) : null}
           <MapChooser venue={venue} compact />
         </div>
         {!discover && children}

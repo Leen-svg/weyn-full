@@ -11,7 +11,19 @@ const VENUE_FIELDS = [
   "name", "neighborhood", "city", "avg_spend_aed", "google_maps_url", "hero_video_url", "menu_url",
   "description", "zone_slug", "category", "cuisine", "age_restriction", "is_aesthetic",
   "latitude", "longitude",
+  // Contact + booking, as exported by the nightlife link resolver.
+  "phone", "booking_phone", "booking_url", "website", "opening_hours",
 ];
+
+// Phone numbers arrive formatted for humans ("+971 4 123 4567"). Keep the
+// digits and a leading +, so a tel: link actually dials.
+function cleanPhone(value) {
+  if (value == null) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+  const normalized = trimmed.replace(/[^\d+]/g, "");
+  return /\d{6,}/.test(normalized) ? normalized.slice(0, 32) : null;
+}
 
 function parseRows(buffer, filename) {
   const lower = filename.toLowerCase();
@@ -48,6 +60,19 @@ function cleanRow(row) {
   if (clean.google_maps_url) clean.google_maps_url = safeUrl(clean.google_maps_url);
   if (clean.hero_video_url) clean.hero_video_url = safeUrl(clean.hero_video_url);
   if (clean.menu_url) clean.menu_url = safeUrl(clean.menu_url);
+  if (clean.booking_url) clean.booking_url = safeUrl(clean.booking_url);
+  if (clean.website) clean.website = safeUrl(clean.website);
+  if (clean.phone !== undefined) clean.phone = cleanPhone(clean.phone);
+  if (clean.booking_phone !== undefined) clean.booking_phone = cleanPhone(clean.booking_phone);
+  // Hours may arrive as a JSON string from a spreadsheet cell.
+  if (typeof clean.opening_hours === "string") {
+    try { clean.opening_hours = JSON.parse(clean.opening_hours); } catch { delete clean.opening_hours; }
+  }
+  // Drop keys that cleaned down to nothing, so an empty column never wipes
+  // a value that is already correct in the database.
+  for (const key of ["phone", "booking_phone", "booking_url", "website"]) {
+    if (clean[key] == null) delete clean[key];
+  }
   return clean;
 }
 

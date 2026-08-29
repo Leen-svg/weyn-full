@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Bookmark, ChevronLeft, ChevronRight, MapPin, Play, Send } from "lucide-react";
+import { BookOpen, Bookmark, CalendarCheck, ChevronLeft, ChevronRight, MapPin, Phone, Play, Send } from "lucide-react";
 import ShareToGroupButton from "./ShareToGroupButton";
 import { highResPhoto, normalizeHttpUrl } from "@/lib/media-url.mjs";
 
@@ -177,6 +177,8 @@ function DiscoverSlide({ venue, priority, saved, onSave }) {
   const maps = normalizeHttpUrl(venue.google_maps_url);
   const video = normalizeHttpUrl(venue.hero_video_url);
   const menu = normalizeHttpUrl(venue.menu_url);
+  const booking = normalizeHttpUrl(venue.booking_url);
+  const callNumber = venue.booking_phone || venue.phone || null;
   const [from, to] = washFor(venue.id);
   const spend = spendLabel(venue);
   const age = venue.age_restriction === "21-plus" ? "21+" : venue.age_restriction === "18-plus" ? "18+" : null;
@@ -331,6 +333,17 @@ function DiscoverSlide({ venue, priority, saved, onSave }) {
               <span className="sr-only">Open </span>Menu
             </a>
           )}
+          {booking ? (
+            <a className="discover-slide__action" href={booking} target="_blank" rel="noopener noreferrer">
+              <CalendarCheck aria-hidden="true" />
+              Book
+            </a>
+          ) : callNumber ? (
+            <a className="discover-slide__action" href={`tel:${callNumber}`}>
+              <Phone aria-hidden="true" />
+              Call
+            </a>
+          ) : null}
           <ShareToGroupButton
             className="discover-slide__action"
             label={<><Send aria-hidden="true" />Send</>}
