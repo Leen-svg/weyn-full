@@ -54,17 +54,35 @@ export async function withCovers(venues, { maxMediaPerVenue = 6 } = {}) {
    search ("Waze?q=Zeera by Buddha, Yas Island, UAE"), which finds nothing —
    pressing a map provider appeared to do nothing at all. Hydrating here
    avoids a migration on the shortlist functions. */
-export async function withCoordinates(venues) {
+// Backfills the columns the shortlist/nearby RPCs do not return.
+//
+// Those functions declare an explicit RETURNS TABLE, so any column added to
+// `venues` later is invisible to them until the function is recreated. Rather
+// than doing that to three core RPCs, the few extra fields the cards need are
+// fetched by id here. Only rows actually missing something trigger the query.
+export async function withRpcExtras(venues) {
   if (!venues?.length) return venues || [];
-  const missing = venues.filter((v) => v.latitude == null || v.longitude == null);
+  const missing = venues.filter(
+    (v) => v.latitude == null || v.longitude == null || v.menu_url === undefined
+  );
   if (!missing.length) return venues;
   const { data } = await db()
     .from("venues")
-    .select("id, latitude, longitude, city")
+    .select("id, latitude, longitude, city, menu_url")
     .in("id", missing.map((v) => v.id));
   const byId = new Map((data || []).map((row) => [row.id, row]));
   return venues.map((venue) => {
     const row = byId.get(venue.id);
-    return row ? { ...venue, latitude: row.latitude, longitude: row.longitude, city: venue.city ?? row.city } : venue;
+    if (!row) return venue;
+    return {
+      ...venue,
+      latitude: venue.latitude ?? row.latitude,
+      longitude: venue.longitude ?? row.longitude,
+      city: venue.city ?? row.city,
+      menu_url: venue.menu_url ?? row.menu_url,
+    };
   });
 }
+
+// Kept as an alias so existing callers keep working.
+export const withCoordinates = withRpcExtras;

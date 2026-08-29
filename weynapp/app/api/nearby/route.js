@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { payloadTooLarge, validCoordinates } from "@/lib/request-security.mjs";
 import { rateLimit } from "@/lib/request-security";
-import { withCovers } from "@/lib/venueMedia";
+import { withCovers, withRpcExtras } from "@/lib/venueMedia";
 import { viewerAccess } from "@/lib/session";
 import { AGE_TIERS } from "@/lib/age";
 
@@ -31,5 +31,5 @@ export async function POST(req) {
     p_max_age: clampAge(maxAge, tier),
   });
   if (error) return NextResponse.json({ error: "Nearby search is temporarily unavailable" }, { status: 500 });
-  return NextResponse.json({ venues: await withCovers(data || []) });
+  return NextResponse.json({ venues: await withRpcExtras(await withCovers(data || [])) });
 }

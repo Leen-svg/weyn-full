@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Bookmark, ChevronLeft, ChevronRight, MapPin, Play, Send } from "lucide-react";
+import { BookOpen, Bookmark, ChevronLeft, ChevronRight, MapPin, Play, Send } from "lucide-react";
 import ShareToGroupButton from "./ShareToGroupButton";
 import { highResPhoto, normalizeHttpUrl } from "@/lib/media-url.mjs";
 
@@ -176,6 +176,7 @@ function DiscoverSlide({ venue, priority, saved, onSave }) {
 
   const maps = normalizeHttpUrl(venue.google_maps_url);
   const video = normalizeHttpUrl(venue.hero_video_url);
+  const menu = normalizeHttpUrl(venue.menu_url);
   const [from, to] = washFor(venue.id);
   const spend = spendLabel(venue);
   const age = venue.age_restriction === "21-plus" ? "21+" : venue.age_restriction === "18-plus" ? "18+" : null;
@@ -322,6 +323,12 @@ function DiscoverSlide({ venue, priority, saved, onSave }) {
             <a className="discover-slide__action" href={maps} target="_blank" rel="noopener noreferrer">
               <MapPin aria-hidden="true" />
               <span className="sr-only">Open </span>Maps
+            </a>
+          )}
+          {menu && (
+            <a className="discover-slide__action" href={menu} target="_blank" rel="noopener noreferrer">
+              <BookOpen aria-hidden="true" />
+              <span className="sr-only">Open </span>Menu
             </a>
           )}
           <ShareToGroupButton

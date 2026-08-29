@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { withCovers, withCoordinates } from "@/lib/venueMedia";
+import { withCovers, withRpcExtras } from "@/lib/venueMedia";
 import { cleanStringList, payloadTooLarge, validCoordinates } from "@/lib/request-security.mjs";
 import { rateLimit } from "@/lib/request-security";
 import { mergeVenueResults, shortlistResultNote } from "@/lib/shortlist-utils.mjs";
@@ -124,7 +124,7 @@ export async function POST(req) {
   });
 
   return NextResponse.json({
-    venues: await withCoordinates(await withCovers(venues)),
+    venues: await withRpcExtras(await withCovers(venues)),
     attractions: attraction ? [attraction] : [],
     relaxed: relaxedCount > 0,
     budgetLifted,
