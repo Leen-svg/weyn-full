@@ -235,6 +235,8 @@ export async function importCurationRecords(records) {
       if (bookingPhone) fields.booking_phone = bookingPhone;
       if (bookingUrl) fields.booking_url = bookingUrl;
       if (website) fields.website = website;
+      if (m.instagram_url ?? m.instagram) fields.instagram_url = m.instagram_url ?? m.instagram;
+      if (m.tiktok_url ?? m.tiktok) fields.tiktok_url = m.tiktok_url ?? m.tiktok;
       if (m.menu_url ?? m.menu?.url) fields.menu_url = m.menu_url ?? m.menu.url;
 
       let venueId = venueIdByPlaceId[r.venue_id];

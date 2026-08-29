@@ -13,7 +13,7 @@ export async function GET(req) {
 
   let query = s
     .from("venues")
-    .select("id, name, neighborhood, zone_slug, city, avg_spend_aed, hero_video_url, menu_url, google_maps_url, description, age_restriction, is_aesthetic, is_trending, trending_rank, is_active, venue_tags(tag_id)")
+    .select("id, name, neighborhood, zone_slug, city, avg_spend_aed, hero_video_url, menu_url, google_maps_url, description, age_restriction, is_aesthetic, is_trending, trending_rank, is_active, phone, booking_phone, booking_url, website, instagram_url, tiktok_url, venue_tags(tag_id)")
     .order("name")
     .limit(50);
   if (q) query = query.ilike("name", `%${q}%`);
@@ -97,12 +97,28 @@ export async function PATCH(req) {
     "longitude",
     "age_restriction",
     "is_aesthetic",
+    "phone",
+    "booking_phone",
+    "booking_url",
+    "website",
+    "instagram_url",
+    "tiktok_url",
   ];
   const clean = {};
   for (const k of allowed) if (k in patch) clean[k] = patch[k];
   if ("hero_video_url" in clean) clean.hero_video_url = clean.hero_video_url ? normalizeHttpUrl(clean.hero_video_url) : null;
   if ("menu_url" in clean) clean.menu_url = clean.menu_url ? normalizeHttpUrl(clean.menu_url) : null;
   if ("google_maps_url" in clean) clean.google_maps_url = clean.google_maps_url ? normalizeHttpUrl(clean.google_maps_url) : null;
+  for (const key of ["booking_url", "website", "instagram_url", "tiktok_url"]) {
+    if (key in clean) clean[key] = clean[key] ? normalizeHttpUrl(clean[key]) : null;
+  }
+  // Keep digits and a leading + so a tel: link actually dials.
+  for (const key of ["phone", "booking_phone"]) {
+    if (key in clean) {
+      const digits = String(clean[key] ?? "").replace(/[^\d+]/g, "");
+      clean[key] = /\d{6,}/.test(digits) ? digits.slice(0, 32) : null;
+    }
+  }
   if (clean.is_trending) clean.trending_set_at = new Date().toISOString();
 
   const { error } = await db().from("venues").update(clean).eq("id", id);

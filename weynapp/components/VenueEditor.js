@@ -332,6 +332,12 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
   const [description, setDescription] = useState(venue.description || "");
   const [heroVideo, setHeroVideo] = useState(venue.hero_video_url || "");
   const [menuUrl, setMenuUrl] = useState(venue.menu_url || "");
+  const [phone, setPhone] = useState(venue.phone || "");
+  const [bookingPhone, setBookingPhone] = useState(venue.booking_phone || "");
+  const [bookingUrl, setBookingUrl] = useState(venue.booking_url || "");
+  const [website, setWebsite] = useState(venue.website || "");
+  const [instagramUrl, setInstagramUrl] = useState(venue.instagram_url || "");
+  const [tiktokUrl, setTiktokUrl] = useState(venue.tiktok_url || "");
   const [ageRestriction, setAgeRestriction] = useState(venue.age_restriction || "all-ages");
   const [isAesthetic, setIsAesthetic] = useState(!!venue.is_aesthetic);
   const [media, setMedia] = useState([]);
@@ -470,6 +476,34 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
       </div>
       <div className="venue-form-grid">
         <div className="field">
+          <label>Phone</label>
+          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+971 4 123 4567" />
+        </div>
+        <div className="field">
+          <label>Booking phone</label>
+          <input type="tel" value={bookingPhone} onChange={(e) => setBookingPhone(e.target.value)} placeholder="Used for Call to book" />
+        </div>
+      </div>
+      <div className="field">
+        <label>Booking / reservation URL</label>
+        <input type="url" value={bookingUrl} onChange={(e) => setBookingUrl(e.target.value)} placeholder="SevenRooms, OpenTable, etc." />
+      </div>
+      <div className="field">
+        <label>Website</label>
+        <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
+      </div>
+      <div className="venue-form-grid">
+        <div className="field">
+          <label>Instagram</label>
+          <input type="url" value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} placeholder="https://instagram.com/..." />
+        </div>
+        <div className="field">
+          <label>TikTok</label>
+          <input type="url" value={tiktokUrl} onChange={(e) => setTiktokUrl(e.target.value)} placeholder="https://tiktok.com/@..." />
+        </div>
+      </div>
+      <div className="venue-form-grid">
+        <div className="field">
           <label>Age access</label>
           <select value={ageRestriction} onChange={(e) => setAgeRestriction(e.target.value)}>
             <option value="all-ages">All ages</option>
@@ -520,6 +554,12 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
             description,
             hero_video_url: heroVideo || null,
             menu_url: menuUrl || null,
+            phone: phone || null,
+            booking_phone: bookingPhone || null,
+            booking_url: bookingUrl || null,
+            website: website || null,
+            instagram_url: instagramUrl || null,
+            tiktok_url: tiktokUrl || null,
             age_restriction: ageRestriction,
             is_aesthetic: isAesthetic,
           }, tagIds)

@@ -15,7 +15,7 @@ import WelcomeHero from "@/components/WelcomeHero";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Home" };
 
-const VENUE_FIELDS = "id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, phone, booking_phone, booking_url, opening_hours, is_aesthetic, age_restriction, description";
+const VENUE_FIELDS = "id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, phone, booking_phone, booking_url, website, instagram_url, tiktok_url, opening_hours, is_aesthetic, age_restriction, description";
 
 function editorialSection(list) {
   if (list.home_section === "our_picks" || list.home_section === "curated") return list.home_section;
@@ -119,8 +119,8 @@ export default async function HomePage() {
             <h1 id="home-title">Where to?</h1>
             <p className="sub">Tell Weyn the mood and the budget. Or just browse what everyone else is going to.</p>
           </div>
-          <Link className="btn primary app-home__find-cta" href="/discover">
-            Start browsing →
+          <Link className="btn primary app-home__find-cta" href="/find">
+            Find me somewhere →
           </Link>
         </header>
 
@@ -154,7 +154,7 @@ export default async function HomePage() {
             <h2>Our picks</h2>
             <p>Worth leaving the group chat for.</p>
           </div>
-          <Link className="app-home__section-action" href="/discover">See all</Link>
+          <Link className="app-home__section-action" href="/find">Find more</Link>
         </div>
         {picks.length ? (
           <div className="venue-rail" aria-label="Scroll through our picks">

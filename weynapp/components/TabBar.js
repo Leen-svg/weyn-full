@@ -14,7 +14,7 @@ import { FEATURES } from "@/lib/features";
 // closer after a shortlist, not the way in.
 const TABS = [
   { href: "/app", label: "Home", Icon: House },
-  { href: "/discover", label: "Discover", Icon: Telescope },
+  { href: "/discover", label: "Discover", Icon: Telescope, flag: "discover" },
   { href: "/find", label: "Find", Icon: Sparkles },
   { href: "/groups", label: "Groups", Icon: MessagesSquare, flag: "groups" },
   { href: "/wishlist", label: "Saved", Icon: Bookmark },

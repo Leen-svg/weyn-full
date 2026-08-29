@@ -33,6 +33,12 @@ export const FEATURES = {
   publicProfiles: on("PUBLIC_PROFILES", false),
   creators: on("CREATORS", false),
 
+  // Discover is an infinite browse surface, which is the "where should we eat"
+  // tarpit the roadmap names outright: Home already carries finite rails and
+  // Find answers the actual question. Hidden rather than deleted — /discover
+  // still resolves for anyone holding a link.
+  discover: on("DISCOVER", false),
+
   // Kept on: these are the product.
   nightlife21Plus: on("NIGHTLIFE", true),
   magicImport: on("MAGIC_IMPORT", true),

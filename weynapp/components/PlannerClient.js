@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import MapChooser from "./MapChooser";
+import { FEATURES } from "@/lib/features";
 import { buildTimeline, coordinates, orderStops } from "@/lib/planner-utils.mjs";
 
 // Use a native select so keyboard, screen-reader, and mobile picker behaviour
@@ -33,7 +34,6 @@ export default function PlannerClient() {
   const load = async () => { try { const response = await fetch("/api/planner", { cache: "no-store" }); const body = await response.json(); if (!response.ok) throw new Error(body.error || "Couldn't load your plans"); setData(body); } catch (loadError) { setError(loadError.message); } };
   useEffect(() => { load(); }, []);
   const places = data?.places || [];
-  const neighborhoods = useMemo(() => Object.entries(places.reduce((all, place) => { const name = place.neighborhood || place.city || "Saved elsewhere"; all[name] = (all[name] || 0) + 1; return all; }, {})).sort((a, b) => b[1] - a[1]), [places]);
   const itinerary = useMemo(() => buildTimeline(ordered, startTime), [ordered, startTime]);
 
   async function importPlace() {
@@ -105,32 +105,6 @@ export default function PlannerClient() {
           <button className="btn primary btn-full" disabled={busy || !input.trim()} onClick={importPlace}>{busy ? "Finding it…" : "Save place"}</button>
         </section>
 
-        <section className="card planner-saved-summary">
-          <div className="toggle-row planner-ghost-row">
-            <div>
-              <strong>Ghost mode</strong>
-              <div className="sub">Keep your browsing and reviews out of friend activity.</div>
-            </div>
-            <label className="planner-ghost-toggle">
-              <span className="sr-only">Ghost mode</span>
-              <input
-                type="checkbox"
-                checked={data.ghostMode}
-                onChange={async (event) => {
-                  const value = event.target.checked;
-                  setData({ ...data, ghostMode: value });
-                  await fetch("/api/planner", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "ghost", ghostMode: value }) });
-                }}
-              />
-            </label>
-          </div>
-          <div className="planner-neighborhoods">
-            <span className="eyebrow">Saved by area</span>
-            {neighborhoods.length ? (
-              <div className="tag-row">{neighborhoods.map(([name, count]) => <span className="tag-pill" key={name}>{name} · {count}</span>)}</div>
-            ) : <p className="sub">Save a few places and they will appear here.</p>}
-          </div>
-        </section>
       </div>
 
       <section className="card planner-builder">
@@ -236,7 +210,7 @@ export default function PlannerClient() {
         ))}</div>}
       </section>
 
-      {data.curators.length > 0 && (
+      {FEATURES.creators && data.curators.length > 0 && (
         <section className="card">
           <span className="eyebrow">Curators, not contacts</span>
           <h2>Local tastemakers</h2>

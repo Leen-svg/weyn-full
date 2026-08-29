@@ -13,6 +13,7 @@ const VENUE_FIELDS = [
   "latitude", "longitude",
   // Contact + booking, as exported by the nightlife link resolver.
   "phone", "booking_phone", "booking_url", "website", "opening_hours",
+  "instagram_url", "tiktok_url",
 ];
 
 // Phone numbers arrive formatted for humans ("+971 4 123 4567"). Keep the
@@ -62,6 +63,8 @@ function cleanRow(row) {
   if (clean.menu_url) clean.menu_url = safeUrl(clean.menu_url);
   if (clean.booking_url) clean.booking_url = safeUrl(clean.booking_url);
   if (clean.website) clean.website = safeUrl(clean.website);
+  if (clean.instagram_url) clean.instagram_url = safeUrl(clean.instagram_url);
+  if (clean.tiktok_url) clean.tiktok_url = safeUrl(clean.tiktok_url);
   if (clean.phone !== undefined) clean.phone = cleanPhone(clean.phone);
   if (clean.booking_phone !== undefined) clean.booking_phone = cleanPhone(clean.booking_phone);
   // Hours may arrive as a JSON string from a spreadsheet cell.
@@ -70,7 +73,7 @@ function cleanRow(row) {
   }
   // Drop keys that cleaned down to nothing, so an empty column never wipes
   // a value that is already correct in the database.
-  for (const key of ["phone", "booking_phone", "booking_url", "website"]) {
+  for (const key of ["phone", "booking_phone", "booking_url", "website", "instagram_url", "tiktok_url"]) {
     if (clean[key] == null) delete clean[key];
   }
   return clean;

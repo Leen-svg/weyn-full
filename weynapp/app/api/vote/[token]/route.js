@@ -19,7 +19,7 @@ export async function GET(req, { params }) {
   const { data: venues } = venueIds.length
     ? await s
         .from("venues")
-        .select("id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, phone, booking_phone, booking_url, opening_hours, is_aesthetic, age_restriction, description")
+        .select("id, name, neighborhood, city, latitude, longitude, avg_spend_aed, google_maps_url, hero_video_url, menu_url, phone, booking_phone, booking_url, website, instagram_url, tiktok_url, opening_hours, is_aesthetic, age_restriction, description")
         .in("id", venueIds)
     : { data: [] };
   const venuesWithMedia = await withCovers(venues || []);

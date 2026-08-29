@@ -29,6 +29,9 @@ export default function VenueCard({ venue, children, picked, priority = false, v
   // switchboard — so only the best available option is offered, not all three.
   const callNumber = venue.booking_phone || venue.phone || null;
   const todayHours = hoursForToday(venue.opening_hours);
+  const websiteUrl = normalizeHttpUrl(venue.website);
+  const instagramUrl = normalizeHttpUrl(venue.instagram_url);
+  const tiktokUrl = normalizeHttpUrl(venue.tiktok_url);
   const coverUrl = normalizeHttpUrl(venue.cover_url);
   const initialMedia = (venue.media || [])
     .map((item) => ({ type: item.type, url: normalizeHttpUrl(item.url) }))
@@ -170,6 +173,15 @@ export default function VenueCard({ venue, children, picked, priority = false, v
           ) : callNumber ? (
             <a className="btn small" href={`tel:${callNumber}`}>Call to book</a>
           ) : null}
+          {instagramUrl && (
+            <a className="btn small ghost" href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label={`${venue.name} on Instagram`}>Instagram</a>
+          )}
+          {tiktokUrl && (
+            <a className="btn small ghost" href={tiktokUrl} target="_blank" rel="noopener noreferrer" aria-label={`${venue.name} on TikTok`}>TikTok</a>
+          )}
+          {websiteUrl && (
+            <a className="btn small ghost" href={websiteUrl} target="_blank" rel="noopener noreferrer">Website</a>
+          )}
           <MapChooser venue={venue} compact />
         </div>
         {!discover && children}
