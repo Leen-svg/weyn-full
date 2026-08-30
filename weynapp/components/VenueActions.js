@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { safeUrl } from "@/lib/sanitize";
-import ShareToGroupButton from "./ShareToGroupButton";
+import { venueShareUrl } from "@/lib/venue-share.mjs";
 
 export default function VenueActions({ venue, initialSaved = false, savedContext = false, onRemoved }) {
   const [saved, setSaved] = useState(initialSaved);
@@ -15,6 +15,7 @@ export default function VenueActions({ venue, initialSaved = false, savedContext
   const [visibility, setVisibility] = useState("");
   const [reviewMsg, setReviewMsg] = useState(null);
   const [needsLogin, setNeedsLogin] = useState(false);
+  const [shareStatus, setShareStatus] = useState("idle");
 
   // Check-in: confirm you went, earn points, then get offered the rating for
   // more. `visit` holds what the server said so the reward is shown once and
@@ -173,6 +174,25 @@ export default function VenueActions({ venue, initialSaved = false, savedContext
     if (next && reviews === null) loadReviews();
   }
 
+  async function shareLink() {
+    const url = venueShareUrl(window.location.origin, venue.id);
+    const shareData = {
+      title: venue.name,
+      text: `Check out ${venue.name}${venue.neighborhood ? ` in ${venue.neighborhood}` : ""} on Weyn.`,
+      url,
+    };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else {
+        await navigator.clipboard.writeText(url);
+        setShareStatus("copied");
+        window.setTimeout(() => setShareStatus("idle"), 1800);
+      }
+    } catch (error) {
+      if (error?.name !== "AbortError") setShareStatus("error");
+    }
+  }
+
   return (
     <div className="venue-actions">
       <div className="venue-links venue-action-bar" style={{ marginTop: 10 }}>
@@ -198,7 +218,9 @@ export default function VenueActions({ venue, initialSaved = false, savedContext
         <button className="btn small ghost" onClick={toggleReviews} type="button">
           💬 Reviews
         </button>
-        <ShareToGroupButton text={`📍 Check out ${venue.name}${venue.neighborhood ? ` in ${venue.neighborhood}` : ""}.`} share={{ type: "venue", id: venue.id }} />
+        <button className="btn small ghost" onClick={shareLink} type="button">
+          {shareStatus === "copied" ? "Link copied ✓" : shareStatus === "error" ? "Copy failed" : "↗ Share link"}
+        </button>
       </div>
 
       {visit && (
