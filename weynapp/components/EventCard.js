@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 import { trackProductEvent } from "@/lib/product-analytics";
+import InstagramCarousel from "@/components/InstagramCarousel";
 
 const TYPE_LABELS = { party: "Party", "club-night": "Club night", "live-music": "Live music", brunch: "Brunch", "ladies-night": "Ladies' night", other: "Event" };
 const GULF_TZ = "Asia/Dubai";
@@ -58,6 +59,7 @@ export default function EventCard({ event }) {
 
         {expanded && <div className="event-card__details">
           {event.description && <p className="event-card__description">{event.description}</p>}
+          {event.instagram_post_url && <InstagramCarousel value={event.instagram_post_url} title={`${event.title} Instagram carousel`} />}
           {venue && <div className="event-card__venue">
             <div><span>Hosted at</span><strong>{venue.name}</strong><small>{[venue.neighborhood, venue.city].filter(Boolean).join(" · ")}</small></div>
             <Link className="btn small" href={`/v/${encodeURIComponent(venue.id)}`} onClick={() => trackProductEvent("event_venue_clicked", { event_id: event.id, venue_id: venue.id })}>View venue</Link>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
+import { extractInstagramPostUrl } from "@/lib/instagram-embed.mjs";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -43,6 +44,8 @@ function eventValues(body) {
   if (body.startTime && !startTime) return { error: "Choose a valid start time" };
   if (body.endTime && !endTime) return { error: "Choose a valid end time" };
   const price = Number(body.priceFromAed);
+  const instagramPostUrl = body.instagramEmbed ? extractInstagramPostUrl(String(body.instagramEmbed).slice(0, 20000)) : null;
+  if (body.instagramEmbed && !instagramPostUrl) return { error: "Paste a valid public Instagram post, reel, carousel link, or embed code" };
 
   return { values: {
     title, description: cleanText(body.description, 1000), venue_id: UUID.test(body.venueId || "") ? body.venueId : null,
@@ -53,7 +56,7 @@ function eventValues(body) {
     age_restriction: AGES.has(body.ageRestriction) ? body.ageRestriction : "21-plus",
     event_type: TYPES.has(body.eventType) ? body.eventType : "party",
     cover_image_url: cleanUrl(body.imageUrl), ticket_url: cleanUrl(body.ticketUrl), website_url: cleanUrl(body.websiteUrl),
-    social_url: cleanUrl(body.socialUrl), reservation_phone: phone,
+    social_url: cleanUrl(body.socialUrl), instagram_post_url: instagramPostUrl, reservation_phone: phone,
     price_from_aed: Number.isFinite(price) && price >= 0 ? Math.min(100000, Math.round(price)) : null,
     sort_order: Number.isInteger(body.sortOrder) && body.sortOrder >= 0 ? Math.min(body.sortOrder, 99999) : 0,
     is_trending: !!body.isTrending, is_try_this_out: !!body.isTryThisOut, is_active: !!body.isPublished,

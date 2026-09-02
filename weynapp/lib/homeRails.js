@@ -14,7 +14,7 @@ import { db } from "@/lib/db";
 // Selecting it here rather than querying the events_live view keeps the
 // `venues(...)` embed working, which PostgREST cannot infer through a view.
 const EVENT_FIELDS =
-  "id, title, description, city, neighborhood, starts_at, ends_at, next_start, recurrence, recurrence_until, recurrence_days, age_restriction, event_type, cover_image_url, ticket_url, website_url, social_url, reservation_phone, is_trending, is_try_this_out, sort_order, partner, price_from_aed, venues(id, name, neighborhood, city)";
+  "id, title, description, city, neighborhood, starts_at, ends_at, next_start, recurrence, recurrence_until, recurrence_days, age_restriction, event_type, cover_image_url, ticket_url, website_url, social_url, instagram_post_url, reservation_phone, is_trending, is_try_this_out, sort_order, partner, price_from_aed, venues(id, name, neighborhood, city)";
 
 // The service-role client bypasses RLS, so expiry is re-applied here. Sorting
 // happens in JS because the ordering key is computed per row.

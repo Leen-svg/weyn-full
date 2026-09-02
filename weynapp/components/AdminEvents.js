@@ -8,7 +8,7 @@ const blank = {
   id: null, title: "", description: "", venueId: "", city: "Dubai", location: "",
   startsOn: "", endsOn: "", startTime: "", endTime: "", recurrenceType: "one_time", recurrenceDays: [],
   ageRestriction: "21-plus", eventType: "party", imageUrl: "", ticketUrl: "", websiteUrl: "", socialUrl: "",
-  reservationPhone: "", priceFromAed: "", sortOrder: 0, isTrending: false, isTryThisOut: false, isPublished: true,
+  instagramEmbed: "", reservationPhone: "", priceFromAed: "", sortOrder: 0, isTrending: false, isTryThisOut: false, isPublished: true,
 };
 
 function dubaiDateTime(value) {
@@ -29,6 +29,7 @@ function toEditor(event) {
     recurrenceDays: (event.recurrence_days || []).map(Number), ageRestriction: event.age_restriction || "21-plus",
     eventType: event.event_type || "party", imageUrl: event.cover_image_url || "", ticketUrl: event.ticket_url || "",
     websiteUrl: event.website_url || "", socialUrl: event.social_url || "", reservationPhone: event.reservation_phone || "",
+    instagramEmbed: event.instagram_post_url || "",
     priceFromAed: event.price_from_aed ?? "", sortOrder: event.sort_order || 0,
     isTrending: !!event.is_trending, isTryThisOut: !!event.is_try_this_out, isPublished: !!event.is_active,
   };
@@ -120,6 +121,7 @@ export default function AdminEvents() {
         <label className="field"><span>Social media link</span><input type="url" value={editing.socialUrl} onChange={(e) => setField("socialUrl", e.target.value)} placeholder="https://instagram.com/..." /></label>
         <label className="field"><span>Booking / ticket link</span><input type="url" value={editing.ticketUrl} onChange={(e) => setField("ticketUrl", e.target.value)} placeholder="https://..." /></label>
       </div>
+      <label className="field"><span>Instagram carousel embed code or post link</span><textarea value={editing.instagramEmbed} onChange={(e) => setField("instagramEmbed", e.target.value)} placeholder={'Paste the full Instagram embed code or https://www.instagram.com/p/…/'} /><small>Weyn safely extracts the post link and shows the official swipeable carousel when someone expands this event.</small></label>
 
       <fieldset className="event-schedule"><legend>Schedule</legend>
         <div className="event-form-grid event-form-grid--schedule">
