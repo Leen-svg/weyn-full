@@ -1178,11 +1178,21 @@ input:focus, select:focus, textarea:focus {
 .weekday-picker, .event-badges, .event-card__actions { display: flex; flex-wrap: wrap; gap: 7px; }
 .weekday-picker .chip { min-width: 52px; }
 .event-toggle-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.event-toggle-grid--badges { grid-template-columns: repeat(2,minmax(0,1fr)); }
 .event-toggle-grid .toggle-row { align-items: flex-start; margin: 0; padding: 13px; border: 1px solid rgba(31,48,68,.12); border-radius: 15px; }
 .event-toggle-grid .toggle-row span { display: grid; gap: 2px; }
 .event-toggle-grid small { color: var(--ink-soft); font-size: 11px; }
 .event-admin-card { display: grid; grid-template-columns: 110px minmax(0,1fr) auto; align-items: center; gap: 16px; padding: 14px; }
 .event-admin-card > img { width: 110px; height: 90px; object-fit: cover; border-radius: 14px; }
+.event-selected-venue { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid rgba(120,99,219,.25); border-radius: 14px; background: rgba(120,99,219,.08); }
+.event-selected-venue > span { display: grid; gap: 2px; }
+.event-selected-venue small, .event-venue-results small { color: var(--ink-soft); font-size: 11px; }
+.event-venue-results { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; max-height: 250px; overflow-y: auto; }
+.event-venue-results > button { display: grid; gap: 2px; min-width: 0; padding: 10px 12px; border: 1px solid rgba(31,48,68,.12); border-radius: 12px; background: rgba(255,255,255,.75); color: var(--ink); text-align: left; cursor: pointer; }
+.event-venue-results > button:hover, .event-venue-results > button.is-selected { border-color: var(--purple); background: rgba(120,99,219,.1); }
+.event-save-actions { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.25fr); gap: 10px; }
+.event-save-actions .btn { width: 100%; }
+.event-save-help { margin: -8px 0 0; color: var(--ink-soft); font-size: 12px; text-align: center; }
 .event-order-actions { display: grid; grid-template-columns: repeat(2,auto); }
 .event-badge { display: inline-flex; width: fit-content; padding: 5px 9px; border-radius: 999px; font-size: 10px; font-weight: 900; }
 .event-badge--trending { background: var(--pink); color: var(--white); }
@@ -1191,7 +1201,7 @@ input:focus, select:focus, textarea:focus {
 .maps-audit { display: grid; gap: 5px; margin-bottom: 14px; }
 .maps-duplicate-alert { margin-top: 8px; }
 @media (max-width:760px) {
-  .event-form-grid, .event-form-grid--schedule, .event-toggle-grid { grid-template-columns: 1fr; }
+  .event-form-grid, .event-form-grid--schedule, .event-toggle-grid, .event-venue-results { grid-template-columns: 1fr; }
   .event-admin-card { grid-template-columns: 76px minmax(0,1fr); align-items: start; }
   .event-admin-card > img { width: 76px; height: 76px; }
   .event-admin-card .event-order-actions { grid-column: 1 / -1; width: 100%; grid-template-columns: repeat(4,minmax(0,1fr)); }
