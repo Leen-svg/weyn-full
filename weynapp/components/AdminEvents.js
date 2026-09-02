@@ -2,6 +2,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { EVENT_WEEKDAYS, recurrenceLabel } from "@/lib/events.mjs";
 import { safeUrl } from "@/lib/sanitize";
+import { compressImage } from "@/lib/image-compress";
+import { createClient } from "@/lib/supabase/client";
 
 const TYPES = [["party", "Party"], ["club-night", "Club night"], ["live-music", "Live music"], ["ladies-night", "Ladies' night"], ["brunch", "Brunch"], ["other", "Other"]];
 const blank = {
@@ -10,6 +12,26 @@ const blank = {
   ageRestriction: "21-plus", eventType: "party", imageUrl: "", ticketUrl: "", websiteUrl: "", socialUrl: "",
   instagramEmbed: "", reservationPhone: "", priceFromAed: "", sortOrder: 0, isTrending: false, isTryThisOut: false, isPublished: true,
 };
+
+async function uploadEventCover(file) {
+  const compressed = await compressImage(file);
+  const signResponse = await fetch("/api/admin/events/cover", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ intent: "sign", contentType: compressed.type, fileSize: compressed.size }),
+  });
+  const signed = await signResponse.json();
+  if (!signResponse.ok) throw new Error(signed.error || "Could not start the image upload");
+  const supabase = createClient();
+  const { error: uploadError } = await supabase.storage.from("venue-media").uploadToSignedUrl(signed.path, signed.token, compressed, { contentType: compressed.type });
+  if (uploadError) throw uploadError;
+  const completeResponse = await fetch("/api/admin/events/cover", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ intent: "complete", path: signed.path }),
+  });
+  const completed = await completeResponse.json();
+  if (!completeResponse.ok) throw new Error(completed.error || "Could not finish the image upload");
+  return completed.url;
+}
 
 function dubaiDateTime(value) {
   if (!value) return { date: "", time: "" };
@@ -43,6 +65,8 @@ export default function AdminEvents() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
 
   const load = useCallback(async () => {
     const response = await fetch("/api/admin/events");
@@ -62,8 +86,29 @@ export default function AdminEvents() {
   }, [venueQuery]);
 
   function open(event = null) {
-    setNotice(""); setError(""); setVenueQuery("");
+    setNotice(""); setError(""); setVenueQuery(""); setUploadStatus("");
     setEditing(event ? toEditor(event) : { ...blank, recurrenceDays: [], sortOrder: events.length });
+  }
+
+  async function handleCoverFile(file) {
+    if (!file || uploadingCover) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) return setError("Choose a JPG, PNG, or WebP image.");
+    setUploadingCover(true); setUploadStatus("Optimizing and uploading image…"); setError("");
+    try {
+      const url = await uploadEventCover(file);
+      setEditing((current) => ({ ...current, imageUrl: url }));
+      setUploadStatus("Image uploaded and ready to save.");
+    } catch (uploadError) {
+      setUploadStatus(""); setError(uploadError.message || "Could not upload this image.");
+    } finally {
+      setUploadingCover(false);
+    }
+  }
+
+  function onCoverChosen(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    handleCoverFile(file);
   }
   const setField = (field, value) => setEditing((current) => ({ ...current, [field]: value }));
   function toggleDay(day) {
@@ -110,6 +155,12 @@ export default function AdminEvents() {
       <div className="admin-row"><h3>{editing.id ? "Edit event" : "Create event"}</h3><button className="btn small ghost" type="button" onClick={() => setEditing(null)}>Close</button></div>
       <label className="field"><span>Event name *</span><input type="text" maxLength="160" required value={editing.title} onChange={(e) => setField("title", e.target.value)} placeholder="Friday Rooftop Sessions" /></label>
       <label className="field"><span>Description</span><textarea maxLength="1000" value={editing.description} onChange={(e) => setField("description", e.target.value)} placeholder="What makes this worth going to?" /></label>
+      <label className={`event-cover-upload ${uploadingCover ? "is-uploading" : ""}`} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); handleCoverFile(e.dataTransfer.files?.[0]); }}>
+        <strong>{uploadingCover ? "Uploading event image…" : "Drop an event image here"}</strong>
+        <span>or press to choose a JPG, PNG, or WebP file</span>
+        <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingCover} onChange={onCoverChosen} />
+      </label>
+      {uploadStatus && <div className="media-upload-status" role="status">{uploadStatus}</div>}
       <label className="field"><span>Cover image link</span><input type="url" value={editing.imageUrl} onChange={(e) => setField("imageUrl", e.target.value)} placeholder="https://..." /></label>
       {safeUrl(editing.imageUrl) && <img className="event-image-preview" src={safeUrl(editing.imageUrl)} alt="Event cover preview" />}
 
@@ -147,7 +198,7 @@ export default function AdminEvents() {
         <label className="toggle-row"><input type="checkbox" checked={editing.isTrending} onChange={(e) => setField("isTrending", e.target.checked)} /><span><strong>🔥 Trending</strong><small>Add the Trending sign</small></span></label>
         <label className="toggle-row"><input type="checkbox" checked={editing.isTryThisOut} onChange={(e) => setField("isTryThisOut", e.target.checked)} /><span><strong>✨ Try this out</strong><small>Add the Try this out sign</small></span></label>
       </div>
-      <button className="btn primary btn-full" disabled={busy || !editing.title.trim() || !editing.startsOn} type="submit">{busy ? "Saving…" : "Save event"}</button>
+      <button className="btn primary btn-full" disabled={busy || uploadingCover || !editing.title.trim() || !editing.startsOn} type="submit">{busy ? "Saving…" : uploadingCover ? "Uploading image…" : "Save event"}</button>
     </form>}
 
     <div className="event-admin-list">{events.length === 0 && !error ? <div className="discover-empty">No events yet. Create the first one above.</div> : events.map((item, index) => <article className="card event-admin-card" key={item.id}>
