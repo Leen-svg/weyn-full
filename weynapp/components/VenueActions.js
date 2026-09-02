@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { safeUrl } from "@/lib/sanitize";
 import { venueShareUrl } from "@/lib/venue-share.mjs";
+import { trackProductEvent } from "@/lib/product-analytics";
 
 export default function VenueActions({ venue, initialSaved = false, savedContext = false, onRemoved }) {
   const [saved, setSaved] = useState(initialSaved);
@@ -73,6 +74,7 @@ export default function VenueActions({ venue, initialSaved = false, savedContext
         setNeedsLogin(true);
       } else if (res.ok) {
         setVisit(body);
+        trackProductEvent("venue_check_in", { venue_id: venue.id, venue_name: venue.name });
       } else if (body.tooFar) {
         const away =
           body.distanceM > 1000
@@ -103,6 +105,7 @@ export default function VenueActions({ venue, initialSaved = false, savedContext
     } else if (res.ok) {
       const next = !saved;
       setSaved(next);
+      trackProductEvent(next ? "venue_saved" : "venue_unsaved", { venue_id: venue.id, venue_name: venue.name });
       if (!next && onRemoved) onRemoved(venue.id);
     }
     setBusy(false);
@@ -147,6 +150,7 @@ export default function VenueActions({ venue, initialSaved = false, savedContext
         setPhoto(null);
         setVisibility("");
         if (reviewsOpen) loadReviews();
+        trackProductEvent("venue_reviewed", { venue_id: venue.id, venue_name: venue.name, rating });
       } else {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error || "Couldn't save that review");
@@ -188,6 +192,7 @@ export default function VenueActions({ venue, initialSaved = false, savedContext
         setShareStatus("copied");
         window.setTimeout(() => setShareStatus("idle"), 1800);
       }
+      trackProductEvent("venue_shared", { venue_id: venue.id, venue_name: venue.name });
     } catch (error) {
       if (error?.name !== "AbortError") setShareStatus("error");
     }

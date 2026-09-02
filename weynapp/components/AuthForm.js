@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ConfirmEmail from "./ConfirmEmail";
 import PasswordInput from "./PasswordInput";
+import { trackProductEvent } from "@/lib/product-analytics";
 
 const AUTH_ERRORS = {
   auth: "We couldn't complete sign-in. Please try again.",
@@ -28,6 +29,11 @@ export default function AuthForm({ mode }) {
   // Set when signup succeeds without a session, i.e. waiting on the emailed link.
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(null);
   const consentReady = termsAccepted && privacyAccepted && betaAcknowledged;
+
+  function recordSignup(user, source) {
+    trackProductEvent("account_created", { method: source });
+    if (user?.id) fetch("/api/auth/signup-notification", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ userId: user.id, source }) }).catch(() => {});
+  }
 
   async function submit(e) {
     e.preventDefault();
@@ -78,15 +84,18 @@ export default function AuthForm({ mode }) {
         }));
         if (error) setErr(readable(error.message));
         else if (data.session) {
+          recordSignup(data.user, "email");
           router.push(`/onboarding?next=${encodeURIComponent(next)}`);
           router.refresh();
         } else {
+          recordSignup(data.user, "email");
           setAwaitingConfirmation(email);
         }
       } else {
         const { error } = await guard(supabase.auth.signInWithPassword({ email, password }));
         if (error) setErr(readable(error.message));
         else {
+          trackProductEvent("login_completed", { method: "email" });
           const { data: { user } } = await supabase.auth.getUser();
           const { data: profile } = user
             ? await supabase.from("profile_public").select("display_name").eq("id", user.id).maybeSingle()
@@ -121,6 +130,7 @@ export default function AuthForm({ mode }) {
     setErr(null);
     const supabase = createClient();
     try {
+      trackProductEvent(mode === "signup" ? "signup_started" : "login_started", { method: "google" });
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },

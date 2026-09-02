@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { safeRelativePath } from "@/lib/request-security.mjs";
+import { notifyNewSignup } from "@/lib/signup-notification";
 
 const OTP_TYPES = new Set([
   "email",
@@ -33,6 +34,7 @@ export async function GET(req) {
         } = await supabase.auth.getUser();
 
         if (user) {
+          if (type === "signup") await notifyNewSignup(user, "email").catch((cause) => console.error("Signup notification error", cause));
           const { data: profile } = await supabase
             .from("profile_public")
             .select("display_name")

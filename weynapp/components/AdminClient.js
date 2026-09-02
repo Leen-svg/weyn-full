@@ -8,6 +8,7 @@ import AdminEditorialLists from "./AdminEditorialLists";
 import AdminEvents from "./AdminEvents";
 import AdminAttractions from "./AdminAttractions";
 import AdminMediaQuality from "./AdminMediaQuality";
+import AdminAnalytics from "./AdminAnalytics";
 import { safeUrl } from "@/lib/sanitize";
 
 export default function AdminClient() {
@@ -41,6 +42,7 @@ export default function AdminClient() {
   if (!data) return <p className="sub">Loading…</p>;
 
   const tabs = [
+    ["analytics", "Analytics", 0],
     ["submissions", "New spots", data.submissions.length],
     ["content", "Content reports", data.contentReports.length],
     ["photos", "Photo review", data.pendingMedia.length],
@@ -209,6 +211,7 @@ export default function AdminClient() {
       )}
 
       {tab === "venues" && <VenueEditor />}
+      {tab === "analytics" && <AdminAnalytics />}
       {tab === "media-quality" && <AdminMediaQuality />}
       {tab === "editorial" && <AdminEditorialLists />}
       {tab === "events" && <AdminEvents />}

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
+import { trackProductEvent } from "@/lib/product-analytics";
 
 const TYPE_LABELS = { party: "Party", "club-night": "Club night", "live-music": "Live music", brunch: "Brunch", "ladies-night": "Ladies' night", other: "Event" };
 const GULF_TZ = "Asia/Dubai";
@@ -28,7 +29,11 @@ export default function EventCard({ event }) {
 
   function toggleFromCard(eventClick) {
     if (eventClick.target.closest("a,button")) return;
-    setExpanded((value) => !value);
+    toggleExpanded();
+  }
+
+  function toggleExpanded() {
+    setExpanded((value) => { if (!value) trackProductEvent("event_opened", { event_id: event.id, event_name: event.title, has_venue: !!venue }); return !value; });
   }
 
   return (
@@ -47,7 +52,7 @@ export default function EventCard({ event }) {
         {place && <p className="event-card__where">At {place}</p>}
         {event.price_from_aed ? <p className="event-card__price">From {event.price_from_aed} AED</p> : null}
 
-        <button className="event-card__expand" type="button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>
+        <button className="event-card__expand" type="button" aria-expanded={expanded} onClick={toggleExpanded}>
           {expanded ? "Show less" : venue ? "View event & venue" : "View event"}
         </button>
 
@@ -55,10 +60,10 @@ export default function EventCard({ event }) {
           {event.description && <p className="event-card__description">{event.description}</p>}
           {venue && <div className="event-card__venue">
             <div><span>Hosted at</span><strong>{venue.name}</strong><small>{[venue.neighborhood, venue.city].filter(Boolean).join(" · ")}</small></div>
-            <Link className="btn small" href={`/v/${encodeURIComponent(venue.id)}`}>View venue</Link>
+            <Link className="btn small" href={`/v/${encodeURIComponent(venue.id)}`} onClick={() => trackProductEvent("event_venue_clicked", { event_id: event.id, venue_id: venue.id })}>View venue</Link>
           </div>}
           <div className="event-card__actions">
-            {ticket && <a className="btn small" href={ticket} target="_blank" rel="noopener noreferrer">Book</a>}
+            {ticket && <a className="btn small" href={ticket} target="_blank" rel="noopener noreferrer" onClick={() => trackProductEvent("event_booking_clicked", { event_id: event.id, event_name: event.title })}>Book</a>}
             {event.reservation_phone && <a className="btn small ghost" href={`tel:${String(event.reservation_phone).replace(/[^+\d]/g, "")}`}>Call</a>}
             {website && <a className="btn small ghost" href={website} target="_blank" rel="noopener noreferrer">Website</a>}
             {social && <a className="btn small ghost" href={social} target="_blank" rel="noopener noreferrer">Social</a>}

@@ -55,6 +55,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/submissions",
   "/api/video-submissions",
   "/api/takedowns",
+  "/api/auth/signup-notification",
 ]);
 const PUBLIC_API_PREFIXES = ["/api/polls/", "/api/vote/"];
 

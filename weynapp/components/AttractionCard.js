@@ -1,4 +1,6 @@
+"use client";
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
+import { trackProductEvent } from "@/lib/product-analytics";
 
 const CATEGORY_LABELS = {
   "theme-park": "Theme park",
@@ -44,6 +46,7 @@ export default function AttractionCard({ attraction }) {
             href={href}
             target="_blank"
             rel="sponsored nofollow noopener noreferrer"
+            onClick={() => trackProductEvent("attraction_booking_clicked", { attraction_id: attraction.id, attraction_name: attraction.title })}
           >
             Book
           </a>

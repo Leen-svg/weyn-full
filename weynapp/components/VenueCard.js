@@ -6,6 +6,7 @@ import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 import MapChooser from "./MapChooser";
 import VenueMedia from "./VenueMedia";
 import { hoursForToday } from "@/lib/opening-hours.mjs";
+import { trackProductEvent } from "@/lib/product-analytics";
 
 const PLACEHOLDER_GRADIENTS = [
   "linear-gradient(135deg, var(--purple-wash), var(--sky-wash))",
@@ -88,15 +89,22 @@ export default function VenueCard({ venue, children, picked, priority = false, v
     }
   }
 
+  function toggleExpanded() {
+    setExpanded((current) => {
+      if (!current) trackProductEvent("venue_opened", { venue_id: venue.id, venue_name: venue.name, surface: variant });
+      return !current;
+    });
+  }
+
   function toggleFromCard(event) {
     if (event.target.closest("a, button, input, select, textarea, video")) return;
-    setExpanded((current) => !current);
+    toggleExpanded();
   }
 
   function toggleFromKeyboard(event) {
     if (event.target !== event.currentTarget || !["Enter", " "].includes(event.key)) return;
     event.preventDefault();
-    setExpanded((current) => !current);
+    toggleExpanded();
   }
 
   return (
@@ -169,7 +177,7 @@ export default function VenueCard({ venue, children, picked, priority = false, v
             </div>
           </>
         )}
-        <button className="venue-expand-toggle" type="button" aria-expanded={expanded} onClick={() => setExpanded((current) => !current)}>
+        <button className="venue-expand-toggle" type="button" aria-expanded={expanded} onClick={toggleExpanded}>
           <span>{expanded ? "Show less" : "View details"}</span>
           {expanded ? <ChevronUp aria-hidden="true" size={18} /> : <ChevronDown aria-hidden="true" size={18} />}
         </button>
@@ -193,7 +201,7 @@ export default function VenueCard({ venue, children, picked, priority = false, v
               {hasMoreMedia && <button className="btn small ghost" type="button" disabled={loadingMedia} onClick={loadAllMedia}>{loadingMedia ? "Loading gallery…" : `View all ${venue.media_count} media`}</button>}
               {menuUrl && <a className="btn small ghost" href={menuUrl} target="_blank" rel="noopener noreferrer">☰ Menu</a>}
               {bookingUrl ? (
-                <a className="btn small" href={bookingUrl} target="_blank" rel="noopener noreferrer">Book</a>
+                <a className="btn small" href={bookingUrl} target="_blank" rel="noopener noreferrer" onClick={() => trackProductEvent("venue_booking_clicked", { venue_id: venue.id, venue_name: venue.name })}>Book</a>
               ) : callNumber ? (
                 <a className="btn small" href={`tel:${callNumber}`}>Call to book</a>
               ) : null}
