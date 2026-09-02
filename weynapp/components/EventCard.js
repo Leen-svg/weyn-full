@@ -1,7 +1,5 @@
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 
-const PARTNER_LABELS = { platinumlist: "Platinumlist" };
-
 const TYPE_LABELS = {
   party: "Party",
   "club-night": "Club night",
@@ -26,6 +24,8 @@ function formatWhen(startsAt) {
 export default function EventCard({ event }) {
   const cover = normalizeHttpUrl(event.cover_image_url);
   const ticket = normalizeHttpUrl(event.ticket_url);
+  const website = normalizeHttpUrl(event.website_url);
+  const social = normalizeHttpUrl(event.social_url);
   // For a weekly series, starts_at is the first date the series ever ran —
   // showing it would advertise a night that has already happened.
   const when = formatWhen(event.next_start || event.starts_at);
@@ -40,6 +40,10 @@ export default function EventCard({ event }) {
         style={cover ? { backgroundImage: `url("${cover}")` } : undefined}
         aria-hidden="true"
       >
+        <div className="event-badges">
+          {event.is_trending && <span className="event-badge event-badge--trending">🔥 Trending</span>}
+          {event.is_try_this_out && <span className="event-badge event-badge--try">✨ Try this out</span>}
+        </div>
         {ageLabel && <span className="event-card__age">{ageLabel}</span>}
       </div>
       <div className="event-card__body">
@@ -55,18 +59,21 @@ export default function EventCard({ event }) {
         {event.price_from_aed ? (
           <p className="event-card__price">From {event.price_from_aed} AED</p>
         ) : null}
-        {/* When the ticket link is an affiliate link, it carries the same
-            disclosure as an attraction: named partner and rel="sponsored". */}
-        {ticket && (
+        <div className="event-card__actions">
+          {ticket && (
           <a
             className="btn small"
             href={ticket}
             target="_blank"
-            rel={event.partner ? "sponsored nofollow noopener noreferrer" : "noopener noreferrer"}
+            rel="noopener noreferrer"
           >
-            {event.partner ? `Tickets on ${PARTNER_LABELS[event.partner] || event.partner}` : "Tickets"}
+            Book
           </a>
-        )}
+          )}
+          {event.reservation_phone && <a className="btn small ghost" href={`tel:${String(event.reservation_phone).replace(/[^+\d]/g, "")}`}>Call</a>}
+          {website && <a className="btn small ghost" href={website} target="_blank" rel="noopener noreferrer">Website</a>}
+          {social && <a className="btn small ghost" href={social} target="_blank" rel="noopener noreferrer">Social</a>}
+        </div>
       </div>
     </article>
   );

@@ -1,7 +1,15 @@
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
+import { duplicateGoogleMapsVenue, groupDuplicateGoogleMapsVenues } from "@/lib/google-maps-duplicate.mjs";
 import { NextResponse } from "next/server";
+
+async function findMapsDuplicate(s, mapsUrl, excludeId = null) {
+  if (!mapsUrl) return null;
+  const { data, error } = await s.from("venues").select("id,name,neighborhood,city,google_maps_url").not("google_maps_url", "is", null).limit(5000);
+  if (error) throw error;
+  return duplicateGoogleMapsVenue(data, mapsUrl, excludeId);
+}
 
 export async function GET(req) {
   const admin = await requireAdmin();
@@ -10,6 +18,17 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") || "").trim();
   const s = db();
+
+  const mapsUrl = (searchParams.get("maps_url") || "").trim();
+  if (mapsUrl) {
+    try { return NextResponse.json({ duplicate: await findMapsDuplicate(s, mapsUrl, searchParams.get("exclude_id")) }); }
+    catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); }
+  }
+  if (searchParams.get("maps_audit") === "1") {
+    const { data, error } = await s.from("venues").select("id,name,neighborhood,city,google_maps_url").not("google_maps_url", "is", null).limit(5000);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ duplicate_groups: groupDuplicateGoogleMapsVenues(data) });
+  }
 
   let query = s
     .from("venues")
@@ -34,19 +53,24 @@ export async function POST(req) {
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const { name, neighborhood, city, avg_spend_aed, description, google_maps_url, hero_video_url, menu_url, latitude, longitude, age_restriction, is_aesthetic, is_trending, tag_ids } = body;
+  const { name, neighborhood, city, avg_spend_aed, description, google_maps_url, hero_video_url, menu_url, latitude, longitude, age_restriction, is_aesthetic, is_trending, tag_ids, phone, booking_phone, booking_url, website, instagram_url, tiktok_url } = body;
   if (!name?.trim()) return NextResponse.json({ error: "name required" }, { status: 400 });
 
   const s = db();
+  const normalizedMapsUrl = google_maps_url ? normalizeHttpUrl(google_maps_url) : null;
+  try {
+    const duplicate = await findMapsDuplicate(s, normalizedMapsUrl);
+    if (duplicate) return NextResponse.json({ error: `Duplicate Google Maps place: already used by ${duplicate.name}${duplicate.neighborhood ? ` (${duplicate.neighborhood})` : ""}.`, duplicate }, { status: 409 });
+  } catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); }
   const { data, error } = await s
     .from("venues")
     .insert({
       name: name.trim(),
       neighborhood: neighborhood?.trim() || null,
-      city: city === "Dubai" ? "Dubai" : "Abu Dhabi",
+      city: city === "Abu Dhabi" ? "Abu Dhabi" : "Dubai",
       avg_spend_aed: Number.isFinite(avg_spend_aed) ? avg_spend_aed : 0,
       description: description?.trim().slice(0, 1000) || null,
-      google_maps_url: google_maps_url ? normalizeHttpUrl(google_maps_url) : null,
+      google_maps_url: normalizedMapsUrl,
       hero_video_url: hero_video_url ? normalizeHttpUrl(hero_video_url) : null,
       menu_url: menu_url ? normalizeHttpUrl(menu_url) : null,
       latitude: Number.isFinite(latitude) ? latitude : null,
@@ -57,6 +81,12 @@ export async function POST(req) {
       trending_rank: is_trending ? 1 : null,
       trending_set_at: is_trending ? new Date().toISOString() : null,
       is_active: true,
+      phone: phone || null,
+      booking_phone: booking_phone || null,
+      booking_url: booking_url ? normalizeHttpUrl(booking_url) : null,
+      website: website ? normalizeHttpUrl(website) : null,
+      instagram_url: instagram_url ? normalizeHttpUrl(instagram_url) : null,
+      tiktok_url: tiktok_url ? normalizeHttpUrl(tiktok_url) : null,
     })
     .select("id")
     .single();
@@ -120,6 +150,13 @@ export async function PATCH(req) {
     }
   }
   if (clean.is_trending) clean.trending_set_at = new Date().toISOString();
+
+  if (clean.google_maps_url) {
+    try {
+      const duplicate = await findMapsDuplicate(db(), clean.google_maps_url, id);
+      if (duplicate) return NextResponse.json({ error: `Duplicate Google Maps place: already used by ${duplicate.name}${duplicate.neighborhood ? ` (${duplicate.neighborhood})` : ""}.`, duplicate }, { status: 409 });
+    } catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); }
+  }
 
   const { error } = await db().from("venues").update(clean).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

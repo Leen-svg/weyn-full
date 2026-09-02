@@ -15,10 +15,6 @@ export default async function AttractionsPage() {
         <header className="app-home__hero">
           <div>
             <h1>Attractions &amp; tickets</h1>
-            {/* Affiliate disclosure, stated plainly on the page itself. */}
-            <p className="sub">
-              Booked with our partners. Weyn may earn a commission — it doesn&apos;t change what you pay.
-            </p>
           </div>
         </header>
       </section>

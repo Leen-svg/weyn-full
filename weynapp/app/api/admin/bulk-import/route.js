@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin";
 import { safeUrl } from "@/lib/sanitize";
 import { isCurationFormat, importCurationRecords } from "@/lib/venueImport";
+import { duplicateGoogleMapsVenue, googleMapsPlaceKey } from "@/lib/google-maps-duplicate.mjs";
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
@@ -52,8 +53,8 @@ function cleanRow(row) {
     if (row[f] === undefined || row[f] === null || row[f] === "") continue;
     clean[f] = row[f];
   }
-  if (clean.city && clean.city !== "Dubai") clean.city = "Abu Dhabi";
-  if (!clean.city) clean.city = "Abu Dhabi";
+  if (clean.city && clean.city !== "Abu Dhabi") clean.city = "Dubai";
+  if (!clean.city) clean.city = "Dubai";
   if (clean.avg_spend_aed != null) clean.avg_spend_aed = Number(clean.avg_spend_aed) || 0;
   if (clean.latitude != null) clean.latitude = Number(clean.latitude);
   if (clean.longitude != null) clean.longitude = Number(clean.longitude);
@@ -125,6 +126,9 @@ export async function POST(req) {
     updated = 0,
     skipped = 0;
   const errors = [];
+  const { data: mappedVenues, error: mappedVenuesError } = await s.from("venues").select("id,name,neighborhood,google_maps_url").not("google_maps_url", "is", null).limit(5000);
+  if (mappedVenuesError) return NextResponse.json({ error: mappedVenuesError.message }, { status: 500 });
+  const knownMapsVenues = [...(mappedVenues || [])];
 
   for (const raw of rows) {
     if (!raw.name?.trim?.()) {
@@ -134,6 +138,8 @@ export async function POST(req) {
     const clean = cleanRow(raw);
     try {
       let existingId = UUID.test(raw.id || "") ? raw.id : null;
+      const mapsDuplicate = clean.google_maps_url ? duplicateGoogleMapsVenue(knownMapsVenues, clean.google_maps_url, existingId) : null;
+      if (mapsDuplicate) throw new Error(`duplicate Google Maps place already used by ${mapsDuplicate.name}${mapsDuplicate.neighborhood ? ` (${mapsDuplicate.neighborhood})` : ""}`);
       if (!existingId) {
         const { data: existing } = await s
           .from("venues")
@@ -148,8 +154,9 @@ export async function POST(req) {
         if (error) throw error;
         updated++;
       } else {
-        const { error } = await s.from("venues").insert({ ...clean, is_active: true });
+        const { data: insertedVenue, error } = await s.from("venues").insert({ ...clean, is_active: true }).select("id").single();
         if (error) throw error;
+        if (clean.google_maps_url && googleMapsPlaceKey(clean.google_maps_url)) knownMapsVenues.push({ id: insertedVenue.id, name: clean.name, neighborhood: clean.neighborhood, google_maps_url: clean.google_maps_url });
         inserted++;
       }
     } catch (e) {

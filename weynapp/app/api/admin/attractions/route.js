@@ -14,7 +14,7 @@ function clean(body) {
   const title = String(body.title || "").trim().slice(0, 160);
   if (!title) return { error: "Title is required" };
 
-  // The affiliate link is the whole point of the row — a broken or non-http
+  // The booking link is the whole point of the row — a broken or non-http
   // one would render a card that cannot be booked.
   const affiliate = body.affiliateUrl ? safeUrl(String(body.affiliateUrl).trim()) : null;
   if (!affiliate) return { error: "A valid https booking link is required" };

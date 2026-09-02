@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Play } from "lucide-react";
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 import MapChooser from "./MapChooser";
 import VenueMedia from "./VenueMedia";
@@ -46,6 +46,7 @@ export default function VenueCard({ venue, children, picked, priority = false, v
   const discover = variant === "discover";
   const [activeMedia, setActiveMedia] = useState(0);
   const [playingVideo, setPlayingVideo] = useState(null);
+  const [expanded, setExpanded] = useState(false);
   const mediaRef = useRef(null);
   const scrollFrame = useRef(0);
 
@@ -87,8 +88,25 @@ export default function VenueCard({ venue, children, picked, priority = false, v
     }
   }
 
+  function toggleFromCard(event) {
+    if (event.target.closest("a, button, input, select, textarea, video")) return;
+    setExpanded((current) => !current);
+  }
+
+  function toggleFromKeyboard(event) {
+    if (event.target !== event.currentTarget || !["Enter", " "].includes(event.key)) return;
+    event.preventDefault();
+    setExpanded((current) => !current);
+  }
+
   return (
-    <div className={`venue-card${picked ? " picked" : ""}${discover ? " discover-venue-card" : ""}`}>
+    <div
+      className={`venue-card${picked ? " picked" : ""}${discover ? " discover-venue-card" : ""}${expanded ? " is-expanded" : ""}`}
+      onClick={toggleFromCard}
+      onKeyDown={toggleFromKeyboard}
+      tabIndex={0}
+      aria-expanded={expanded}
+    >
       <div className="venue-cover" style={media.length ? undefined : { background: gradientFor(venue.id) }}>
         {media.length ? (
           <>
@@ -149,42 +167,50 @@ export default function VenueCard({ venue, children, picked, priority = false, v
               {venue.is_aesthetic ? " · 📸 aesthetic" : ""}
               {ageLabel ? ` · 🔞 ${ageLabel}` : ""}
             </div>
-            {todayHours && <div className="venue-hours">Today: {todayHours}</div>}
           </>
         )}
-        {venue.description && <p className="venue-desc">{venue.description}</p>}
-        {Array.isArray(venue.tags) && venue.tags.length > 0 && (
-          <div className="tag-row">
-            {venue.tags.map((t) => <span key={t} className="tag-pill">{t}</span>)}
+        <button className="venue-expand-toggle" type="button" aria-expanded={expanded} onClick={() => setExpanded((current) => !current)}>
+          <span>{expanded ? "Show less" : "View details"}</span>
+          {expanded ? <ChevronUp aria-hidden="true" size={18} /> : <ChevronDown aria-hidden="true" size={18} />}
+        </button>
+        {expanded && (
+          <div className="venue-card-expanded">
+            {todayHours && <div className="venue-hours">Today: {todayHours}</div>}
+            {venue.description && <p className="venue-desc">{venue.description}</p>}
+            {Array.isArray(venue.tags) && venue.tags.length > 0 && (
+              <div className="tag-row">
+                {venue.tags.map((t) => <span key={t} className="tag-pill">{t}</span>)}
+              </div>
+            )}
+            {discover && children}
+            <div className="venue-links">
+              {firstVideoIndex >= 0 && (
+                <button className="btn small ghost" type="button" onClick={() => playVideo(firstVideoIndex)}>
+                  <Play aria-hidden="true" size={14} />
+                  Play video
+                </button>
+              )}
+              {hasMoreMedia && <button className="btn small ghost" type="button" disabled={loadingMedia} onClick={loadAllMedia}>{loadingMedia ? "Loading gallery…" : `View all ${venue.media_count} media`}</button>}
+              {menuUrl && <a className="btn small ghost" href={menuUrl} target="_blank" rel="noopener noreferrer">☰ Menu</a>}
+              {bookingUrl ? (
+                <a className="btn small" href={bookingUrl} target="_blank" rel="noopener noreferrer">Book</a>
+              ) : callNumber ? (
+                <a className="btn small" href={`tel:${callNumber}`}>Call to book</a>
+              ) : null}
+              {instagramUrl && (
+                <a className="btn small ghost" href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label={`${venue.name} on Instagram`}>Instagram</a>
+              )}
+              {tiktokUrl && (
+                <a className="btn small ghost" href={tiktokUrl} target="_blank" rel="noopener noreferrer" aria-label={`${venue.name} on TikTok`}>TikTok</a>
+              )}
+              {websiteUrl && (
+                <a className="btn small ghost" href={websiteUrl} target="_blank" rel="noopener noreferrer">Website</a>
+              )}
+              <MapChooser venue={venue} compact />
+            </div>
+            {!discover && children}
           </div>
         )}
-        {discover && children}
-        <div className="venue-links">
-          {firstVideoIndex >= 0 && (
-            <button className="btn small ghost" type="button" onClick={() => playVideo(firstVideoIndex)}>
-              <Play aria-hidden="true" size={14} />
-              Play video
-            </button>
-          )}
-          {hasMoreMedia && <button className="btn small ghost" type="button" disabled={loadingMedia} onClick={loadAllMedia}>{loadingMedia ? "Loading gallery…" : `View all ${venue.media_count} media`}</button>}
-          {menuUrl && <a className="btn small ghost" href={menuUrl} target="_blank" rel="noopener noreferrer">☰ Menu</a>}
-          {bookingUrl ? (
-            <a className="btn small" href={bookingUrl} target="_blank" rel="noopener noreferrer">Book</a>
-          ) : callNumber ? (
-            <a className="btn small" href={`tel:${callNumber}`}>Call to book</a>
-          ) : null}
-          {instagramUrl && (
-            <a className="btn small ghost" href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label={`${venue.name} on Instagram`}>Instagram</a>
-          )}
-          {tiktokUrl && (
-            <a className="btn small ghost" href={tiktokUrl} target="_blank" rel="noopener noreferrer" aria-label={`${venue.name} on TikTok`}>TikTok</a>
-          )}
-          {websiteUrl && (
-            <a className="btn small ghost" href={websiteUrl} target="_blank" rel="noopener noreferrer">Website</a>
-          )}
-          <MapChooser venue={venue} compact />
-        </div>
-        {!discover && children}
       </div>
     </div>
   );

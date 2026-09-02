@@ -564,7 +564,9 @@
   border-radius: var(--r-lg);
   background: #fff;
   box-shadow: var(--lift-1);
+  cursor: pointer;
 }
+.venue-card:focus-visible { outline: 3px solid var(--ui-purple); outline-offset: 3px; }
 /* Base cover box. Holds the absolutely-positioned city badge, media arrows
    and dots, and centres the placeholder glyph when there is no media. */
 .app-shell.stitch .venue-cover {
@@ -590,6 +592,24 @@
 .venue-card .venue-links .btn,
 .venue-card .venue-action-bar .btn { width: auto; min-width: 0; min-height: 40px; flex: 0 0 auto; padding: 0 var(--sp-3); font-size: var(--t-micro); }
 .venue-action-bar { margin-top: 0 !important; }
+.venue-expand-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ui-ink);
+  font: inherit;
+  font-size: var(--t-meta);
+  font-weight: 700;
+  cursor: pointer;
+}
+.venue-expand-toggle svg { color: var(--ui-muted); }
+.venue-card-expanded { display: grid; width: 100%; gap: var(--sp-3); }
 
 /* ---------- Discover-variant card (image-led, used on rails) ----------
    The action row used to float loose under a card that had no border and no
@@ -647,6 +667,8 @@
   padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
   background: transparent;
 }
+.discover-venue-card:not(.is-expanded) .venue-card-body { padding-block: var(--sp-2); }
+.discover-venue-card.is-expanded .venue-card-body { align-items: stretch; }
 .discover-venue-card .venue-desc,
 .discover-venue-card .tag-row { display: none; }
 .discover-venue-card .venue-links,

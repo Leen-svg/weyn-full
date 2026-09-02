@@ -31,11 +31,6 @@ export function AttractionsSection({ attractions }) {
       <div className="app-home__section-header">
         <div>
           <h2 id="attractions-title">Attractions &amp; tickets</h2>
-          {/* Affiliate disclosure. Stated once, plainly, next to the rail
-              itself rather than buried in a terms page. */}
-          <p>
-            Booked with our partners. Weyn may earn a commission — it doesn&apos;t change what you pay.
-          </p>
         </div>
         <Link className="app-home__section-action" href="/attractions">See all</Link>
       </div>

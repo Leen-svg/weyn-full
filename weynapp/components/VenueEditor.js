@@ -8,10 +8,27 @@ import VenueMedia from "@/components/VenueMedia";
 
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 const EMPTY_VENUE = {
-  placeId: "", name: "", neighborhood: "", city: "Abu Dhabi", avg_spend_aed: 0,
+  placeId: "", name: "", neighborhood: "", city: "Dubai", avg_spend_aed: 0,
   description: "", google_maps_url: "", hero_video_url: "", menu_url: "", latitude: null, longitude: null,
   age_restriction: "all-ages", is_aesthetic: false, is_trending: false,
 };
+
+function MapsDuplicateAlert({ value, excludeId = "" }) {
+  const [duplicate, setDuplicate] = useState(null);
+  useEffect(() => {
+    if (!value?.trim()) { setDuplicate(null); return; }
+    const timer = setTimeout(async () => {
+      const params = new URLSearchParams({ maps_url: value });
+      if (excludeId) params.set("exclude_id", excludeId);
+      const res = await fetch(`/api/admin/venues?${params}`);
+      const data = await res.json();
+      if (res.ok) setDuplicate(data.duplicate || null);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [value, excludeId]);
+  if (!duplicate) return null;
+  return <div className="notice err maps-duplicate-alert" role="alert"><strong>Duplicate Google Maps place</strong><br />This link is already used by {duplicate.name}{duplicate.neighborhood ? ` (${duplicate.neighborhood})` : ""}. Weyn will block saving it twice.</div>;
+}
 
 async function uploadVenueFile(venueId, source) {
   if (!source.type.startsWith("image/") && !source.type.startsWith("video/")) throw new Error(`${source.name} is not an image or video`);
@@ -63,6 +80,7 @@ export default function VenueEditor() {
   const [newVideoUrls, setNewVideoUrls] = useState("");
   const [suggesting, setSuggesting] = useState(false);
   const [createStatus, setCreateStatus] = useState("");
+  const [duplicateGroups, setDuplicateGroups] = useState([]);
 
   const search = useCallback(async (query) => {
     const res = await fetch(`/api/admin/venues?q=${encodeURIComponent(query)}`);
@@ -73,6 +91,7 @@ export default function VenueEditor() {
 
   useEffect(() => {
     search("");
+    fetch("/api/admin/venues?maps_audit=1").then((res) => res.json()).then((data) => setDuplicateGroups(data.duplicate_groups || []));
     fetch("/api/admin/tags").then((res) => res.json()).then((data) => {
       setCategories(data.categories || []);
       setTags((data.tags || []).filter((tag) => tag.is_active));
@@ -150,6 +169,7 @@ export default function VenueEditor() {
 
   return (
     <div>
+      {duplicateGroups.length > 0 && <div className="notice err maps-audit" role="alert"><strong>Duplicate Maps alarm: {duplicateGroups.length} duplicate group{duplicateGroups.length === 1 ? "" : "s"} already in the catalog.</strong>{duplicateGroups.map((group) => <div key={group.map((venue) => venue.id).join("-")}>{group.map((venue) => venue.name).join(" ↔ ")}</div>)}</div>}
       <div className="field">
         <label>Search venues</label>
         <input
@@ -191,8 +211,8 @@ export default function VenueEditor() {
             <div className="field">
               <label>City</label>
               <select value={newVenue.city} onChange={(e) => setNewVenue({ ...newVenue, city: e.target.value })}>
-                <option>Abu Dhabi</option>
                 <option>Dubai</option>
+                <option>Abu Dhabi</option>
               </select>
             </div>
             <div className="field">
@@ -207,6 +227,7 @@ export default function VenueEditor() {
             <div className="field">
               <label>Google Maps URL</label>
               <input type="url" value={newVenue.google_maps_url} onChange={(e) => setNewVenue({ ...newVenue, google_maps_url: e.target.value })} />
+              <MapsDuplicateAlert value={newVenue.google_maps_url} />
             </div>
             <div className="field">
               <label>Optional external video URL</label>
@@ -327,9 +348,10 @@ function TagPicker({ categories, tags, selected, onChange }) {
 function VenueEditFields({ venue, categories, tags, onSave, busy }) {
   const [name, setName] = useState(venue.name || "");
   const [neighborhood, setNeighborhood] = useState(venue.neighborhood || "");
-  const [city, setCity] = useState(venue.city || "Abu Dhabi");
+  const [city, setCity] = useState(venue.city || "Dubai");
   const [avgSpend, setAvgSpend] = useState(venue.avg_spend_aed ?? 0);
   const [description, setDescription] = useState(venue.description || "");
+  const [googleMapsUrl, setGoogleMapsUrl] = useState(venue.google_maps_url || "");
   const [heroVideo, setHeroVideo] = useState(venue.hero_video_url || "");
   const [menuUrl, setMenuUrl] = useState(venue.menu_url || "");
   const [phone, setPhone] = useState(venue.phone || "");
@@ -424,8 +446,8 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
       <div className="field">
         <label>City</label>
         <select value={city} onChange={(e) => setCity(e.target.value)}>
-          <option>Abu Dhabi</option>
           <option>Dubai</option>
+          <option>Abu Dhabi</option>
         </select>
       </div>
       <div className="field">
@@ -435,6 +457,11 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
       <div className="field">
         <label>Description</label>
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+      </div>
+      <div className="field">
+        <label>Google Maps URL</label>
+        <input type="url" value={googleMapsUrl} onChange={(e) => setGoogleMapsUrl(e.target.value)} />
+        <MapsDuplicateAlert value={googleMapsUrl} excludeId={venue.id} />
       </div>
       <div className="field">
         <label>Venue tags</label>
@@ -552,6 +579,7 @@ function VenueEditFields({ venue, categories, tags, onSave, busy }) {
             city,
             avg_spend_aed: avgSpend,
             description,
+            google_maps_url: googleMapsUrl || null,
             hero_video_url: heroVideo || null,
             menu_url: menuUrl || null,
             phone: phone || null,

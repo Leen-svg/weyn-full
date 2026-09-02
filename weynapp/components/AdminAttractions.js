@@ -62,7 +62,7 @@ export default function AdminAttractions() {
     setEditing(null); setNotice("Attraction saved."); await load();
   }
 
-  // One per line: Title | https://affiliate-link | price | image-url
+  // One per line: Title | https://booking-link | price | image-url
   async function saveBulk() {
     const rows = bulk.split("\n").map((l) => l.trim()).filter(Boolean).map((line) => {
       const [title, affiliateUrl, price, coverImageUrl] = line.split("|").map((p) => (p || "").trim());
@@ -100,7 +100,7 @@ export default function AdminAttractions() {
     <section className="admin-editorial">
       <div className="admin-row">
         <div>
-          <span className="eyebrow">Affiliate</span>
+          <span className="eyebrow">Attractions</span>
           <h2>Attractions &amp; tickets</h2>
           <p className="sub">
             Partner booking links (Platinumlist). These are kept separate from venues on purpose — they can never appear
@@ -120,7 +120,7 @@ export default function AdminAttractions() {
         <div className="card editorial-editor">
           <h3>Paste a batch</h3>
           <p className="sub">
-            One per line: <code>Title | https://affiliate-link | price | image-url</code>. Price and image are optional.
+            One per line: <code>Title | https://booking-link | price | image-url</code>. Price and image are optional.
             Everything lands as Dubai / all-ages — edit individually afterwards.
           </p>
           <textarea
@@ -146,7 +146,7 @@ export default function AdminAttractions() {
           <label className="field"><span>Title</span>
             <input type="text" maxLength={160} value={editing.title} onChange={(e) => set({ title: e.target.value })} placeholder="Burj Khalifa: At The Top" />
           </label>
-          <label className="field"><span>Booking link (affiliate)</span>
+          <label className="field"><span>Booking link</span>
             <input type="text" inputMode="url" value={editing.affiliateUrl} onChange={(e) => set({ affiliateUrl: e.target.value })} placeholder="https://platinumlist.net/..." />
           </label>
           <label className="field"><span>Description</span>

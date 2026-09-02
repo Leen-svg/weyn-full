@@ -1,7 +1,5 @@
 import { normalizeHttpUrl } from "@/lib/media-url.mjs";
 
-const PARTNER_LABELS = { platinumlist: "Platinumlist" };
-
 const CATEGORY_LABELS = {
   "theme-park": "Theme park",
   waterpark: "Waterpark",
@@ -22,7 +20,6 @@ const CATEGORY_LABELS = {
 export default function AttractionCard({ attraction }) {
   const cover = normalizeHttpUrl(attraction.cover_image_url);
   const href = normalizeHttpUrl(attraction.affiliate_url);
-  const partner = PARTNER_LABELS[attraction.partner] || attraction.partner;
   const where = attraction.neighborhood || attraction.city;
 
   return (
@@ -48,7 +45,7 @@ export default function AttractionCard({ attraction }) {
             target="_blank"
             rel="sponsored nofollow noopener noreferrer"
           >
-            Book on {partner}
+            Book
           </a>
         )}
       </div>
