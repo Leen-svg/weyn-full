@@ -1,5 +1,6 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AdminSortableItem, AdminSortableList } from "@/components/AdminSortableList";
 
 const blank = {
   id: null, title: "", description: "", city: "Dubai", neighborhood: "",
@@ -27,6 +28,7 @@ export default function AdminAttractions() {
   const [showBulk, setShowBulk] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const orderTimer = useRef(null);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/attractions");
@@ -36,6 +38,7 @@ export default function AdminAttractions() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => () => clearTimeout(orderTimer.current), []);
 
   function open(item = null) {
     setNotice("");
@@ -46,7 +49,29 @@ export default function AdminAttractions() {
       coverImageUrl: item.cover_image_url || "", affiliateUrl: item.affiliate_url,
       partner: item.partner, priceFromAed: item.price_from_aed ?? "",
       ageRestriction: item.age_restriction, sortOrder: item.sort_order, isActive: item.is_active,
-    } : { ...blank });
+    } : { ...blank, sortOrder: items.length });
+  }
+
+  async function persistOrder(next) {
+    setBusy(true); setNotice("");
+    const response = await fetch("/api/admin/attractions", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ order: next.map((item) => item.id) }) });
+    const body = await response.json(); setBusy(false);
+    if (!response.ok) { setNotice(body.error || "Could not save attraction order."); return load(); }
+    setNotice("Attraction order saved."); await load();
+  }
+
+  function reorder(next) {
+    setItems(next);
+    clearTimeout(orderTimer.current);
+    orderTimer.current = setTimeout(() => persistOrder(next), 450);
+  }
+
+  function move(index, direction) {
+    const target = index + direction;
+    if (target < 0 || target >= items.length || busy) return;
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    reorder(next);
   }
 
   async function save() {
@@ -183,9 +208,6 @@ export default function AdminAttractions() {
             <label className="field"><span>Partner</span>
               <input type="text" value={editing.partner} onChange={(e) => set({ partner: e.target.value })} />
             </label>
-            <label className="field"><span>Order</span>
-              <input type="number" min="0" max="999" value={editing.sortOrder} onChange={(e) => set({ sortOrder: Number(e.target.value) })} />
-            </label>
           </div>
 
           <label className="toggle-row">
@@ -199,10 +221,11 @@ export default function AdminAttractions() {
         </div>
       )}
 
-      <div className="editorial-list-admin">
+      <p className="admin-reorder-help">Press and drag the grip to rearrange attractions. The order saves automatically.</p>
+      <AdminSortableList values={items} onReorder={reorder} className="editorial-list-admin">
         {items.length === 0 && <div className="discover-empty">Nothing yet. Add your first booking link.</div>}
-        {items.map((item) => (
-          <article className="card" key={item.id}>
+        {items.map((item, index) => (
+          <AdminSortableItem value={item} label={item.title} disabled={busy} className="card attraction-admin-card" key={item.id}>
             <div className="admin-row">
               <div>
                 <span className={`saved-visibility ${item.is_active ? "public" : "private"}`}>
@@ -212,17 +235,18 @@ export default function AdminAttractions() {
                 <p className="sub">
                   {item.partner} · {item.city}
                   {item.price_from_aed ? ` · from ${item.price_from_aed} AED` : ""}
-                  {" · order "}{item.sort_order}
                 </p>
               </div>
               <div className="admin-actions">
+                <button className="btn small ghost admin-move-fallback" type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} aria-label={`Move ${item.title} up`}>↑</button>
+                <button className="btn small ghost admin-move-fallback" type="button" disabled={busy || index === items.length - 1} onClick={() => move(index, 1)} aria-label={`Move ${item.title} down`}>↓</button>
                 <button className="btn small" onClick={() => open(item)}>Edit</button>
                 <button className="btn small ghost" onClick={() => remove(item.id)}>Delete</button>
               </div>
             </div>
-          </article>
+          </AdminSortableItem>
         ))}
-      </div>
+      </AdminSortableList>
     </section>
   );
 }

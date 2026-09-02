@@ -25,6 +25,7 @@ export default function EventCard({ event }) {
   const when = formatWhen(event.next_start || event.starts_at);
   const isWeekly = event.recurrence === "weekly";
   const venue = event.venues || null;
+  const venueTags = (venue?.venue_tags || []).map((link) => link.vibe_tags).filter((tag) => tag?.is_active && tag.display_name).sort((a, b) => (a.display_order || 0) - (b.display_order || 0)).map((tag) => tag.display_name);
   const place = venue?.name || event.neighborhood || event.city;
   const ageLabel = event.age_restriction === "21-plus" ? "21+" : event.age_restriction === "18-plus" ? "18+" : null;
 
@@ -64,6 +65,7 @@ export default function EventCard({ event }) {
             <div><span>Hosted at</span><strong>{venue.name}</strong><small>{[venue.neighborhood, venue.city].filter(Boolean).join(" · ")}</small></div>
             <Link className="btn small" href={`/v/${encodeURIComponent(venue.id)}`} onClick={() => trackProductEvent("event_venue_clicked", { event_id: event.id, venue_id: venue.id })}>View venue</Link>
           </div>}
+          {venueTags.length > 0 && <div className="tag-row event-card__venue-tags">{venueTags.map((tag) => <span className="tag-pill" key={tag}>{tag}</span>)}</div>}
           <div className="event-card__actions">
             {ticket && <a className="btn small" href={ticket} target="_blank" rel="noopener noreferrer" onClick={() => trackProductEvent("event_booking_clicked", { event_id: event.id, event_name: event.title })}>Book</a>}
             {event.reservation_phone && <a className="btn small ghost" href={`tel:${String(event.reservation_phone).replace(/[^+\d]/g, "")}`}>Call</a>}

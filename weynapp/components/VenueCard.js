@@ -40,8 +40,11 @@ export default function VenueCard({ venue, children, picked, priority = false, v
   if (!initialMedia.length && coverUrl) initialMedia.push({ type: "image", url: coverUrl });
   if (videoUrl && !initialMedia.some((item) => item.url === videoUrl)) initialMedia.push({ type: "video", url: videoUrl });
   const [loadedMedia, setLoadedMedia] = useState(null);
+  const [loadedTags, setLoadedTags] = useState(null);
+  const [detailsLoaded, setDetailsLoaded] = useState(false);
   const [loadingMedia, setLoadingMedia] = useState(false);
   const media = loadedMedia || initialMedia;
+  const tags = loadedTags || (Array.isArray(venue.tags) ? venue.tags : []);
   const hasMoreMedia = !loadedMedia && Number(venue.media_count || 0) > initialMedia.length;
   const firstVideoIndex = media.findIndex((item) => item.type === "video");
   const discover = variant === "discover";
@@ -75,7 +78,7 @@ export default function VenueCard({ venue, children, picked, priority = false, v
   }
 
   async function loadAllMedia() {
-    if (loadingMedia || loadedMedia) return;
+    if (loadingMedia || detailsLoaded) return;
     setLoadingMedia(true);
     try {
       const response = await fetch(`/api/venues/${venue.id}/media`);
@@ -83,13 +86,15 @@ export default function VenueCard({ venue, children, picked, priority = false, v
       if (response.ok && Array.isArray(body.media)) {
         const next = body.media.map((item) => ({ type: item.type, url: normalizeHttpUrl(item.url) })).filter((item) => item.url);
         if (next.length) setLoadedMedia(next);
+        if (Array.isArray(body.tags)) setLoadedTags(body.tags);
       }
     } finally {
-      setLoadingMedia(false);
+      setLoadingMedia(false); setDetailsLoaded(true);
     }
   }
 
   function toggleExpanded() {
+    if (!expanded && !tags.length) loadAllMedia();
     setExpanded((current) => {
       if (!current) trackProductEvent("venue_opened", { venue_id: venue.id, venue_name: venue.name, surface: variant });
       return !current;
@@ -185,9 +190,9 @@ export default function VenueCard({ venue, children, picked, priority = false, v
           <div className="venue-card-expanded">
             {todayHours && <div className="venue-hours">Today: {todayHours}</div>}
             {venue.description && <p className="venue-desc">{venue.description}</p>}
-            {Array.isArray(venue.tags) && venue.tags.length > 0 && (
+            {tags.length > 0 && (
               <div className="tag-row">
-                {venue.tags.map((t) => <span key={t} className="tag-pill">{t}</span>)}
+                {tags.map((tag) => <span key={tag} className="tag-pill">{tag}</span>)}
               </div>
             )}
             {discover && children}

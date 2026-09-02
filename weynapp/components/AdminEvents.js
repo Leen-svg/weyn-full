@@ -1,9 +1,10 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { EVENT_WEEKDAYS, recurrenceLabel } from "@/lib/events.mjs";
 import { safeUrl } from "@/lib/sanitize";
 import { compressImage } from "@/lib/image-compress";
 import { createClient } from "@/lib/supabase/client";
+import { AdminSortableItem, AdminSortableList } from "@/components/AdminSortableList";
 
 const TYPES = [["party", "Party"], ["club-night", "Club night"], ["live-music", "Live music"], ["ladies-night", "Ladies' night"], ["brunch", "Brunch"], ["other", "Other"]];
 const blank = {
@@ -71,6 +72,7 @@ export default function AdminEvents() {
   const [busy, setBusy] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
+  const orderTimer = useRef(null);
 
   const load = useCallback(async () => {
     const response = await fetch("/api/admin/events");
@@ -80,6 +82,7 @@ export default function AdminEvents() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => () => clearTimeout(orderTimer.current), []);
   useEffect(() => {
     const timer = setTimeout(async () => {
       const response = await fetch(`/api/admin/venues?q=${encodeURIComponent(venueQuery)}`);
@@ -132,16 +135,26 @@ export default function AdminEvents() {
     setSelectedVenue(venue); setField("venueId", venue.id); setVenueQuery(venue.name);
   }
 
-  async function move(index, direction) {
-    const target = index + direction;
-    if (target < 0 || target >= events.length || busy) return;
-    const previous = events; const next = [...events];
-    [next[index], next[target]] = [next[target], next[index]];
-    setEvents(next); setBusy(true); setError("");
+  async function persistOrder(next) {
+    setBusy(true); setError("");
     const response = await fetch("/api/admin/events", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ order: next.map((item) => item.id) }) });
     const body = await response.json(); setBusy(false);
-    if (!response.ok) { setEvents(previous); return setError(body.error || "Could not save event order."); }
+    if (!response.ok) { setError(body.error || "Could not save event order."); return load(); }
     setNotice("Event order saved."); await load();
+  }
+
+  function reorder(next) {
+    setEvents(next);
+    clearTimeout(orderTimer.current);
+    orderTimer.current = setTimeout(() => persistOrder(next), 450);
+  }
+
+  function move(index, direction) {
+    const target = index + direction;
+    if (target < 0 || target >= events.length || busy) return;
+    const next = [...events];
+    [next[index], next[target]] = [next[target], next[index]];
+    reorder(next);
   }
 
   async function remove(id) {
@@ -216,10 +229,11 @@ export default function AdminEvents() {
       <p className="event-save-help">Drafts can be incomplete and stay hidden. Publishing checks the event name, date, schedule, and links.</p>
     </form>}
 
-    <div className="event-admin-list">{events.length === 0 && !error ? <div className="discover-empty">No events yet. Create the first one above.</div> : events.map((item, index) => <article className="card event-admin-card" key={item.id}>
+    <p className="admin-reorder-help">Press and drag the grip to rearrange events. The order saves automatically.</p>
+    <AdminSortableList values={events} onReorder={reorder} className="event-admin-list">{events.length === 0 && !error ? <div className="discover-empty">No events yet. Create the first one above.</div> : events.map((item, index) => <AdminSortableItem value={item} label={item.title || item.draft_data?.title || "untitled event"} disabled={busy} className="card event-admin-card" key={item.id}>
       {safeUrl(item.cover_image_url) && <img src={safeUrl(item.cover_image_url)} alt="" />}
       <div className="event-admin-card__body"><div className="event-badges">{item.is_trending && <span className="event-badge event-badge--trending">🔥 Trending</span>}{item.is_try_this_out && <span className="event-badge event-badge--try">✨ Try this out</span>}<span className={`saved-visibility ${item.is_active ? "public" : "private"}`}>{item.is_active ? "published" : "draft"}</span></div><h3>{item.title || item.draft_data?.title || "Untitled event"}</h3><p className="venue-meta">{item.starts_at ? `${recurrenceLabel({ recurrence_type: item.recurrence === "weekly" ? "weekly" : "one_time", recurrence_days: item.recurrence_days })} · ${dubaiDateTime(item.starts_at).date}` : "Date not added yet"}{item.neighborhood ? ` · ${item.neighborhood}` : ""}{item.venues?.name ? ` · ${item.venues.name}` : ""}</p></div>
-      <div className="admin-actions event-order-actions"><button className="btn small ghost" type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} aria-label={`Move ${item.title} up`}>↑</button><button className="btn small ghost" type="button" disabled={busy || index === events.length - 1} onClick={() => move(index, 1)} aria-label={`Move ${item.title} down`}>↓</button><button className="btn small" type="button" disabled={busy} onClick={() => open(item)}>Edit</button><button className="btn small ghost" type="button" disabled={busy} onClick={() => remove(item.id)}>Delete</button></div>
-    </article>)}</div>
+      <div className="admin-actions event-order-actions"><button className="btn small ghost admin-move-fallback" type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} aria-label={`Move ${item.title || "event"} up`}>↑</button><button className="btn small ghost admin-move-fallback" type="button" disabled={busy || index === events.length - 1} onClick={() => move(index, 1)} aria-label={`Move ${item.title || "event"} down`}>↓</button><button className="btn small" type="button" disabled={busy} onClick={() => open(item)}>Edit</button><button className="btn small ghost" type="button" disabled={busy} onClick={() => remove(item.id)}>Delete</button></div>
+    </AdminSortableItem>)}</AdminSortableList>
   </section>;
 }

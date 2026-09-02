@@ -75,6 +75,19 @@ export async function POST(req) {
 export async function PATCH(req) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const body = await req.json().catch(() => null);
+  if (Array.isArray(body?.order)) {
+    const ids = body.order.filter((id) => UUID.test(id));
+    if (ids.length !== body.order.length || new Set(ids).size !== ids.length) return NextResponse.json({ error: "Invalid attraction order" }, { status: 400 });
+    const service = db();
+    const { data, error: lookupError } = ids.length ? await service.from("attractions").select("id").in("id", ids) : { data: [], error: null };
+    if (lookupError) return NextResponse.json({ error: lookupError.message }, { status: 500 });
+    if ((data || []).length !== ids.length) return NextResponse.json({ error: "One or more attractions no longer exist" }, { status: 409 });
+    for (let index = 0; index < ids.length; index += 1) {
+      const { error } = await service.from("attractions").update({ sort_order: index }).eq("id", ids[index]);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
+  }
   if (!UUID.test(body?.id || "")) return NextResponse.json({ error: "Valid id required" }, { status: 400 });
   const { row, error: invalid } = clean(body);
   if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
