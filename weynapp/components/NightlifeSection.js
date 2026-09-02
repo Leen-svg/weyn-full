@@ -17,8 +17,8 @@ export default function NightlifeSection({ rails, events, isEmpty, showEvents = 
     <section className="app-home__section app-home__nightlife" aria-labelledby="nightlife-title">
       <div className="app-home__section-header">
         <div>
-          <h2 id="nightlife-title">21+ tonight</h2>
-          <p>Clubs, bars, beach clubs and the nights that are actually on.</p>
+          <h2 id="nightlife-title">Weyn Tonight · 21+</h2>
+          <p>Club events happening tonight, linked to the place hosting them.</p>
         </div>
         <Link className="app-home__section-action" href="/nightlife">See all</Link>
       </div>
@@ -31,8 +31,8 @@ export default function NightlifeSection({ rails, events, isEmpty, showEvents = 
         <>
           {showEvents && events.length > 0 && (
             <div className="nightlife-block">
-              <h3 className="nightlife-block__title">What&apos;s on</h3>
-              <div className="venue-rail" aria-label="Upcoming 21+ nights">
+              <h3 className="nightlife-block__title">Club events tonight</h3>
+              <div className="venue-rail" aria-label="Club events happening tonight">
                 {events.map((event) => <EventCard key={event.id} event={event} />)}
               </div>
             </div>

@@ -7,7 +7,7 @@ import VenueActions from "@/components/VenueActions";
 import EventCard from "@/components/EventCard";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "21+ tonight" };
+export const metadata = { title: "Weyn Tonight · 21+" };
 
 export default async function NightlifePage() {
   const { user } = await currentSession();
@@ -57,8 +57,8 @@ export default async function NightlifePage() {
       <section className="app-home__intro">
         <header className="app-home__hero">
           <div>
-            <h1>21+ tonight</h1>
-            <p className="sub">Clubs, bars, beach clubs and the nights that are actually on.</p>
+            <h1>Weyn Tonight · 21+</h1>
+            <p className="sub">Club events happening tonight, with the venue attached.</p>
           </div>
         </header>
       </section>
@@ -74,7 +74,7 @@ export default async function NightlifePage() {
           {events.length > 0 && (
             <section className="app-home__section" aria-labelledby="nightlife-events">
               <div className="app-home__section-header">
-                <h2 id="nightlife-events">What&apos;s on</h2>
+                <div><h2 id="nightlife-events">Club events tonight</h2><p>Press an event to see the venue hosting it.</p></div>
               </div>
               <div className="venue-grid">
                 {events.map((event) => <EventCard key={event.id} event={event} />)}

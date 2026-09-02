@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { withCovers } from "@/lib/venueMedia";
 import { EVENT_FIELDS, liveSorted } from "@/lib/homeRails";
+import { tonightClubEvents } from "@/lib/event-tonight.mjs";
 
 // The 21+ surface: clubs, bars & lounges, beach clubs, and dated nights.
 //
@@ -60,9 +61,11 @@ export async function getNightlife(allowedAges, { city = null, limitPerRail = 12
     venues: hydrated.filter((v) => rail.categories.includes(v.category)).slice(0, limitPerRail),
   })).filter((rail) => rail.venues.length > 0);
 
+  const liveEvents = liveSorted(events, 60);
+  const tonightEvents = tonightClubEvents(liveEvents, new Date(), 12);
   return {
     rails,
-    events: liveSorted(events, 12),
-    isEmpty: rails.length === 0 && (events || []).length === 0,
+    events: tonightEvents,
+    isEmpty: rails.length === 0 && tonightEvents.length === 0,
   };
 }

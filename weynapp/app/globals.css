@@ -1211,6 +1211,16 @@ input:focus, select:focus, textarea:focus {
   border: 1px solid rgba(31,48,68,.1); border-radius: 18px;
   background: rgba(255,255,255,.78);
 }
+.event-card { cursor: pointer; transition: transform .18s ease, box-shadow .18s ease; }
+.event-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(31,48,68,.12); }
+.event-card__expand { width: fit-content; margin-top: 6px; padding: 0; border: 0; background: transparent; color: var(--purple-deep); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.event-card__details { display: grid; gap: 10px; margin-top: 8px; padding-top: 10px; border-top: 1px solid rgba(31,48,68,.12); }
+.event-card__description { margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.45; }
+.event-card__venue { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 14px; background: rgba(120,99,219,.08); }
+.event-card__venue > div { display: grid; gap: 1px; min-width: 0; }
+.event-card__venue span, .event-card__venue small { color: var(--ink-soft); font-size: 10px; font-weight: 700; }
+.event-card__venue strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.event-card.is-expanded { cursor: default; }
 .venue-grid .event-card { min-width: 0; max-width: none; width: 100%; }
 .event-card__cover {
   position: relative; aspect-ratio: 16 / 10;

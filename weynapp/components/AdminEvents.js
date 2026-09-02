@@ -134,7 +134,7 @@ export default function AdminEvents() {
         </>}
       </fieldset>
 
-      <label className="field"><span>Linked venue (optional)</span><input type="text" value={venueQuery} onChange={(e) => setVenueQuery(e.target.value)} placeholder="Search venue name" /><select value={editing.venueId} onChange={(e) => setField("venueId", e.target.value)}><option value="">No linked venue / pop-up</option>{venues.map((v) => <option key={v.id} value={v.id}>{v.name} — {v.neighborhood || v.city}</option>)}</select></label>
+      <label className="field"><span>Linked venue</span><input type="text" value={venueQuery} onChange={(e) => setVenueQuery(e.target.value)} placeholder="Search venue name" /><select value={editing.venueId} onChange={(e) => setField("venueId", e.target.value)}><option value="">No linked venue / pop-up</option>{venues.map((v) => <option key={v.id} value={v.id}>{v.name} — {v.neighborhood || v.city}</option>)}</select><small>Required for club events to appear in Weyn Tonight. Pressing the event card will reveal this venue.</small></label>
       <div className="event-form-grid">
         <label className="field"><span>Type</span><select value={editing.eventType} onChange={(e) => setField("eventType", e.target.value)}>{TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label className="field"><span>Age</span><select value={editing.ageRestriction} onChange={(e) => setField("ageRestriction", e.target.value)}><option value="all-ages">All ages</option><option value="18-plus">18+</option><option value="21-plus">21+</option></select></label>
